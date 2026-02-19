@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
+import { useNavigate } from "react-router-dom";
+
 
 // ===== Icons (SVG) =====
 const Icons = {
@@ -201,7 +203,7 @@ const Hero = () => (
     </section>
 );
 
-const Features = () => {
+const Features = ({ onGoInterview }) => {
   const features = [
     {
       icon: <Icons.FileCheck />,
@@ -235,24 +237,52 @@ const Features = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16" data-aos="fade-up">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            AI 기반 <span className="bg-gradient-to-br from-blue-800 to-blue-500 bg-clip-text text-transparent">핵심 기능</span>
+            AI 기반{" "}
+            <span className="bg-gradient-to-br from-blue-800 to-blue-500 bg-clip-text text-transparent">
+              핵심 기능
+            </span>
           </h2>
-          <p className="text-xl text-gray-600">CareerTalk의 강력한 기능으로 면접 준비를 완성하세요</p>
+          <p className="text-xl text-gray-600">
+            CareerTalk의 강력한 기능으로 면접 준비를 완성하세요
+          </p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
-          {features.map((f, idx) => (
-            <div
-              key={idx}
-              className="bg-white rounded-xl p-8 shadow-[0_10px_30px_rgba(0,0,0,0.1)] hover:shadow-[0_15px_40px_rgba(0,0,0,0.15)] transition hover:scale-105"
-              data-aos="fade-up"
-              data-aos-delay={idx * 100}
-            >
-              <div className="text-blue-600 mb-4">{f.icon}</div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">{f.title}</h3>
-              <p className="text-gray-600">{f.description}</p>
-            </div>
-          ))}
+          {features.map((f, idx) => {
+            const isInterview = f.title === "AI 모의 면접";
+
+            return (
+              <div
+                key={idx}
+                role={isInterview ? "button" : undefined}
+                tabIndex={isInterview ? 0 : undefined}
+                onClick={isInterview ? onGoInterview : undefined}
+                onKeyDown={
+                  isInterview
+                    ? (e) => {
+                        if (e.key === "Enter" || e.key === " ") onGoInterview?.();
+                      }
+                    : undefined
+                }
+                className={[
+                  "bg-white rounded-xl p-8 shadow-[0_10px_30px_rgba(0,0,0,0.1)] hover:shadow-[0_15px_40px_rgba(0,0,0,0.15)] transition hover:scale-105",
+                  isInterview ? "cursor-pointer ring-1 ring-blue-100 hover:ring-blue-300" : "",
+                ].join(" ")}
+                data-aos="fade-up"
+                data-aos-delay={idx * 100}
+              >
+                <div className="text-blue-600 mb-4">{f.icon}</div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">{f.title}</h3>
+                <p className="text-gray-600">{f.description}</p>
+
+                {isInterview && (
+                  <div className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-blue-600">
+                    바로 시작하기 <span aria-hidden>→</span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -478,6 +508,8 @@ const Footer = () => (
 
 // ===== Home Page =====
 export default function Home() {
+  const navigate = useNavigate();
+
   useEffect(() => {
     AOS.init({ duration: 1000, once: true, offset: 100 });
   }, []);
@@ -486,7 +518,7 @@ export default function Home() {
     <>
       <Navigation />
       <Hero />
-      <Features />
+      <Features onGoInterview={() => navigate("/interview/select")} />
       <HowItWorks />
       <Statistics />
       <Testimonials />
@@ -494,7 +526,6 @@ export default function Home() {
       <CTA />
       <Footer />
 
-      {/* styles moved from original HTML */}
       <style>{`
         .blue-gradient { background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); }
         .text-gradient {
