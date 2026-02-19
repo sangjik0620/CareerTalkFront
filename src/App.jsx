@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import InterviewDocSelect from './pages/interview/InterviewDocSelect';
 import InterviewScreen from './pages/interview/InterviewScreen';
+import InAnalysis from './pages/InAnalysis';
 
 function App() {
 
@@ -15,6 +16,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/interview/select" element={<InterviewDocSelect />} />
         <Route path="/interview" element={<InterviewScreen />} />
+        <Route path="/interview/result" element={<InAnalysis />} />
       </Routes>
     </BrowserRouter>
   )
