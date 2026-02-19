@@ -1,0 +1,704 @@
+/* InAnalysis.css
+   - Scope all styles under .iaPage to avoid affecting other pages
+   - Use brand tokens: --brand / --brand-700 / --brand-ink
+*/
+
+*{ box-sizing: border-box; }
+html, body{ height: 100%; }
+
+/* ---------------- Theme Tokens (Scoped) ---------------- */
+.iaPage{
+  /* Neutral base (웹 톤) */
+  --bg: var(--app-bg, #F8FAFC);
+  --surface: var(--app-surface, #FFFFFF);
+  --surface2: var(--app-surface2, #F1F5FF); /* subtle blue tint only */
+  --text: var(--app-text, #0F172A);
+  --muted: var(--app-muted, #64748B);
+  --line: var(--app-line, #E2E8F0);
+
+  /* Brand (Home 톤: 딥블루 계열) */
+  --brand: var(--primary-600, #2563EB);
+  --brand-700: var(--primary-700, #1D4ED8);
+  --brand-ink: var(--primary-ink, #14327A);
+
+  /* Shadows / radius */
+  --shadow1: 0 8px 26px rgba(15, 23, 42, 0.06);
+  --shadow2: 0 12px 34px rgba(15, 23, 42, 0.08);
+  --radius: 18px;
+
+  /* Page base */
+  width: 100%;
+  min-height: 100vh;
+  color: var(--text);
+  background: var(--bg);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans KR", Arial;
+}
+
+/* optional helper */
+.iaNoScroll{ height: 100vh; overflow: hidden; }
+
+/* ---------------- Layout ---------------- */
+.iaMain{
+  width: min(1200px, 96vw);
+  margin: 0 auto;
+  padding: 18px 0 0;
+}
+
+.iaMainFixed{
+  height: 100vh;
+  display:flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ---------------- Top Bar ---------------- */
+.iaTop{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  padding: 6px 2px;
+}
+
+.iaTopTitle{
+  margin:0;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+
+.iaTopActions{ display:flex; gap: 8px; }
+
+/* ---------------- Buttons ---------------- */
+.iaBtn{
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 900;
+  color:#27304a;
+  box-shadow: var(--shadow1);
+  cursor:pointer;
+  transition: transform 0.06s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.iaBtn:hover{
+  border-color: rgba(37, 99, 235, 0.35);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+.iaBtn:active{ transform: translateY(1px); }
+
+/* ---------------- Tabs ---------------- */
+.iaTabs{
+  display:flex;
+  gap: 8px;
+  padding: 0 2px;
+  flex-wrap: wrap;
+}
+
+.iaTab{
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 950;
+  color:#27304a;
+  cursor:pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.iaTab.on{
+  background: rgba(37, 99, 235, 0.10);
+  border-color: rgba(37, 99, 235, 0.30);
+  color: var(--brand-ink);
+}
+
+/* ---------------- Card / Panel ---------------- */
+.iaCard{
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow2);
+}
+
+.iaPanel{
+  flex:1;
+  display:flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.iaPanelBody{
+  padding: 14px 16px 16px;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: auto;
+  min-height: 0;
+}
+
+/* ---------------- Header Meta ---------------- */
+.iaHeaderCard{
+  border-bottom: 1px solid var(--line);
+  padding: 14px 16px;
+  display:grid;
+  grid-template-columns: 1fr 520px;
+  gap: 14px;
+}
+.iaHeaderCard.compact{
+  padding: 10px 12px;
+  gap: 10px;
+}
+
+.iaHeaderLeft{
+  display:flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.iaName{
+  font-size: 16px;
+  font-weight: 950;
+  letter-spacing: -0.02em;
+}
+
+.iaMeta{
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  display:flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items:center;
+}
+.iaMeta .dot{ opacity: .55; }
+
+.iaHeaderRight{
+  display:grid;
+  grid-template-columns: repeat(5, minmax(95px, 1fr));
+  gap: 8px;
+  align-items: stretch;
+}
+
+@media (max-width: 980px){
+  .iaHeaderCard{ grid-template-columns: 1fr; }
+  .iaHeaderRight{ grid-template-columns: 1fr 1fr; }
+}
+
+/* ---------------- Mini Info ---------------- */
+.iaMiniInfo{
+  border: 1px solid var(--line);
+  background: var(--surface2);
+  border-radius: 14px;
+  padding: 10px 12px;
+  display:flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.iaMiniInfo.compact{
+  padding: 8px 10px;
+  border-radius: 12px;
+}
+.iaMiniIcon{ font-size: 16px; }
+.iaMiniLabel{
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 900;
+  color:#334155;
+}
+.iaMiniValue{
+  margin-top: 1px;
+  font-size: 12px;
+  font-weight: 950;
+  color:#0f172a;
+}
+
+/* ---------------- Section Header ---------------- */
+.iaSectionRow{
+  display:flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.iaSectionH2{
+  margin: 0;
+  font-size: 14px;
+  font-weight: 950;
+  letter-spacing: -0.02em;
+}
+.iaSectionSub{
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+/* ---------------- Boxes ---------------- */
+.iaBox{
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 14px;
+}
+.iaBoxTight{ padding: 12px; }
+
+.iaBoxTitle{
+  font-size: 12px;
+  font-weight: 950;
+  color:#27304a;
+}
+
+.iaHint{
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.iaMuted{ color: var(--muted); font-weight: 800; }
+
+/* ---------------- KPI Strip ---------------- */
+.iaKpiStrip{
+  margin-top: 12px;
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 980px){
+  .iaKpiStrip{ grid-template-columns: 1fr; }
+}
+
+.iaKpiCard{
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow1);
+  padding: 12px;
+}
+
+.iaKpiTop{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.iaKpiTitle{
+  font-weight: 950;
+  color:#27304a;
+  font-size: 12px;
+}
+
+.iaKpiScore{
+  font-size: 34px;
+  font-weight: 950;
+  margin-top: 6px;
+  letter-spacing: -0.03em;
+}
+
+.iaKpiMeta{
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.iaGradePill{
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  background: rgba(37, 99, 235, 0.10);
+  color: var(--brand-ink);
+  font-weight: 950;
+  font-size: 12px;
+  border-radius: 999px;
+  padding: 6px 10px;
+}
+
+/* ---------------- Summary Grid ---------------- */
+.iaSummaryGrid{
+  margin-top: 12px;
+  display:grid;
+  grid-template-columns: 1.1fr 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 980px){
+  .iaSummaryGrid{ grid-template-columns: 1fr; }
+}
+
+.iaKpis{
+  margin-top: 10px;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.iaKpi{
+  border: 1px solid var(--line);
+  background: var(--surface2);
+  border-radius: 12px;
+  padding: 10px;
+}
+.iaKpiLabel{
+  font-size: 11px;
+  font-weight: 900;
+  color:#334155;
+}
+.iaKpiValue{
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 950;
+  color:#0f172a;
+}
+
+/* ---------------- Chips ---------------- */
+.iaChips{
+  margin-top: 10px;
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.iaChip{
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  background: rgba(37, 99, 235, 0.10);
+  color: var(--brand-ink);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-weight: 950;
+  font-size: 12px;
+}
+
+/* ---------------- Ring ---------------- */
+.iaBox.center{
+  display:flex;
+  flex-direction: column;
+  align-items:center;
+  justify-content:center;
+  min-height: 220px;
+}
+.iaRing{ position: relative; }
+.iaRing.big{ width: 120px; height: 120px; }
+.iaRingBg{ fill:none; stroke:#e6ecf5; stroke-width: 10; }
+.iaRingFg{
+  fill:none;
+  stroke: var(--brand);
+  stroke-width: 10;
+  stroke-linecap: round;
+  transform-origin: 60px 60px;
+  transform: rotate(-90deg);
+}
+.iaRingCenter{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction: column;
+  align-items:center;
+  justify-content:center;
+}
+.iaRingValue{ font-size: 18px; font-weight: 950; }
+.iaRingLabel{ font-size: 11px; font-weight: 900; color: var(--muted); }
+
+/* ---------------- Bar ---------------- */
+.iaBar{
+  margin-top: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #eef3ff;
+  overflow:hidden;
+  border: 1px solid rgba(37, 99, 235, 0.15);
+}
+.iaBarFill{ height: 100%; background: var(--brand); border-radius: 999px; }
+.iaBarText{ margin-top: 8px; font-weight: 950; color:#27304a; }
+
+/* ---------------- Actions ---------------- */
+.iaActionList{
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  display:grid;
+  gap: 10px;
+}
+.iaActionList.compact{ gap: 8px; }
+
+.iaActionList li{
+  display:flex;
+  gap: 10px;
+  align-items:flex-start;
+  font-weight: 900;
+  color:#27304a;
+  line-height: 1.45;
+}
+
+.iaActionNo{
+  flex:0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  background: rgba(37, 99, 235, 0.10);
+  border: 1px solid rgba(37, 99, 235, 0.25);
+  color: var(--brand-ink);
+  font-weight: 950;
+  font-size: 12px;
+}
+
+/* ---------------- Docs ---------------- */
+.iaDocGrid{
+  margin-top: 12px;
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 1100px){
+  .iaDocGrid{ grid-template-columns: 1fr; }
+}
+
+.iaDocTop{
+  display:flex;
+  justify-content: space-between;
+  align-items:flex-end;
+  gap: 10px;
+}
+.iaDocTitle{
+  font-weight: 950;
+  font-size: 14px;
+  color:#27304a;
+}
+.iaDocScore{
+  font-weight: 950;
+  font-size: 28px;
+  letter-spacing: -0.03em;
+  color: var(--brand-ink);
+}
+
+.iaDocCols{
+  margin-top: 10px;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+@media (max-width: 980px){
+  .iaDocCols{ grid-template-columns: 1fr; }
+}
+
+/* ---------------- Bullets / Text ---------------- */
+.iaBullet{
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color:#27304a;
+  font-weight: 850;
+  line-height: 1.5;
+}
+.iaText{
+  margin: 8px 0 0;
+  color:#27304a;
+  font-weight: 850;
+  line-height: 1.6;
+}
+
+/* ---------------- QnA ---------------- */
+.iaQList{ width: 100%; }
+
+.iaQItem{
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow:hidden;
+  background: var(--surface);
+  margin-bottom: 10px;
+}
+
+.iaQHead{
+  width: 100%;
+  background: var(--surface);
+  border: 0;
+  cursor:pointer;
+  padding: 12px;
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.iaQHeadLeft{
+  display:flex;
+  gap: 12px;
+  align-items:flex-start;
+}
+
+.iaQNo{
+  width: 34px;
+  height: 34px;
+  border-radius: 14px;
+  background: rgba(37, 99, 235, 0.10);
+  border: 1px solid rgba(37, 99, 235, 0.22);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight: 950;
+  color: var(--brand-ink);
+}
+
+.iaQTitle{ font-weight: 950; color:#0f172a; }
+
+.iaQMeta{
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.iaQToggle{
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--surface2);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight: 950;
+  color:#27304a;
+}
+
+.iaQBody{
+  padding: 12px;
+  border-top: 1px solid var(--line);
+  background: #fbfdff;
+}
+
+.iaQBGrid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+@media (max-width: 980px){
+  .iaQBGrid{ grid-template-columns: 1fr; }
+}
+
+.iaQBCard{
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.iaTemplate{
+  margin-top: 8px;
+  border: 1px solid rgba(37, 99, 235, 0.20);
+  background: rgba(37, 99, 235, 0.06);
+  border-radius: 14px;
+  padding: 12px;
+  color:#27304a;
+  font-weight: 850;
+  line-height: 1.6;
+}
+
+/* ---------------- Compare layout ---------------- */
+.iaOverallGrid{
+  margin-top: 12px;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 980px){
+  .iaOverallGrid{ grid-template-columns: 1fr; }
+}
+
+/* ---------------- Twin Grid ---------------- */
+.iaTwinGrid{
+  margin-top: 12px;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 980px){
+  .iaTwinGrid{ grid-template-columns: 1fr; }
+}
+
+/* ---------------- Charts ---------------- */
+.iaChart{ margin-top: 10px; }
+
+.iaGrid line{ stroke: #e8eef8; stroke-width: 1; }
+
+.iaLine.main{ fill:none; stroke: var(--brand); stroke-width: 3; }
+.iaLine.peer{
+  fill:none;
+  stroke: #94a3b8;
+  stroke-width: 2;
+  stroke-dasharray: 6 6;
+}
+
+.iaMyLine{ stroke: #ef4444; stroke-width: 2; opacity: .9; }
+.iaMyDot{ fill: #ef4444; }
+
+.iaTag{ fill: rgba(15,23,42,0.86); }
+.iaTagText{ fill: #fff; font-size: 12px; font-weight: 900; }
+
+.iaLegend{
+  margin-top: 10px;
+  display:flex;
+  align-items:center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.iaDot{
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display:inline-block;
+  margin-right: 6px;
+}
+.iaDot.me{ background:#ef4444; }
+.iaDot.line{ background: var(--brand); }
+.iaDot.peer{ background:#94a3b8; }
+
+/* ---------------- Radar ---------------- */
+.iaRadar{ margin-top: 10px; }
+
+.iaRadarRing{ fill:none; stroke:#e6ecf5; stroke-width:1.5; }
+.iaRadarAxis{ stroke:#e6ecf5; stroke-width:1.5; }
+.iaRadarLabel{ fill:#475569; font-size: 11px; font-weight: 900; }
+
+.iaRadarPoly{ fill:none; stroke: var(--brand); stroke-width:2.5; }
+.iaRadarFill{ fill: rgba(37, 99, 235, 0.20); stroke:none; }
+
+.iaRadarPeerPoly{
+  fill:none;
+  stroke:#94a3b8;
+  stroke-width:2;
+  stroke-dasharray: 6 6;
+}
+.iaRadarPeerFill{ fill: rgba(148,163,184,0.18); stroke:none; }
+
+/* ---------------- Capability action groups ---------------- */
+.iaActionByComp{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+@media (max-width: 980px){
+  .iaActionByComp{ grid-template-columns: 1fr; }
+}
+
+.iaActionGroup{
+  border: 1px solid var(--line);
+  background: var(--surface2);
+  border-radius: 14px;
+  padding: 12px;
+}
+
+.iaActionGroupTitle{
+  font-weight: 950;
+  color:#27304a;
+  margin-bottom: 8px;
+}
+
+.iaCompComment{
+  margin: 8px 0 10px;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #fff;
+  display:grid;
+  gap: 6px;
+}
+.iaCompComment .good{ font-weight: 900; color:#14532d; }
+.iaCompComment .bad{ font-weight: 900; color:#7f1d1d; }
