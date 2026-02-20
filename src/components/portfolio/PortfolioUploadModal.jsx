@@ -102,7 +102,7 @@ const PortfolioUploadModal = ({ isOpen, onClose, onAnalyzeSuccess }) => {
             id="fileInput"
             className="hidden"
             onChange={handleFileChange}
-            accept=".pdf,.hwp,.docx,.pptx"
+            accept=".pdf,.ppt,.docx,.pptx"
             disabled={isAnalyzing}
           />
           <label
