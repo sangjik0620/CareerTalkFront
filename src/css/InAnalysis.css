@@ -1,87 +1,52 @@
-/* InAnalysis.css
-   - Scope all styles under .iaPage to avoid affecting other pages
-   - Use brand tokens: --brand / --brand-700 / --brand-ink
-*/
-
-* {
+/* Base */
+.iaPage,
+.iaPage * {
   box-sizing: border-box;
 }
-html,
-body {
-  height: 100%;
-}
 
-/* ---------------- Theme Tokens (Scoped) ---------------- */
 .iaPage {
-  /* Neutral base (웹 톤) */
   --bg: #f8fafc;
   --surface: #ffffff;
-  --surface2: #f1f5ff; /* subtle blue tint only */
+  --surface2: #f1f5ff;
   --text: #0f172a;
   --muted: #64748b;
   --line: #e2e8f0;
 
-  /* Brand (Home 톤: 딥블루 계열) */
   --brand: #2563eb;
   --brand-700: #1d4ed8;
   --brand-ink: #14327a;
 
-  /* Shadows / radius */
-  --shadow1: 0 8px 26px rgba(15, 23, 42, 0.06);
-  --shadow2: 0 12px 34px rgba(15, 23, 42, 0.08);
-  --radius: 18px;
-
-  /* Page base */
   position: relative;
   width: 100%;
   min-height: 100vh;
   color: var(--text);
   background: linear-gradient(to bottom, #f8fafc 0%, #e0e7ff 100%);
-  font-family:
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    Roboto,
-    "Noto Sans KR",
-    Arial;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Noto Sans KR", Arial;
 }
 
-.iaPage::before {
-  content: "";
-  position: fixed;
-  top: -20%;
-  right: -10%;
-  width: 500px;
-  height: 500px;
-  background: rgba(59, 130, 246, 0.08);
-  border-radius: 50%;
-  filter: blur(100px);
-  pointer-events: none;
-  z-index: 0;
-}
-
+.iaPage::before,
 .iaPage::after {
   content: "";
   position: fixed;
-  bottom: -20%;
-  left: -10%;
   width: 500px;
   height: 500px;
-  background: rgba(37, 99, 235, 0.06);
   border-radius: 50%;
   filter: blur(100px);
   pointer-events: none;
   z-index: 0;
 }
-
-/* optional helper */
-.iaNoScroll {
-  height: 100vh;
-  overflow: hidden;
+.iaPage::before {
+  top: -20%;
+  right: -10%;
+  background: rgba(59, 130, 246, 0.08);
+}
+.iaPage::after {
+  bottom: -20%;
+  left: -10%;
+  background: rgba(37, 99, 235, 0.06);
 }
 
-/* ---------------- Layout ---------------- */
 .iaMain {
   position: relative;
   width: min(1200px, 96vw);
@@ -91,13 +56,13 @@ body {
 }
 
 .iaMainFixed {
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
-/* ---------------- Top Bar ---------------- */
+/* Top */
 .iaTop {
   display: flex;
   align-items: center;
@@ -107,14 +72,10 @@ body {
   border-radius: 20px;
   box-shadow: 0 10px 30px rgba(37, 99, 235, 0.3);
   margin-bottom: 8px;
-}
-
-.iaTopGradient {
   position: relative;
   overflow: hidden;
 }
-
-.iaTopGradient::before {
+.iaTop::before {
   content: "";
   position: absolute;
   top: -40%;
@@ -125,26 +86,24 @@ body {
   border-radius: 50%;
   filter: blur(60px);
 }
-
 .iaTopContent {
   flex: 1;
+  position: relative;
+  z-index: 1;
 }
-
 .iaTopTitle {
   margin: 0;
   font-size: 28px;
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: #ffffff;
+  color: #fff;
 }
-
 .iaTopSubtitle {
   margin: 4px 0 0;
   font-size: 14px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.85);
 }
-
 .iaTopActions {
   display: flex;
   gap: 8px;
@@ -152,39 +111,44 @@ body {
   z-index: 1;
 }
 
-/* ---------------- Buttons ---------------- */
+/* Buttons / Tabs (shared baseline-safe) */
+.iaBtn,
+.iaTab,
+.iaChip,
+.iaPill,
+.iaMiniPill,
+.iaDeltaPill,
+.iaGradePill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  white-space: nowrap;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
 .iaBtn {
   border: none;
-  background: #ffffff;
+  background: #fff;
   color: #2563eb;
   border-radius: 999px;
-  padding: 12px 24px;
-  font-weight: 600;
+  height: 40px;
+  padding: 0 18px;
+  font-weight: 700;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
   cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .iaBtn:hover {
-  transform: scale(1.05);
+  transform: scale(1.03);
   box-shadow: 0 6px 25px rgba(0, 0, 0, 0.25);
 }
 .iaBtn:active {
-  transform: scale(0.98);
+  transform: scale(0.99);
 }
 
-/* Secondary button variant */
-.iaBtnSecondary {
-  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
-  color: #ffffff;
-  box-shadow: 0 10px 30px rgba(37, 99, 235, 0.3);
-}
-.iaBtnSecondary:hover {
-  box-shadow: 0 15px 40px rgba(37, 99, 235, 0.4);
-}
-
-/* ---------------- Tabs ---------------- */
 .iaTabs {
   display: flex;
   gap: 8px;
@@ -196,15 +160,13 @@ body {
   border: none;
   background: var(--surface);
   border-radius: 999px;
-  padding: 10px 20px;
-  font-weight: 600;
+  height: 38px;
+  padding: 0 16px;
+  font-weight: 700;
   color: #64748b;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
-  transition:
-    background 0.2s ease,
-    transform 0.2s ease,
-    box-shadow 0.2s ease,
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease,
     color 0.2s ease;
 }
 .iaTab:hover {
@@ -213,21 +175,17 @@ body {
 }
 .iaTab.on {
   background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
-  color: #ffffff;
+  color: #fff;
   box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
-  transform: translateY(-2px);
+  transform: translateY(-1px);
 }
 
-/* ---------------- Card / Panel ---------------- */
+/* Panel */
 .iaCard {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 20px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.3s ease;
-}
-.iaCard:hover {
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
 }
 
 .iaPanel {
@@ -237,39 +195,37 @@ body {
   min-height: 0;
 }
 
+.iaPdfArea {
+  background: #fff;
+}
+
 .iaPanelBody {
   padding: 14px 16px 16px;
   width: 100%;
-  box-sizing: border-box;
   overflow: auto;
   min-height: 0;
+  background: #fff;
 }
 
-/* ---------------- Header Meta ---------------- */
+/* Header meta */
 .iaHeaderCard {
   border-bottom: 1px solid var(--line);
-  padding: 14px 16px;
+  padding: 10px 12px;
   display: grid;
   grid-template-columns: 1fr 520px;
-  gap: 14px;
-}
-.iaHeaderCard.compact {
-  padding: 10px 12px;
   gap: 10px;
+  background: #fff;
 }
-
 .iaHeaderLeft {
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
-
 .iaName {
   font-size: 16px;
   font-weight: 950;
   letter-spacing: -0.02em;
 }
-
 .iaMeta {
   margin-top: 3px;
   color: var(--muted);
@@ -283,14 +239,12 @@ body {
 .iaMeta .dot {
   opacity: 0.55;
 }
-
 .iaHeaderRight {
   display: grid;
   grid-template-columns: repeat(5, minmax(95px, 1fr));
   gap: 8px;
   align-items: stretch;
 }
-
 @media (max-width: 980px) {
   .iaHeaderCard {
     grid-template-columns: 1fr;
@@ -300,19 +254,15 @@ body {
   }
 }
 
-/* ---------------- Mini Info ---------------- */
+/* Mini info */
 .iaMiniInfo {
   border: 1px solid var(--line);
   background: var(--surface2);
-  border-radius: 14px;
-  padding: 10px 12px;
+  border-radius: 12px;
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-}
-.iaMiniInfo.compact {
-  padding: 8px 10px;
-  border-radius: 12px;
 }
 .iaMiniIcon {
   font-size: 16px;
@@ -330,7 +280,7 @@ body {
   color: #0f172a;
 }
 
-/* ---------------- Section Header ---------------- */
+/* Section header */
 .iaSectionRow {
   display: flex;
   align-items: baseline;
@@ -349,44 +299,31 @@ body {
   font-weight: 800;
 }
 
-/* ---------------- Boxes ---------------- */
+/* Boxes */
 .iaBox {
   border: 1px solid var(--line);
-  background: var(--surface);
+  background: #fff;
   border-radius: 20px;
-  padding: 16px;
-  box-shadow: 0 8px 26px rgba(15, 23, 42, 0.06);
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
-}
-.iaBox:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 34px rgba(15, 23, 42, 0.1);
-}
-.iaBoxTight {
   padding: 14px;
+  box-shadow: 0 8px 26px rgba(15, 23, 42, 0.06);
 }
-
 .iaBoxTitle {
   font-size: 12px;
   font-weight: 950;
   color: #27304a;
 }
-
 .iaHint {
   color: var(--muted);
   font-size: 12px;
   font-weight: 800;
   line-height: 1.5;
 }
-
 .iaMuted {
   color: var(--muted);
   font-weight: 800;
 }
 
-/* ---------------- KPI Strip ---------------- */
+/* KPI */
 .iaKpiStrip {
   margin-top: 12px;
   display: grid;
@@ -398,38 +335,29 @@ body {
     grid-template-columns: 1fr;
   }
 }
-
 .iaKpiCard {
   border: 1px solid var(--line);
   border-radius: 20px;
-  background: var(--surface);
+  background: #fff;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   padding: 16px;
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
 }
-.iaKpiCard:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
-}
-
 .iaKpiTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
 }
-
 .iaKpiTitle {
   font-weight: 950;
   color: #27304a;
   font-size: 12px;
 }
 
-.iaKpiScore {
+.iaKpiScore,
+.iaDocScore {
   font-size: 38px;
-  font-weight: 700;
+  font-weight: 800;
   margin-top: 8px;
   letter-spacing: -0.03em;
   background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
@@ -437,7 +365,10 @@ body {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
-
+.iaDocScore {
+  font-size: 32px;
+  margin-top: 0;
+}
 .iaKpiMeta {
   margin-top: 6px;
   color: var(--muted);
@@ -445,19 +376,18 @@ body {
   font-weight: 800;
   line-height: 1.4;
 }
-
 .iaGradePill {
-  border: none;
   background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
-  color: #ffffff;
-  font-weight: 600;
+  color: #fff;
+  font-weight: 700;
   font-size: 12px;
   border-radius: 999px;
-  padding: 6px 14px;
+  height: 28px;
+  padding: 0 12px;
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 }
 
-/* ---------------- Summary Grid ---------------- */
+/* Summary grid */
 .iaSummaryGrid {
   margin-top: 12px;
   display: grid;
@@ -469,7 +399,6 @@ body {
     grid-template-columns: 1fr;
   }
 }
-
 .iaKpis {
   margin-top: 10px;
   display: grid;
@@ -494,7 +423,7 @@ body {
   color: #0f172a;
 }
 
-/* ---------------- Chips ---------------- */
+/* Chips / Pills (fix vertical alignment) */
 .iaChips {
   margin-top: 10px;
   display: flex;
@@ -502,7 +431,6 @@ body {
   flex-wrap: wrap;
 }
 .iaChip {
-  border: none;
   background: linear-gradient(
     135deg,
     rgba(37, 99, 235, 0.15) 0%,
@@ -510,20 +438,24 @@ body {
   );
   color: var(--brand-ink);
   border-radius: 999px;
-  padding: 7px 14px;
-  font-weight: 600;
+  height: 28px;
+  padding: 0 14px;
+  font-weight: 700;
   font-size: 12px;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
 }
-.iaChip:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+.iaPill,
+.iaMiniPill,
+.iaDeltaPill {
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  height: 28px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 900;
 }
 
-/* ---------------- Ring ---------------- */
+/* Ring */
 .iaBox.center {
   display: flex;
   flex-direction: column;
@@ -569,7 +501,7 @@ body {
   color: var(--muted);
 }
 
-/* ---------------- Bar ---------------- */
+/* Bar */
 .iaBar {
   margin-top: 10px;
   height: 10px;
@@ -589,7 +521,7 @@ body {
   color: #27304a;
 }
 
-/* ---------------- Actions ---------------- */
+/* Actions */
 .iaActionList {
   margin: 10px 0 0;
   padding: 0;
@@ -600,7 +532,6 @@ body {
 .iaActionList.compact {
   gap: 8px;
 }
-
 .iaActionList li {
   display: flex;
   gap: 10px;
@@ -609,7 +540,6 @@ body {
   color: #27304a;
   line-height: 1.45;
 }
-
 .iaActionNo {
   flex: 0 0 auto;
   width: 22px;
@@ -625,7 +555,7 @@ body {
   font-size: 12px;
 }
 
-/* ---------------- Docs ---------------- */
+/* Docs */
 .iaDocGrid {
   margin-top: 12px;
   display: grid;
@@ -637,7 +567,6 @@ body {
     grid-template-columns: 1fr;
   }
 }
-
 .iaDocTop {
   display: flex;
   justify-content: space-between;
@@ -649,16 +578,6 @@ body {
   font-size: 14px;
   color: #27304a;
 }
-.iaDocScore {
-  font-weight: 700;
-  font-size: 32px;
-  letter-spacing: -0.03em;
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
 .iaDocCols {
   margin-top: 10px;
   display: grid;
@@ -671,7 +590,7 @@ body {
   }
 }
 
-/* ---------------- Bullets / Text ---------------- */
+/* Text */
 .iaBullet {
   margin: 8px 0 0;
   padding-left: 18px;
@@ -686,30 +605,18 @@ body {
   line-height: 1.6;
 }
 
-/* ---------------- QnA ---------------- */
-.iaQList {
-  width: 100%;
-}
-
+/* QnA */
 .iaQItem {
   border: 1px solid var(--line);
   border-radius: 20px;
   overflow: hidden;
-  background: var(--surface);
+  background: #fff;
   margin-bottom: 12px;
   box-shadow: 0 8px 26px rgba(15, 23, 42, 0.06);
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
 }
-.iaQItem:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 34px rgba(15, 23, 42, 0.1);
-}
-
 .iaQHead {
   width: 100%;
-  background: var(--surface);
+  background: #fff;
   border: 0;
   cursor: pointer;
   padding: 12px;
@@ -718,13 +625,11 @@ body {
   justify-content: space-between;
   gap: 12px;
 }
-
 .iaQHeadLeft {
   display: flex;
   gap: 12px;
   align-items: flex-start;
 }
-
 .iaQNo {
   width: 34px;
   height: 34px;
@@ -737,19 +642,16 @@ body {
   font-weight: 950;
   color: var(--brand-ink);
 }
-
 .iaQTitle {
   font-weight: 950;
   color: #0f172a;
 }
-
 .iaQMeta {
   margin-top: 2px;
   color: var(--muted);
   font-size: 12px;
   font-weight: 850;
 }
-
 .iaQToggle {
   width: 34px;
   height: 34px;
@@ -762,13 +664,11 @@ body {
   font-weight: 950;
   color: #27304a;
 }
-
 .iaQBody {
   padding: 12px;
   border-top: 1px solid var(--line);
   background: #fbfdff;
 }
-
 .iaQBGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -779,14 +679,12 @@ body {
     grid-template-columns: 1fr;
   }
 }
-
 .iaQBCard {
   border: 1px solid var(--line);
-  background: var(--surface);
+  background: #fff;
   border-radius: 14px;
   padding: 12px;
 }
-
 .iaTemplate {
   margin-top: 8px;
   border: 1px solid rgba(37, 99, 235, 0.2);
@@ -798,20 +696,8 @@ body {
   line-height: 1.6;
 }
 
-/* ---------------- Compare layout ---------------- */
-.iaOverallGrid {
-  margin-top: 12px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-@media (max-width: 980px) {
-  .iaOverallGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ---------------- Twin Grid ---------------- */
+/* Grids */
+.iaOverallGrid,
 .iaTwinGrid {
   margin-top: 12px;
   display: grid;
@@ -819,21 +705,23 @@ body {
   gap: 12px;
 }
 @media (max-width: 980px) {
+  .iaOverallGrid,
   .iaTwinGrid {
     grid-template-columns: 1fr;
   }
 }
 
-/* ---------------- Charts ---------------- */
-.iaChart {
+/* Charts (prevent overlay) */
+.iaChart,
+.iaChartMini {
   margin-top: 10px;
+  position: relative;
+  isolation: isolate;
 }
-
 .iaGrid line {
   stroke: #e8eef8;
   stroke-width: 1;
 }
-
 .iaLine.main {
   fill: none;
   stroke: var(--brand);
@@ -845,7 +733,6 @@ body {
   stroke-width: 2;
   stroke-dasharray: 6 6;
 }
-
 .iaMyLine {
   stroke: #ef4444;
   stroke-width: 2;
@@ -854,7 +741,6 @@ body {
 .iaMyDot {
   fill: #ef4444;
 }
-
 .iaTag {
   fill: rgba(15, 23, 42, 0.86);
 }
@@ -863,7 +749,6 @@ body {
   font-size: 12px;
   font-weight: 900;
 }
-
 .iaLegend {
   margin-top: 10px;
   display: flex;
@@ -873,7 +758,6 @@ body {
   font-size: 12px;
   font-weight: 900;
 }
-
 .iaDot {
   width: 10px;
   height: 10px;
@@ -891,17 +775,15 @@ body {
   background: #94a3b8;
 }
 
-/* ---------------- Radar ---------------- */
+/* Radar */
 .iaRadar {
   margin-top: 10px;
+  position: relative;
+  isolation: isolate;
 }
-
-.iaRadarRing {
-  fill: none;
-  stroke: #e6ecf5;
-  stroke-width: 1.5;
-}
+.iaRadarRing,
 .iaRadarAxis {
+  fill: none;
   stroke: #e6ecf5;
   stroke-width: 1.5;
 }
@@ -910,7 +792,6 @@ body {
   font-size: 11px;
   font-weight: 900;
 }
-
 .iaRadarPoly {
   fill: none;
   stroke: var(--brand);
@@ -920,7 +801,6 @@ body {
   fill: rgba(37, 99, 235, 0.2);
   stroke: none;
 }
-
 .iaRadarPeerPoly {
   fill: none;
   stroke: #94a3b8;
@@ -932,72 +812,43 @@ body {
   stroke: none;
 }
 
-/* ---------------- Capability action groups ---------------- */
+/* Capability groups */
 .iaActionByComp {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
-
-/* 가로로 긴 직사각형 카드 */
 .iaActionGroup {
   border: 1px solid var(--line);
   background: var(--surface2);
   border-radius: 14px;
   padding: 12px;
-
   display: grid;
-  grid-template-columns: 160px 1fr; /* 좌: 타이틀/점수, 우: 코멘트/액션 */
+  grid-template-columns: 160px 1fr;
   gap: 12px;
   align-items: start;
 }
-
 @media (max-width: 980px) {
   .iaActionGroup {
     grid-template-columns: 1fr;
   }
 }
-
-.iaActionLeft {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+.iaActionLeft,
 .iaActionRight {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
-
 .iaActionGroupTitle {
   font-weight: 950;
   color: #27304a;
-  margin: 0;
+  margin: 0 0 8px 0;
 }
-
-/* 점수 pill */
 .iaActionScoreRow {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
 }
-.iaPill {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 900;
-  border: 1px solid var(--line);
-  background: #fff;
-}
-.iaPill.me {
-}
-.iaPill.peer {
-  color: #64748b;
-}
-
-/* 미니 비교 바 */
 .iaMiniBar {
   position: relative;
   height: 10px;
@@ -1025,26 +876,8 @@ body {
   bottom: 0;
   background: rgba(37, 99, 235, 0.75);
 }
-
-/* 코멘트 박스: 더 얇고 compact */
-.iaCompComment.iaCompCommentCompact {
-  margin: 0;
-  padding: 10px;
-}
-
-/* 액션 리스트: 가로 공간 활용 */
-.iaActionListWide li {
-  align-items: flex-start;
-}
-
-.iaActionGroupTitle {
-  font-weight: 950;
-  color: #27304a;
-  margin-bottom: 8px;
-}
-
 .iaCompComment {
-  margin: 8px 0 10px;
+  margin: 0;
   padding: 10px;
   border-radius: 12px;
   border: 1px solid var(--line);
@@ -1060,41 +893,14 @@ body {
   font-weight: 900;
   color: #7f1d1d;
 }
-.iaLine.history {
-  fill: none;
-  stroke: var(--brand);
-  stroke-width: 3;
-}
 
-.iaTrendMeta {
-  margin-top: 6px;
-}
-
-.iaHistoryDot {
-  fill: var(--brand);
-}
-.iaHistoryDot.last {
-  fill: #ef4444;
-}
-
-.iaHistoryTick {
-  fill: var(--muted);
-  font-size: 11px;
-  font-weight: 900;
-}
-.iaChartMini {
-  margin-top: 6px;
-}
-
-/* ---------------- Compare Summary (replace radar) ---------------- */
-
+/* Compare summary */
 .iaCompareSummary {
   margin-top: 10px;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
-
 .iaCompareKpis {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -1105,7 +911,6 @@ body {
     grid-template-columns: 1fr;
   }
 }
-
 .iaCompareKpi {
   border: 1px solid var(--line);
   background: #fff;
@@ -1123,24 +928,11 @@ body {
   font-weight: 950;
   color: #0f172a;
 }
-
 .iaCompareDelta {
   border: 1px solid var(--line);
   background: var(--surface2);
   border-radius: 14px;
   padding: 12px;
-}
-
-.iaDeltaPill {
-  margin-top: 8px;
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 950;
-  border: 1px solid var(--line);
-  background: #fff;
 }
 .iaDeltaPill.up {
   border-color: rgba(34, 197, 94, 0.35);
@@ -1152,45 +944,67 @@ body {
   background: rgba(239, 68, 68, 0.1);
   color: #7f1d1d;
 }
-
-.iaCompareLists {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 10px;
-}
-
 .iaPillsRow {
   margin-top: 8px;
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
-
-.iaMiniPill {
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 950;
-  border: 1px solid var(--line);
-  background: #fff;
-}
-.iaMiniPill.good {
-  border-color: rgba(34, 197, 94, 0.35);
-  background: rgba(34, 197, 94, 0.1);
-  color: #14532d;
-}
-.iaMiniPill.bad {
-  border-color: rgba(239, 68, 68, 0.35);
-  background: rgba(239, 68, 68, 0.1);
-  color: #7f1d1d;
-}
-
-/* divider가 없으면 추가(이미 있으면 무시됨) */
 .iaDivider {
   height: 1px;
   width: 100%;
   background: var(--line);
   margin: 12px 0;
+}
+
+/* PDF render root */
+.iaPdfOffscreen {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 1200px;
+  background: #fff;
+  z-index: -1;
+}
+.iaPdfRoot {
+  width: 1200px;
+  background: #fff;
+}
+.iaPdfSection {
+  padding: 14px 16px 16px;
+  background: #fff;
+}
+
+/* PDF mode */
+.iaPage.pdf-mode {
+  background: #fff !important;
+}
+.iaPage.pdf-mode::before,
+.iaPage.pdf-mode::after {
+  content: none !important;
+}
+.iaPage.pdf-mode .iaTabs,
+.iaPage.pdf-mode .iaTopActions {
+  display: none !important;
+}
+.iaPage.pdf-mode .iaPanelBody {
+  overflow: visible !important;
+  height: auto !important;
+  max-height: none !important;
+}
+.iaPage.pdf-mode * {
+  animation: none !important;
+  transition: none !important;
+}
+.iaPage.pdf-mode .iaKpiScore,
+.iaPage.pdf-mode .iaDocScore,
+.iaPage.pdf-mode .iaCompareKpi .v {
+  background: none !important;
+  -webkit-text-fill-color: currentColor !important;
+  color: var(--brand-700) !important;
+}
+.iaPage.pdf-mode {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial !important;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
 }
