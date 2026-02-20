@@ -991,8 +991,6 @@ body {
   border: 1px solid var(--line);
   background: #fff;
 }
-.iaPill.me {
-}
 .iaPill.peer {
   color: #64748b;
 }
