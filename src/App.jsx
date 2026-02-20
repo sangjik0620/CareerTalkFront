@@ -7,6 +7,8 @@ import Home from "./pages/Home";
 import InterviewDocSelect from "./pages/interview/InterviewDocSelect";
 import InterviewScreen from "./pages/interview/InterviewScreen";
 import InAnalysis from "./pages/InAnalysis";
+import PfAnalysis from "./pages/PfAnalysis";
+import PortfolioResultPage from "./components/portfolio/PortfolioResultPage";
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
         <Route path="/interview/select" element={<InterviewDocSelect />} />
         <Route path="/interview" element={<InterviewScreen />} />
         <Route path="/interview/result" element={<InAnalysis />} />
+        <Route path="/portfolio" element={<PfAnalysis />} />
+        <Route path="/portfolio/result" element={<PortfolioResultPage />} />
       </Routes>
     </BrowserRouter>
   );

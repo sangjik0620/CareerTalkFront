@@ -3,12 +3,54 @@ import React, { useState } from "react";
 const PortfolioUploadModal = ({ isOpen, onClose, onAnalyzeSuccess }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isDragging, setIsDragging] = useState(false); // 드래그 중인지 시각적 효과를 주기 위한 상태
 
   if (!isOpen) return null;
 
+  // ⭐ 핵심 로직: 파일 용량 검사 및 세팅을 하나의 함수로 분리
+  const validateAndSetFile = (file) => {
+    // F12(개발자 도구)를 누르면 실제 바이트 크기를 볼 수 있습니다!
+    console.log("선택된 파일 크기(Byte):", file.size);
+
+    const maxSize = 50 * 1024 * 1024; // 50MB (52,428,800 Bytes)
+
+    if (file.size > maxSize) {
+      alert(
+        `파일 용량 제한(50MB)을 초과했습니다!\n현재 크기: ${(file.size / 1024 / 1024).toFixed(2)}MB\n\n소스코드 원본 대신 요약된 문서를 올려주세요.`,
+      );
+      return false; // 실패
+    }
+
+    setSelectedFile(file);
+    return true; // 성공
+  };
+
+  // 1. 클릭해서 파일을 선택했을 때
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
+      const isValid = validateAndSetFile(e.target.files[0]);
+      if (!isValid) e.target.value = ""; // 용량 초과 시 input 초기화
+    }
+  };
+
+  // 2. 마우스로 드래그해서 올려놨을 때 (Drag Over)
+  const handleDragOver = (e) => {
+    e.preventDefault(); // 브라우저가 파일을 열어버리는 기본 동작 방지
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  // 3. 마우스 버튼을 놓았을 때 (Drop)
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      validateAndSetFile(e.dataTransfer.files[0]);
     }
   };
 
@@ -17,13 +59,12 @@ const PortfolioUploadModal = ({ isOpen, onClose, onAnalyzeSuccess }) => {
 
     setIsAnalyzing(true);
 
-    // 🚀 나중에 백엔드 API 연동할 부분
     setTimeout(() => {
       setIsAnalyzing(false);
       setSelectedFile(null);
       onClose();
       onAnalyzeSuccess();
-    }, 4000); // 텍스트+이미지 분석이니까 시간(4초)을 살짝 더 줘서 묵직한 느낌을 줍니다.
+    }, 4000);
   };
 
   return (
@@ -42,38 +83,44 @@ const PortfolioUploadModal = ({ isOpen, onClose, onAnalyzeSuccess }) => {
           </button>
         </div>
 
-        {/* ⭐ 기능 강조 배지 추가! */}
         <div className="mb-5">
           <span className="inline-block bg-gradient-to-r from-purple-100 to-indigo-100 text-indigo-800 text-xs font-bold px-2 py-1 rounded">
             ✨ 텍스트 + 이미지(구조도/UI) 통합 분석 지원
           </span>
         </div>
 
-        {/* 파일 업로드 영역 */}
-        <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:bg-indigo-50 transition-colors">
+        {/* ⭐ 파일 업로드 영역 (드래그 앤 드롭 이벤트 추가) */}
+        <div
+          className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors 
+            ${isDragging ? "border-indigo-500 bg-indigo-50" : "border-gray-300 hover:bg-gray-50"}`}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
           <input
             type="file"
             id="fileInput"
             className="hidden"
             onChange={handleFileChange}
-            accept=".pdf,.zip,.hwp,.docx"
+            accept=".pdf,.hwp,.docx,.pptx"
             disabled={isAnalyzing}
           />
           <label
             htmlFor="fileInput"
-            className="cursor-pointer flex flex-col items-center justify-center"
+            className="cursor-pointer flex flex-col items-center justify-center w-full h-full"
           >
             <span className="text-4xl mb-3">📄</span>
             {selectedFile ? (
               <span className="text-sm font-semibold text-indigo-600 break-all">
-                {selectedFile.name}
+                {selectedFile.name} (
+                {(selectedFile.size / 1024 / 1024).toFixed(1)}MB)
               </span>
             ) : (
               <span className="text-sm text-gray-500">
-                여기를 클릭하여 파일을 선택하세요
+                여기를 클릭하거나 파일을 끌어다 놓으세요
                 <br />
                 <span className="text-xs text-gray-400 mt-1 block">
-                  아키텍처 다이어그램, 캡처 화면도 분석 가능합니다.
+                  아키텍처, 캡처 화면 포함 가능 (최대 50MB)
                 </span>
               </span>
             )}
@@ -116,7 +163,6 @@ const PortfolioUploadModal = ({ isOpen, onClose, onAnalyzeSuccess }) => {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                {/* 텍스트 변경: 좀 더 꼼꼼히 분석하는 느낌 */}
                 이미지 문맥 파악 중...
               </>
             ) : (
