@@ -103,7 +103,7 @@ const Icons = {
 };
 
 // ===== Components =====
-const Navigation = () => {
+const Navigation = ({ onStart }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -112,6 +112,11 @@ const Navigation = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleStart = () => {
+    onStart?.();
+    setIsOpen(false); // ✅ 모바일 메뉴 열려있으면 닫기
+  };
 
   return (
     <nav className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? "bg-white shadow-lg" : "bg-transparent"}`}>
@@ -127,7 +132,12 @@ const Navigation = () => {
             <a href="#how-it-works" className={`hover:text-primary-600 transition ${scrolled ? "text-gray-700" : "text-white"}`}>사용 방법</a>
             <a href="#testimonials" className={`hover:text-primary-600 transition ${scrolled ? "text-gray-700" : "text-white"}`}>후기</a>
             <a href="#faq" className={`hover:text-primary-600 transition ${scrolled ? "text-gray-700" : "text-white"}`}>FAQ</a>
-            <button className="bg-primary-600 text-white px-6 py-2 rounded-full hover:bg-primary-700 transition">
+
+            {/* ✅ 여기 연결 */}
+            <button
+              onClick={handleStart}
+              className="bg-primary-600 text-white px-6 py-2 rounded-full hover:bg-primary-700 transition"
+            >
               시작하기
             </button>
           </div>
@@ -149,7 +159,12 @@ const Navigation = () => {
             <a href="#how-it-works" className="block px-3 py-2 text-gray-700 hover:bg-primary-50 rounded-md">사용 방법</a>
             <a href="#testimonials" className="block px-3 py-2 text-gray-700 hover:bg-primary-50 rounded-md">후기</a>
             <a href="#faq" className="block px-3 py-2 text-gray-700 hover:bg-primary-50 rounded-md">FAQ</a>
-            <button className="w-full bg-primary-600 text-white px-6 py-2 rounded-full hover:bg-primary-700 transition">
+
+            {/* ✅ 모바일도 연결 */}
+            <button
+              onClick={handleStart}
+              className="w-full bg-primary-600 text-white px-6 py-2 rounded-full hover:bg-primary-700 transition"
+            >
               시작하기
             </button>
           </div>
@@ -159,7 +174,7 @@ const Navigation = () => {
   );
 };
 
-const Hero = () => (
+const Hero = ({onStart}) => (
   <section className="relative bg-gradient-to-br from-blue-800 to-blue-500 min-h-screen flex items-center pt-20">
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-white opacity-10 rounded-full blur-3xl"></div>
@@ -442,7 +457,7 @@ const FAQ = () => {
   );
 };
 
-const CTA = () => (
+const CTA = ({onStart}) => (
   <section className="py-20 blue-gradient">
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center" data-aos="zoom-in">
       <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">지금 바로 면접 준비를 시작하세요</h2>
@@ -514,16 +529,18 @@ export default function Home() {
     AOS.init({ duration: 1000, once: true, offset: 100 });
   }, []);
 
+  const goInterview = () => navigate("/interview/select");
+
   return (
     <>
-      <Navigation />
-      <Hero />
-      <Features onGoInterview={() => navigate("/interview/select")} />
+      <Navigation onStart={goInterview} />
+      <Hero onStart={goInterview} />
+      <Features onGoInterview={goInterview} />
       <HowItWorks />
       <Statistics />
       <Testimonials />
       <FAQ />
-      <CTA />
+      <CTA onStart={goInterview} />
       <Footer />
 
       <style>{`

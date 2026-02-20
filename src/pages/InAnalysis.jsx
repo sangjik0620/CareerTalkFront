@@ -9,21 +9,48 @@ export default function InAnalysis() {
   return (
     <div className="iaPage iaNoScroll">
       <main className="iaMain iaMainFixed">
-        <header className="iaTop">
-          <h1 className="iaTopTitle">면접 결과</h1>
+        <header className="iaTop iaTopGradient">
+          <div className="iaTopContent">
+            <h1 className="iaTopTitle">면접 결과 분석</h1>
+            <p className="iaTopSubtitle">AI 기반 면접 성과 분석 리포트</p>
+          </div>
           <div className="iaTopActions">
-            <button className="iaBtn" type="button" onClick={() => alert("PDF(더미)")}>
+            <button
+              className="iaBtn"
+              type="button"
+              onClick={() => alert("PDF(더미)")}
+            >
               PDF로 결과 확인하기
             </button>
           </div>
         </header>
 
         <nav className="iaTabs" aria-label="결과 탭">
-          <TabBtn label="요약" active={activeTab === "summary"} onClick={() => setActiveTab("summary")} />
-          <TabBtn label="문서 분석" active={activeTab === "docs"} onClick={() => setActiveTab("docs")} />
-          <TabBtn label="면접 분석" active={activeTab === "interview"} onClick={() => setActiveTab("interview")} />
-          <TabBtn label="분포/비교" active={activeTab === "compare"} onClick={() => setActiveTab("compare")} />
-          <TabBtn label="역량/액션" active={activeTab === "capability"} onClick={() => setActiveTab("capability")} />
+          <TabBtn
+            label="요약"
+            active={activeTab === "summary"}
+            onClick={() => setActiveTab("summary")}
+          />
+          <TabBtn
+            label="문서 분석"
+            active={activeTab === "docs"}
+            onClick={() => setActiveTab("docs")}
+          />
+          <TabBtn
+            label="면접 분석"
+            active={activeTab === "interview"}
+            onClick={() => setActiveTab("interview")}
+          />
+          <TabBtn
+            label="분포/비교"
+            active={activeTab === "compare"}
+            onClick={() => setActiveTab("compare")}
+          />
+          <TabBtn
+            label="역량/액션"
+            active={activeTab === "capability"}
+            onClick={() => setActiveTab("capability")}
+          />
         </nav>
 
         <section className="iaCard iaPanel">
@@ -48,7 +75,11 @@ export default function InAnalysis() {
 
 function TabBtn({ label, active, onClick }) {
   return (
-    <button type="button" className={`iaTab ${active ? "on" : ""}`} onClick={onClick}>
+    <button
+      type="button"
+      className={`iaTab ${active ? "on" : ""}`}
+      onClick={onClick}
+    >
       {label}
     </button>
   );
@@ -79,9 +110,13 @@ function HeaderMeta({ data }) {
 
       <div className="iaHeaderRight compact">
         <MiniInfo icon="🧩" label="직무군" value={data.user.jobGroup} />
-        <MiniInfo icon="📄" label="자소서" value={data.user.docsCoverLetter} />
-        <MiniInfo icon="📄" label="이력서" value={data.user.docsResume} />
-        <MiniInfo icon="🗂️" label="포트폴리오" value={data.user.docsPortfolio} />
+        <MiniInfo icon="📒" label="자소서" value={data.user.docsCoverLetter} />
+        <MiniInfo icon="🧾" label="이력서" value={data.user.docsResume} />
+        <MiniInfo
+          icon="🗂️"
+          label="포트폴리오"
+          value={data.user.docsPortfolio}
+        />
         <MiniInfo icon="✅" label="상태" value={data.user.status} />
       </div>
     </div>
@@ -139,10 +174,15 @@ function SummaryPanel({ data }) {
         <div className="iaBox iaBoxTight">
           <div className="iaBoxTitle">문항/속도</div>
           <BarMeter value={data.summary.questionCount} max={12} suffix="개" />
-          <div className="iaHint">문항별 평균 답변시간 {data.summary.avgAnswerSec}초</div>
+          <div className="iaHint">
+            문항별 평균 답변시간 {data.summary.avgAnswerSec}초
+          </div>
           <div className="iaKpis">
             <Kpi label="평균 발화 속도" value={`${data.summary.wpm} wpm`} />
-            <Kpi label="문항별 평균 어절" value={`${data.summary.avgTokens}개`} />
+            <Kpi
+              label="문항별 평균 어절"
+              value={`${data.summary.avgTokens}개`}
+            />
           </div>
         </div>
 
@@ -155,7 +195,10 @@ function SummaryPanel({ data }) {
               </span>
             ))}
           </div>
-          <div className="iaHint">면접 답변에는 직무 키워드(React/상태관리/성능)를 더 명시해도 좋습니다.</div>
+          <div className="iaHint">
+            면접 답변에는 직무 키워드(React/상태관리/성능)를 더 명시해도
+            좋습니다.
+          </div>
         </div>
       </div>
 
@@ -165,7 +208,9 @@ function SummaryPanel({ data }) {
           {data.summaryConclusion}
         </div>
 
-        <div className="iaBoxTitle" style={{ marginTop: 12 }}>가장 우선 개선 3가지</div>
+        <div className="iaBoxTitle" style={{ marginTop: 12 }}>
+          가장 우선 개선 3가지
+        </div>
         <ul className="iaActionList compact">
           {data.priorityActions.map((t, i) => (
             <li key={i}>
@@ -207,7 +252,10 @@ function Kpi({ label, value }) {
 function DocsPanel({ data }) {
   return (
     <>
-      <SectionTitle title="문서 분석" sub="자소서 · 이력서 · 포트폴리오 점수 및 피드백" />
+      <SectionTitle
+        title="문서 분석"
+        sub="자소서 · 이력서 · 포트폴리오 점수 및 피드백"
+      />
 
       <div className="iaDocGrid">
         {(data.docs?.items ?? []).map((d) => (
@@ -217,26 +265,38 @@ function DocsPanel({ data }) {
               <div className="iaDocScore">{d.score}</div>
             </div>
 
-            <div className="iaHint" style={{ marginTop: 6 }}>{d.summary}</div>
+            <div className="iaHint" style={{ marginTop: 6 }}>
+              {d.summary}
+            </div>
 
             <div className="iaDocCols">
               <div>
                 <div className="iaBoxTitle">강점</div>
                 <ul className="iaBullet">
-                  {(d.strengths ?? []).map((t, i) => <li key={i}>{t}</li>)}
+                  {(d.strengths ?? []).map((t, i) => (
+                    <li key={i}>{t}</li>
+                  ))}
                 </ul>
               </div>
               <div>
                 <div className="iaBoxTitle">보완</div>
                 <ul className="iaBullet">
-                  {(d.improvements ?? []).map((t, i) => <li key={i}>{t}</li>)}
+                  {(d.improvements ?? []).map((t, i) => (
+                    <li key={i}>{t}</li>
+                  ))}
                 </ul>
               </div>
             </div>
 
-            <div className="iaBoxTitle" style={{ marginTop: 10 }}>키워드</div>
+            <div className="iaBoxTitle" style={{ marginTop: 10 }}>
+              키워드
+            </div>
             <div className="iaChips">
-              {(d.keywords ?? []).map((k) => <span className="iaChip" key={k}>{k}</span>)}
+              {(d.keywords ?? []).map((k) => (
+                <span className="iaChip" key={k}>
+                  {k}
+                </span>
+              ))}
             </div>
           </div>
         ))}
@@ -257,10 +317,14 @@ function InterviewPanel({ data, openQ, setOpenQ }) {
         <div className="iaKpis" style={{ marginTop: 8 }}>
           <Kpi label="총 답변 어절" value={`${data.summary.totalTokens}개`} />
           <Kpi label="문항 수" value={`${data.summary.questionCount}개`} />
-          <Kpi label="평균 답변 시간" value={`${data.summary.avgAnswerSec}초`} />
+          <Kpi
+            label="평균 답변 시간"
+            value={`${data.summary.avgAnswerSec}초`}
+          />
         </div>
         <div className="iaHint" style={{ marginTop: 8 }}>
-          단순 길이보다 “결론→근거→성과(수치)” 형태로 구조를 고정하는 게 점수 상승에 유리합니다.
+          단순 길이보다 “결론→근거→성과(수치)” 형태로 구조를 고정하는 게 점수
+          상승에 유리합니다.
         </div>
       </div>
 
@@ -269,9 +333,15 @@ function InterviewPanel({ data, openQ, setOpenQ }) {
           const open = openQ === idx;
           return (
             <div className={`iaQItem ${open ? "open" : ""}`} key={q.id}>
-              <button className="iaQHead" type="button" onClick={() => setOpenQ(open ? -1 : idx)}>
+              <button
+                className="iaQHead"
+                type="button"
+                onClick={() => setOpenQ(open ? -1 : idx)}
+              >
                 <div className="iaQHeadLeft">
-                  <div className="iaQNo">{String(idx + 1).padStart(2, "0")}</div>
+                  <div className="iaQNo">
+                    {String(idx + 1).padStart(2, "0")}
+                  </div>
                   <div>
                     <div className="iaQTitle">{q.question}</div>
                     <div className="iaQMeta">
@@ -292,7 +362,9 @@ function InterviewPanel({ data, openQ, setOpenQ }) {
                     <div className="iaQBCard">
                       <div className="iaBoxTitle">피드백</div>
                       <ul className="iaBullet">
-                        {q.feedback.map((t, i) => <li key={i}>{t}</li>)}
+                        {q.feedback.map((t, i) => (
+                          <li key={i}>{t}</li>
+                        ))}
                       </ul>
                     </div>
                   </div>
@@ -301,9 +373,15 @@ function InterviewPanel({ data, openQ, setOpenQ }) {
                     개선된 답변 구조 예시
                   </div>
                   <div className="iaTemplate">
-                    <div><b>결론</b> — {q.template.conclusion}</div>
-                    <div><b>근거</b> — {q.template.evidence}</div>
-                    <div><b>마무리</b> — {q.template.close}</div>
+                    <div>
+                      <b>결론</b> — {q.template.conclusion}
+                    </div>
+                    <div>
+                      <b>근거</b> — {q.template.evidence}
+                    </div>
+                    <div>
+                      <b>마무리</b> — {q.template.close}
+                    </div>
                   </div>
                 </div>
               )}
@@ -318,43 +396,141 @@ function InterviewPanel({ data, openQ, setOpenQ }) {
 /* ---------------- Compare ---------------- */
 
 function ComparePanel({ data }) {
+  const history = data?.overall?.scoreHistory ?? data?.scoreHistory ?? [];
+
+  // 점수 관련(현재 구조 호환)
+  const myScore = data?.overall?.score ?? data?.scores?.overall ?? 0;
+  const percentile = data?.overall?.percentile ?? data?.scores?.percentile ?? null;
+  const topRate = data?.overall?.topRate ?? data?.scores?.topRate ?? null;
+
+  // 레이더 데이터(요약 추출용으로만 사용)
+  const labels = data?.radar?.labels ?? [];
+  const myVals = data?.radar?.values ?? [];
+  const peerVals = data?.radar?.peerValues ?? [];
+
+  // 평균 점수: peerDistribution이 "평균선"을 나타내는 라인이라면 단순 평균으로 근사
+  const peerDist = data?.overall?.peerDistribution ?? null;
+  const peerAvg = peerDist ? average(peerDist) : null;
+  const deltaVsPeer = peerAvg != null ? Math.round(myScore - peerAvg) : null;
+
+  const { topStrengths, topGaps } = pickTopStrengthsAndGaps(labels, myVals, peerVals, 2);
+
   return (
     <>
-      <SectionTitle title="분포/비교" sub="점수 분포(비교군 포함) + 역량 레이더 비교" />
+      <SectionTitle
+        title="분포/비교"
+        sub="점수 분포 + 내 위치 + 평균 대비 + 강점/보완 요약"
+      />
 
       <div className="iaOverallGrid">
+        {/* 좌측: 분포 + 추이 */}
         <div className="iaBox iaBoxTight">
           <div className="iaBoxTitle">응시자 점수 분포 및 내 위치</div>
+
           <LineDistribution
             values={data.overall.distribution}
             peerValues={data.overall.peerDistribution}
-            myScore={data.overall.score}
+            myScore={myScore}
           />
+
           <div className="iaLegend">
             <span className="iaDot me" /> 내 점수
             <span className="iaDot line" /> 전체 분포
             <span className="iaDot peer" /> 비교군 평균
           </div>
+
+          <div className="iaDivider" />
+
+          <div className="iaBoxTitle">내 이전 면접 점수 추이</div>
+          <ScoreHistoryChart history={history} currentScore={myScore} />
         </div>
 
+        {/* 우측: 요약 카드(대체 콘텐츠) */}
         <div className="iaBox iaBoxTight">
-          <div className="iaBoxTitle">역량 레이더(비교군)</div>
-          <Radar
-            labels={data.radar.labels}
-            values={data.radar.values}
-            peerValues={data.radar.peerValues}
-            max={100}
+          <div className="iaBoxTitle">내 위치 요약</div>
+
+          <CompareSummary
+            myScore={myScore}
+            percentile={percentile}
+            topRate={topRate}
+            deltaVsPeer={deltaVsPeer}
+            topStrengths={topStrengths}
+            topGaps={topGaps}
           />
-          <div className="iaLegend" style={{ marginTop: 10 }}>
-            <span className="iaDot line" /> 내 역량
-            <span className="iaDot peer" /> 비교군 평균
-          </div>
         </div>
       </div>
     </>
   );
 }
 
+function CompareSummary({
+  myScore,
+  percentile,
+  topRate,
+  deltaVsPeer,
+  topStrengths,
+  topGaps,
+}) {
+  return (
+    <div className="iaCompareSummary">
+      {/* KPI 3개 */}
+      <div className="iaCompareKpis">
+        <div className="iaCompareKpi">
+          <div className="t">내 점수</div>
+          <div className="v">{myScore}</div>
+        </div>
+
+        <div className="iaCompareKpi">
+          <div className="t">백분위</div>
+          <div className="v">{percentile != null ? `${percentile}%` : "—"}</div>
+        </div>
+
+        <div className="iaCompareKpi">
+          <div className="t">상위</div>
+          <div className="v">{topRate != null ? `${topRate}%` : "—"}</div>
+        </div>
+      </div>
+
+      {/* 평균 대비 */}
+      <div className="iaCompareDelta">
+        <div className="iaBoxTitle">비교군 평균 대비</div>
+        <div className={`iaDeltaPill ${deltaVsPeer == null ? "" : deltaVsPeer >= 0 ? "up" : "down"}`}>
+          {deltaVsPeer == null ? "비교군 데이터 없음" : `${deltaVsPeer >= 0 ? "+" : ""}${deltaVsPeer}점`}
+        </div>
+        <div className="iaHint" style={{ marginTop: 6 }}>
+          비교군 평균(라인)과 내 점수 차이를 기준으로 계산합니다.
+        </div>
+      </div>
+
+      <div className="iaDivider" />
+
+      {/* 강점/보완 Top2 */}
+      <div className="iaCompareLists">
+        <div className="iaCompareList">
+          <div className="iaBoxTitle">강점 TOP2</div>
+          <div className="iaPillsRow">
+            {(topStrengths.length ? topStrengths : ["—"]).map((t) => (
+              <span className="iaMiniPill good" key={t}>{t}</span>
+            ))}
+          </div>
+        </div>
+
+        <div className="iaCompareList">
+          <div className="iaBoxTitle">보완 필요 TOP2</div>
+          <div className="iaPillsRow">
+            {(topGaps.length ? topGaps : ["—"]).map((t) => (
+              <span className="iaMiniPill bad" key={t}>{t}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="iaHint" style={{ marginTop: 8 }}>
+        * 강점은 “내 점수” 상위 기준, 보완은 “내 점수 - 비교군 평균” 격차 기준입니다.
+      </div>
+    </div>
+  );
+}
 /* ---------------- Capability ---------------- */
 
 function CapabilityPanel({ data }) {
@@ -369,7 +545,12 @@ function CapabilityPanel({ data }) {
       <div className="iaTwinGrid">
         <div className="iaBox iaBoxTight">
           <div className="iaBoxTitle">역량 레이더</div>
-          <Radar labels={labels} values={values} peerValues={peerValues} max={100} />
+          <Radar
+            labels={labels}
+            values={values}
+            peerValues={peerValues}
+            max={100}
+          />
 
           <div className="iaLegend" style={{ marginTop: 10 }}>
             <span className="iaDot line" /> 내 역량
@@ -381,35 +562,72 @@ function CapabilityPanel({ data }) {
           <div className="iaBoxTitle">항목별 개선 액션</div>
 
           <div className="iaActionByComp">
-            {labels.map((label) => (
-              <div className="iaActionGroup" key={label}>
-                <div className="iaActionGroupTitle">{label}</div>
+            {labels.map((label, idx) => {
+              const my = values[idx] ?? 0;
+              const peer = peerValues[idx] ?? 0;
 
-                <div className="iaCompComment">
-                  <div className="good">👍 {data?.commentsByCompetency?.[label]?.good ?? "—"}</div>
-                  <div className="bad">⚠️ {data?.commentsByCompetency?.[label]?.bad ?? "—"}</div>
+              return (
+                <div className="iaActionGroup" key={label}>
+                  {/* 좌측: 항목명 + 점수/미니바 */}
+                  <div className="iaActionLeft">
+                    <div className="iaActionGroupTitle">{label}</div>
+
+                    <div className="iaActionScoreRow">
+                      <span className="iaPill me">내 점수 {my}</span>
+                      <span className="iaPill peer">평균 {peer}</span>
+                    </div>
+
+                    <MiniCompareBar my={my} peer={peer} max={100} />
+                  </div>
+
+                  {/* 우측: 코멘트 + 액션 */}
+                  <div className="iaActionRight">
+                    <div className="iaCompComment iaCompCommentCompact">
+                      <div className="good">
+                        👍 {data?.commentsByCompetency?.[label]?.good ?? "—"}
+                      </div>
+                      <div className="bad">
+                        ⚠️ {data?.commentsByCompetency?.[label]?.bad ?? "—"}
+                      </div>
+                    </div>
+
+                    <ul className="iaActionList compact iaActionListWide">
+                      {(
+                        data?.actionsByCompetency?.[label] ?? ["(액션 없음)"]
+                      ).map((t, i) => (
+                        <li key={i}>
+                          <span className="iaActionNo">{i + 1}</span>
+                          <span>{t}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-
-                <ul className="iaActionList compact">
-                  {(data?.actionsByCompetency?.[label] ?? ["(액션 없음)"]).map((t, i) => (
-                    <li key={i}>
-                      <span className="iaActionNo">{i + 1}</span>
-                      <span>{t}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {labels.length === 0 && (
             <div className="iaHint" style={{ marginTop: 10 }}>
-              radar.labels가 비어있습니다. mockReport()의 radar.labels를 확인하세요.
+              radar.labels가 비어있습니다. mockReport()의 radar.labels를
+              확인하세요.
             </div>
           )}
         </div>
       </div>
     </>
+  );
+}
+function MiniCompareBar({ my, peer, max = 100 }) {
+  const myPct = Math.max(0, Math.min(1, my / max)) * 100;
+  const peerPct = Math.max(0, Math.min(1, peer / max)) * 100;
+
+  return (
+    <div className="iaMiniBar">
+      <div className="iaMiniBarTrack" />
+      <div className="iaMiniBarPeer" style={{ width: `${peerPct}%` }} />
+      <div className="iaMiniBarMe" style={{ width: `${myPct}%` }} />
+    </div>
   );
 }
 
@@ -451,7 +669,11 @@ function BarMeter({ value, max, suffix }) {
       </div>
       <div className="iaBarText">
         <b>{value}</b>
-        {suffix} <span className="iaMuted">/ {max}{suffix}</span>
+        {suffix}{" "}
+        <span className="iaMuted">
+          / {max}
+          {suffix}
+        </span>
       </div>
     </div>
   );
@@ -471,7 +693,9 @@ function LineDistribution({ values, peerValues, myScore }) {
     });
 
   const toPath = (pts) =>
-    pts.map((p, i) => (i === 0 ? `M ${p[0]} ${p[1]}` : `L ${p[0]} ${p[1]}`)).join(" ");
+    pts
+      .map((p, i) => (i === 0 ? `M ${p[0]} ${p[1]}` : `L ${p[0]} ${p[1]}`))
+      .join(" ");
 
   const ptsMain = toPts(values);
   const dMain = toPath(ptsMain);
@@ -484,7 +708,12 @@ function LineDistribution({ values, peerValues, myScore }) {
 
   return (
     <div className="iaChart">
-      <svg width="100%" viewBox={`0 0 ${w} ${h}`} role="img" aria-label="점수 분포 그래프">
+      <svg
+        width="100%"
+        viewBox={`0 0 ${w} ${h}`}
+        role="img"
+        aria-label="점수 분포 그래프"
+      >
         <g className="iaGrid">
           {[0, 25, 50, 75, 100].map((t) => {
             const y = pad + ((maxY - t) * (h - pad * 2)) / 100;
@@ -506,9 +735,68 @@ function LineDistribution({ values, peerValues, myScore }) {
           rx="8"
           className="iaTag"
         />
-        <text x={Math.min(w - 52, Math.max(20, xMy + 4))} y={pad + 22} className="iaTagText">
+        <text
+          x={Math.min(w - 52, Math.max(20, xMy + 4))}
+          y={pad + 22}
+          className="iaTagText"
+        >
           내 점수 {myScore}
         </text>
+      </svg>
+    </div>
+  );
+}
+function ScoreHistoryChart({ history, currentScore }) {
+  const base = Array.isArray(history) ? history : [];
+
+  const withCurrent =
+    base.length === 0 ? [{ date: "이번", score: currentScore }] : base;
+
+  const n = withCurrent.length;
+
+  const w = 420; // 분포 그래프와 동일 폭
+  const h = 120; // 박스 내부용 컴팩트 높이
+  const pad = 16;
+  const maxY = 100;
+
+  const toPt = (i, score) => {
+    const x = n === 1 ? w / 2 : pad + (i * (w - pad * 2)) / (n - 1);
+    const y = pad + ((maxY - score) * (h - pad * 2)) / maxY;
+    return [x, y];
+  };
+
+  const pts = withCurrent.map((d, i) => toPt(i, d.score));
+
+  const dPath = pts
+    .map((p, i) => (i === 0 ? `M ${p[0]} ${p[1]}` : `L ${p[0]} ${p[1]}`))
+    .join(" ");
+
+  return (
+    <div className="iaChartMini">
+      <svg width="100%" viewBox={`0 0 ${w} ${h}`}>
+        {n >= 2 && <path d={dPath} className="iaLine history" />}
+
+        {pts.map(([x, y], i) => {
+          const isLast = i === pts.length - 1;
+          return (
+            <g key={i}>
+              <circle
+                cx={x}
+                cy={y}
+                r={isLast ? 5 : 4}
+                className={isLast ? "iaHistoryDot last" : "iaHistoryDot"}
+              />
+              <text
+                x={x}
+                y={h - 4}
+                className="iaHistoryTick"
+                textAnchor="middle"
+              >
+                {withCurrent[i].date.slice(5)}
+              </text>
+            </g>
+          );
+        })}
       </svg>
     </div>
   );
@@ -529,29 +817,40 @@ function Radar({ labels, values, peerValues, max }) {
     return [cx + rr * Math.cos(ang), cy + rr * Math.sin(ang)];
   };
 
-  const poly = values.map((v, i) => {
-    const [x, y] = toXY(i, v, r);
-    return `${x},${y}`;
-  }).join(" ");
-
-  const peerPoly = peerValues
-    ? peerValues.map((v, i) => {
+  const poly = values
+    .map((v, i) => {
       const [x, y] = toXY(i, v, r);
       return `${x},${y}`;
-    }).join(" ")
+    })
+    .join(" ");
+
+  const peerPoly = peerValues
+    ? peerValues
+        .map((v, i) => {
+          const [x, y] = toXY(i, v, r);
+          return `${x},${y}`;
+        })
+        .join(" ")
     : null;
 
   return (
     <div className="iaRadar">
-      <svg width="100%" viewBox={`0 0 ${size} ${size}`} role="img" aria-label="역량 레이더 차트">
+      <svg
+        width="100%"
+        viewBox={`0 0 ${size} ${size}`}
+        role="img"
+        aria-label="역량 레이더 차트"
+      >
         {[0.25, 0.5, 0.75, 1].map((k) => (
           <polygon
             key={k}
             className="iaRadarRing"
-            points={Array.from({ length: n }).map((_, i) => {
-              const [x, y] = toXY(i, max * k, r);
-              return `${x},${y}`;
-            }).join(" ")}
+            points={Array.from({ length: n })
+              .map((_, i) => {
+                const [x, y] = toXY(i, max * k, r);
+                return `${x},${y}`;
+              })
+              .join(" ")}
           />
         ))}
 
@@ -586,7 +885,36 @@ function Radar({ labels, values, peerValues, max }) {
     </div>
   );
 }
+function average(arr) {
+  if (!Array.isArray(arr) || arr.length === 0) return null;
+  const s = arr.reduce((acc, v) => acc + Number(v || 0), 0);
+  return s / arr.length;
+}
 
+function pickTopStrengthsAndGaps(labels, myVals, peerVals, k = 2) {
+  const n = Math.min(labels.length, myVals.length, peerVals.length);
+  if (n === 0) return { topStrengths: [], topGaps: [] };
+
+  const items = Array.from({ length: n }).map((_, i) => {
+    const my = Number(myVals[i] ?? 0);
+    const peer = Number(peerVals[i] ?? 0);
+    return { label: labels[i], my, peer, gap: my - peer };
+  });
+
+  // 강점: 내 점수 상위 k개
+  const topStrengths = [...items]
+    .sort((a, b) => b.my - a.my)
+    .slice(0, k)
+    .map((x) => x.label);
+
+  // 보완: 격차(gap)가 가장 작은(또는 음수 큰) k개
+  const topGaps = [...items]
+    .sort((a, b) => a.gap - b.gap)
+    .slice(0, k)
+    .map((x) => x.label);
+
+  return { topStrengths, topGaps };
+}
 /* ---------------- Mock ---------------- */
 
 function mockReport() {
@@ -645,7 +973,10 @@ function mockReport() {
           score: 69,
           summary: "기술스택은 적절하나 프로젝트 임팩트 표현이 약합니다.",
           strengths: ["기술 스택 명확", "프로젝트 경험 존재"],
-          improvements: ["성과/지표 중심 문장 재구성", "핵심 프로젝트 2개로 압축"],
+          improvements: [
+            "성과/지표 중심 문장 재구성",
+            "핵심 프로젝트 2개로 압축",
+          ],
           keywords: ["Spring", "MyBatis", "AWS"],
         },
         {
@@ -665,6 +996,12 @@ function mockReport() {
       topRate: 30,
       distribution: [6, 10, 18, 28, 40, 55, 66, 72, 68, 54, 38],
       peerDistribution: [4, 8, 14, 22, 33, 48, 60, 66, 63, 50, 36],
+      scoreHistory: [
+        { date: "2025-12-20", score: 61 },
+        { date: "2026-01-05", score: 66 },
+        { date: "2026-01-22", score: 70 },
+        { date: "2026-02-15", score: 74 },
+      ],
     },
 
     radar: {
@@ -672,23 +1009,55 @@ function mockReport() {
       values: [78, 72, 70, 64, 74, 69],
       peerValues: [70, 68, 66, 60, 69, 64],
     },
-
+    scoreHistory: [
+      { date: "2025-12-20", score: 61 },
+      { date: "2026-01-05", score: 66 },
+      { date: "2026-01-22", score: 70 },
+      { date: "2026-02-15", score: 74 },
+    ],
     commentsByCompetency: {
-      명료도: { good: "핵심 문장이 먼저 나옴", bad: "문장이 길어질 때 호흡이 끊김" },
+      명료도: {
+        good: "핵심 문장이 먼저 나옴",
+        bad: "문장이 길어질 때 호흡이 끊김",
+      },
       논리성: { good: "근거 제시가 빠름", bad: "예시가 짧아 설득력 약함" },
-      직무적합: { good: "키워드 매칭 양호", bad: "기술 디테일(성능/상태) 언급 부족" },
+      직무적합: {
+        good: "키워드 매칭 양호",
+        bad: "기술 디테일(성능/상태) 언급 부족",
+      },
       구체성: { good: "사례 선택은 적절", bad: "수치/역할/성과가 빠짐" },
       자신감: { good: "속도 안정", bad: "마무리 문장이 추상적" },
-      일관성: { good: "메시지 반복이 있음", bad: "주체 표현이 ‘우리’로 흐려짐" },
+      일관성: {
+        good: "메시지 반복이 있음",
+        bad: "주체 표현이 ‘우리’로 흐려짐",
+      },
     },
 
     actionsByCompetency: {
-      명료도: ["답변 첫 문장은 결론 한 줄로 고정하기", "한 문장 길이를 20~25자 수준으로 분할하기"],
-      논리성: ["결론 → 근거 → 예시 순서를 모든 문항에 적용하기", "근거는 2개 이내로 제한하고 우선순위 붙이기"],
-      직무적합: ["React/상태관리/성능 키워드 1~2개를 매 답변에 명시하기", "프로젝트 역할을 ‘내가 한 일’로 분리해 말하기"],
-      구체성: ["성과는 수치(%, ms, 건수)로 표현하기", "기여도를 ‘범위/기간/역할/결과’로 쪼개기"],
-      자신감: ["말끝을 흐리는 표현(아마/같습니다)을 줄이기", "호흡 지점(쉼표)을 미리 넣고 끊어 말하기"],
-      일관성: ["자기소개/지원동기에서 동일 핵심 메시지 1개 반복", "경험 사례를 2개만 고정하고 모든 질문에 재사용하기"],
+      명료도: [
+        "답변 첫 문장은 결론 한 줄로 고정하기",
+        "한 문장 길이를 20~25자 수준으로 분할하기",
+      ],
+      논리성: [
+        "결론 → 근거 → 예시 순서를 모든 문항에 적용하기",
+        "근거는 2개 이내로 제한하고 우선순위 붙이기",
+      ],
+      직무적합: [
+        "React/상태관리/성능 키워드 1~2개를 매 답변에 명시하기",
+        "프로젝트 역할을 ‘내가 한 일’로 분리해 말하기",
+      ],
+      구체성: [
+        "성과는 수치(%, ms, 건수)로 표현하기",
+        "기여도를 ‘범위/기간/역할/결과’로 쪼개기",
+      ],
+      자신감: [
+        "말끝을 흐리는 표현(아마/같습니다)을 줄이기",
+        "호흡 지점(쉼표)을 미리 넣고 끊어 말하기",
+      ],
+      일관성: [
+        "자기소개/지원동기에서 동일 핵심 메시지 1개 반복",
+        "경험 사례를 2개만 고정하고 모든 질문에 재사용하기",
+      ],
     },
 
     questions: [
@@ -697,12 +1066,19 @@ function mockReport() {
         question: "자기소개를 1분 내로 해주세요.",
         score: 72,
         keywords: ["요약", "강점", "직무"],
-        answer: "React 기반 프로젝트 경험을 중심으로, 사용자 경험 개선과 협업을 강조했습니다.",
-        feedback: ["결론은 좋지만 ‘성과(수치)’가 비어 있습니다.", "직무 키워드(React, 상태관리, 성능) 명시를 추천합니다."],
+        answer:
+          "React 기반 프로젝트 경험을 중심으로, 사용자 경험 개선과 협업을 강조했습니다.",
+        feedback: [
+          "결론은 좋지만 ‘성과(수치)’가 비어 있습니다.",
+          "직무 키워드(React, 상태관리, 성능) 명시를 추천합니다.",
+        ],
         template: {
-          conclusion: "React 기반 웹 프로젝트를 주도하며 사용자 경험을 개선한 지원자입니다.",
-          evidence: "상태관리/라우팅을 설계하고 성능 개선을 통해 체감 지연을 줄였습니다(수치 삽입).",
-          close: "실무에서도 문제를 구조화해 끝까지 해결하는 방식으로 기여하겠습니다.",
+          conclusion:
+            "React 기반 웹 프로젝트를 주도하며 사용자 경험을 개선한 지원자입니다.",
+          evidence:
+            "상태관리/라우팅을 설계하고 성능 개선을 통해 체감 지연을 줄였습니다(수치 삽입).",
+          close:
+            "실무에서도 문제를 구조화해 끝까지 해결하는 방식으로 기여하겠습니다.",
         },
       },
       {
@@ -710,12 +1086,18 @@ function mockReport() {
         question: "협업 중 갈등이 있었던 경험을 말해보세요.",
         score: 78,
         keywords: ["소통", "조율", "합의"],
-        answer: "요구사항 충돌 시 기준을 문서화하고 우선순위를 합의해 해결했습니다.",
-        feedback: ["갈등의 ‘원인’과 ‘전환점’을 한 문장으로 명확히 해보세요.", "합의 결과가 어떤 지표로 개선됐는지 덧붙이면 좋습니다."],
+        answer:
+          "요구사항 충돌 시 기준을 문서화하고 우선순위를 합의해 해결했습니다.",
+        feedback: [
+          "갈등의 ‘원인’과 ‘전환점’을 한 문장으로 명확히 해보세요.",
+          "합의 결과가 어떤 지표로 개선됐는지 덧붙이면 좋습니다.",
+        ],
         template: {
           conclusion: "요구사항 충돌을 문서화+우선순위 합의로 해결했습니다.",
-          evidence: "정의서/회의록으로 기준을 고정하고, 일정/리스크를 비교해 합의했습니다.",
-          close: "이후 변경 요청이 줄고 개발 속도가 안정화되었습니다(정량/정성).",
+          evidence:
+            "정의서/회의록으로 기준을 고정하고, 일정/리스크를 비교해 합의했습니다.",
+          close:
+            "이후 변경 요청이 줄고 개발 속도가 안정화되었습니다(정량/정성).",
         },
       },
       {
@@ -723,11 +1105,17 @@ function mockReport() {
         question: "지원한 직무를 선택한 이유는 무엇인가요?",
         score: 70,
         keywords: ["동기", "경험", "기여"],
-        answer: "사용자 문제를 빠르게 검증하고 UI로 풀어내는 과정이 재밌어 선택했습니다.",
-        feedback: ["‘재밌다’ 대신 ‘어떤 문제를 어떻게 풀었는지’로 구체화하세요.", "회사/직무 요구사항과 연결하면 설득력이 올라갑니다."],
+        answer:
+          "사용자 문제를 빠르게 검증하고 UI로 풀어내는 과정이 재밌어 선택했습니다.",
+        feedback: [
+          "‘재밌다’ 대신 ‘어떤 문제를 어떻게 풀었는지’로 구체화하세요.",
+          "회사/직무 요구사항과 연결하면 설득력이 올라갑니다.",
+        ],
         template: {
-          conclusion: "사용자 문제를 데이터/피드백 기반으로 개선하는 과정에 강점이 있습니다.",
-          evidence: "프로젝트에서 사용성 이슈를 발견하고 UI/상태 흐름을 개선했습니다.",
+          conclusion:
+            "사용자 문제를 데이터/피드백 기반으로 개선하는 과정에 강점이 있습니다.",
+          evidence:
+            "프로젝트에서 사용성 이슈를 발견하고 UI/상태 흐름을 개선했습니다.",
           close: "동일한 방식으로 제품 경험 개선에 기여하겠습니다.",
         },
       },

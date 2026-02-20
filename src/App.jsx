@@ -8,7 +8,6 @@ import InterviewDocSelect from "./pages/interview/InterviewDocSelect";
 import InterviewScreen from "./pages/interview/InterviewScreen";
 import InAnalysis from "./pages/InAnalysis";
 import PfAnalysis from "./pages/PfAnalysis";
-import PortfolioResultPage from "./components/portfolio/PortfolioResultPage";
 
 function App() {
   return (
