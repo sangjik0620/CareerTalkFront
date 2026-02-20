@@ -4,8 +4,8 @@ import viteLogo from '/vite.svg'
 import './App.css'
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
-import InterviewDocSelect from './pages/interview/InterviewDocSelect';
-import InterviewScreen from './pages/interview/InterviewScreen';
+import InterviewSelect from "./pages/interview/InterviewSelect";
+import InterviewSession from "./pages/interview/InterviewSession";
 import InAnalysis from './pages/InAnalysis';
 
 function App() {
@@ -14,9 +14,8 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/interview/select" element={<InterviewDocSelect />} />
-        <Route path="/interview" element={<InterviewScreen />} />
-        <Route path="/interview/result" element={<InAnalysis />} />
+        <Route path="/interview/select" element={<InterviewSelect />} />
+        <Route path="/interview/session" element={<InterviewSession />} />
       </Routes>
     </BrowserRouter>
   )
