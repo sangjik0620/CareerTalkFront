@@ -19,7 +19,7 @@ function App() {
         <Route path="/" element={<Home />} />
         {/* 면접 관련 라우트 */}
         <Route path="/interview/select" element={<InterviewSelect />} />
-        <Route path="/interview" element={<InterviewSession />} />
+        <Route path="/interview/session" element={<InterviewSession />} />
         <Route path="/interview/result" element={<InAnalysis />} />
 
         {/* 포트폴리오 관련 라우트 */}
