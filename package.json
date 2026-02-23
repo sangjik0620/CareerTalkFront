@@ -11,8 +11,10 @@
   },
   "dependencies": {
     "aos": "^2.3.4",
+    "core-js": "^3.48.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.0",
+    "raf": "^3.4.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.0",
