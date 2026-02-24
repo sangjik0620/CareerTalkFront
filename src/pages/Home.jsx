@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+1;
+import { useEffect, useState, useRef } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
 import { useNavigate } from "react-router-dom";
@@ -253,7 +254,194 @@ const Icons = {
   ),
 };
 
+// ===== 타이핑 효과 컴포넌트 =====
+const TypingEffect = ({
+  texts,
+  speed = 100,
+  deleteSpeed = 50,
+  pauseTime = 2000,
+}) => {
+  const [displayText, setDisplayText] = useState("");
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    const currentText = texts[currentIndex];
+
+    if (isPaused) {
+      const pauseTimeout = setTimeout(() => {
+        setIsPaused(false);
+        setIsDeleting(true);
+      }, pauseTime);
+      return () => clearTimeout(pauseTimeout);
+    }
+
+    if (!isDeleting && displayText === currentText) {
+      setIsPaused(true);
+      return;
+    }
+
+    if (isDeleting && displayText === "") {
+      setIsDeleting(false);
+      setCurrentIndex((prev) => (prev + 1) % texts.length);
+      return;
+    }
+
+    const timeout = setTimeout(
+      () => {
+        setDisplayText((prev) =>
+          isDeleting
+            ? currentText.substring(0, prev.length - 1)
+            : currentText.substring(0, prev.length + 1),
+        );
+      },
+      isDeleting ? deleteSpeed : speed,
+    );
+
+    return () => clearTimeout(timeout);
+  }, [
+    displayText,
+    currentIndex,
+    isDeleting,
+    isPaused,
+    texts,
+    speed,
+    deleteSpeed,
+    pauseTime,
+  ]);
+
+  return (
+    <span className="relative">
+      {displayText}
+      <span className="animate-blink ml-1">|</span>
+    </span>
+  );
+};
+
+// ===== 동적 배경 컴포넌트 =====
+const AnimatedBackground = () => {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    let animationFrameId;
+    let particles = [];
+
+    // 캔버스 크기 설정
+    const resizeCanvas = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    // 입자 클래스
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 3 + 1;
+        this.speedX = Math.random() * 1 - 0.5;
+        this.speedY = Math.random() * 1 - 0.5;
+        this.opacity = Math.random() * 0.5 + 0.2;
+      }
+
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+
+        if (this.x > canvas.width) this.x = 0;
+        if (this.x < 0) this.x = canvas.width;
+        if (this.y > canvas.height) this.y = 0;
+        if (this.y < 0) this.y = canvas.height;
+      }
+
+      draw() {
+        ctx.fillStyle = `rgba(59, 130, 246, ${this.opacity})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // 입자 생성
+    const initParticles = () => {
+      particles = [];
+      const numberOfParticles = Math.floor(
+        (canvas.width * canvas.height) / 15000,
+      );
+      for (let i = 0; i < numberOfParticles; i++) {
+        particles.push(new Particle());
+      }
+    };
+
+    initParticles();
+
+    // 입자 연결선 그리기
+    const connectParticles = () => {
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < 120) {
+            ctx.strokeStyle = `rgba(59, 130, 246, ${0.15 * (1 - distance / 120)})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+    };
+
+    // 애니메이션 루프
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      particles.forEach((particle) => {
+        particle.update();
+        particle.draw();
+      });
+
+      connectParticles();
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      window.removeEventListener("resize", resizeCanvas);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 w-full h-full"
+      style={{ opacity: 0.6 }}
+    />
+  );
+};
+
+// ===== 그라데이션 웨이브 배경 =====
+const WaveBackground = () => (
+  <div className="absolute inset-0 overflow-hidden">
+    <div className="wave wave1"></div>
+    <div className="wave wave2"></div>
+    <div className="wave wave3"></div>
+  </div>
+);
+
 // ===== Components =====
+// ===== Navigation (개선된 헤더) =====
 const Navigation = ({ onStart }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -266,19 +454,21 @@ const Navigation = ({ onStart }) => {
 
   const handleStart = () => {
     onStart?.();
-    setIsOpen(false); // ✅ 모바일 메뉴 열려있으면 닫기
+    setIsOpen(false);
   };
 
   return (
     <nav
-      className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? "bg-white shadow-lg" : "bg-transparent"}`}
+      className={`fixed w-full z-50 transition-all duration-300 ${
+        scrolled
+          ? "bg-white/95 backdrop-blur-md shadow-lg"
+          : "bg-white/80 backdrop-blur-sm"
+      }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           <div className="flex items-center">
-            <h1
-              className={`text-2xl font-bold ${scrolled ? "text-primary-600" : "text-white"}`}
-            >
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               CareerTalk
             </h1>
           </div>
@@ -287,33 +477,32 @@ const Navigation = ({ onStart }) => {
           <div className="hidden md:flex items-center space-x-8">
             <a
               href="#features"
-              className={`hover:text-primary-600 transition ${scrolled ? "text-gray-700" : "text-white"}`}
+              className="text-gray-700 hover:text-blue-600 transition font-medium"
             >
               주요 기능
             </a>
             <a
               href="#how-it-works"
-              className={`hover:text-primary-600 transition ${scrolled ? "text-gray-700" : "text-white"}`}
+              className="text-gray-700 hover:text-blue-600 transition font-medium"
             >
               사용 방법
             </a>
             <a
               href="#testimonials"
-              className={`hover:text-primary-600 transition ${scrolled ? "text-gray-700" : "text-white"}`}
+              className="text-gray-700 hover:text-blue-600 transition font-medium"
             >
               후기
             </a>
             <a
               href="#faq"
-              className={`hover:text-primary-600 transition ${scrolled ? "text-gray-700" : "text-white"}`}
+              className="text-gray-700 hover:text-blue-600 transition font-medium"
             >
               FAQ
             </a>
 
-            {/* ✅ 여기 연결 */}
             <button
               onClick={handleStart}
-              className="bg-primary-600 text-white px-6 py-2 rounded-full hover:bg-primary-700 transition"
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2.5 rounded-full hover:shadow-lg transition transform hover:scale-105 font-medium"
             >
               시작하기
             </button>
@@ -323,7 +512,7 @@ const Navigation = ({ onStart }) => {
           <div className="md:hidden">
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className={scrolled ? "text-gray-700" : "text-white"}
+              className="text-gray-700"
             >
               {isOpen ? <Icons.X /> : <Icons.Menu />}
             </button>
@@ -333,37 +522,36 @@ const Navigation = ({ onStart }) => {
 
       {/* Mobile Menu */}
       {isOpen && (
-        <div className="md:hidden bg-white">
+        <div className="md:hidden bg-white border-t border-gray-100">
           <div className="px-2 pt-2 pb-3 space-y-1">
             <a
               href="#features"
-              className="block px-3 py-2 text-gray-700 hover:bg-primary-50 rounded-md"
+              className="block px-3 py-2 text-gray-700 hover:bg-blue-50 rounded-md"
             >
               주요 기능
             </a>
             <a
               href="#how-it-works"
-              className="block px-3 py-2 text-gray-700 hover:bg-primary-50 rounded-md"
+              className="block px-3 py-2 text-gray-700 hover:bg-blue-50 rounded-md"
             >
               사용 방법
             </a>
             <a
               href="#testimonials"
-              className="block px-3 py-2 text-gray-700 hover:bg-primary-50 rounded-md"
+              className="block px-3 py-2 text-gray-700 hover:bg-blue-50 rounded-md"
             >
               후기
             </a>
             <a
               href="#faq"
-              className="block px-3 py-2 text-gray-700 hover:bg-primary-50 rounded-md"
+              className="block px-3 py-2 text-gray-700 hover:bg-blue-50 rounded-md"
             >
               FAQ
             </a>
 
-            {/* ✅ 모바일도 연결 */}
             <button
               onClick={handleStart}
-              className="w-full bg-primary-600 text-white px-6 py-2 rounded-full hover:bg-primary-700 transition"
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-full hover:shadow-lg transition"
             >
               시작하기
             </button>
@@ -373,56 +561,127 @@ const Navigation = ({ onStart }) => {
     </nav>
   );
 };
-
-const Hero = ({ onStart }) => (
-  <section className="relative bg-gradient-to-br from-blue-800 to-blue-500 min-h-screen flex items-center pt-20">
+// ===== 새로운 배경 디자인: 흐르는 그라데이션 오브 =====
+const FlowingGradientOrbs = () => {
+  return (
     <div className="absolute inset-0 overflow-hidden">
-      <div className="absolute -top-40 -right-40 w-80 h-80 bg-white opacity-10 rounded-full blur-3xl"></div>
-      <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-white opacity-10 rounded-full blur-3xl"></div>
+      {/* 큰 그라데이션 오브들 */}
+      <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-gradient-to-br from-blue-400/30 via-indigo-400/20 to-transparent rounded-full blur-3xl animate-orb-1"></div>
+      <div className="absolute top-1/4 right-0 w-[700px] h-[700px] bg-gradient-to-bl from-indigo-400/30 via-purple-400/20 to-transparent rounded-full blur-3xl animate-orb-2"></div>
+      <div className="absolute bottom-0 left-1/4 w-[550px] h-[550px] bg-gradient-to-tr from-purple-400/30 via-blue-400/20 to-transparent rounded-full blur-3xl animate-orb-3"></div>
+      <div className="absolute top-1/2 left-1/2 w-[500px] h-[500px] bg-gradient-to-br from-cyan-400/20 via-blue-400/15 to-transparent rounded-full blur-3xl animate-orb-4"></div>
+
+      {/* 작은 액센트 오브들 */}
+      <div className="absolute top-1/3 left-1/4 w-32 h-32 bg-blue-500/40 rounded-full blur-2xl animate-float-slow-1"></div>
+      <div className="absolute bottom-1/3 right-1/3 w-40 h-40 bg-indigo-500/40 rounded-full blur-2xl animate-float-slow-2"></div>
+      <div className="absolute top-2/3 right-1/4 w-36 h-36 bg-purple-500/40 rounded-full blur-2xl animate-float-slow-3"></div>
     </div>
+  );
+};
 
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
-      <div className="grid md:grid-cols-2 gap-12 items-center">
-        <div className="text-white" data-aos="fade-right">
-          <h2 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-            AI와 함께하는
-            <br />
-            완벽한 면접 준비
-          </h2>
-          <p className="text-xl mb-8 text-blue-100">
-            이력서, 자기소개서, 포트폴리오를 AI가 분석하고,
-            <br />
-            실전 같은 모의 면접으로 취업 성공률을 높이세요
-          </p>
+// ===== 개선된 Hero 섹션 =====
+const Hero = ({ onStart }) => {
+  const typingTexts = ["완벽한 면접", "성공적인 취업", "꿈의 직장 합격"];
 
-          <div className="flex flex-col sm:flex-row gap-4">
-            <button className="bg-white text-blue-600 px-8 py-4 rounded-full font-semibold hover:shadow-2xl transition hover:scale-105">
-              무료로 시작하기
-            </button>
-            <button className="border-2 border-white text-white px-8 py-4 rounded-full font-semibold hover:bg-white hover:text-blue-600 transition">
-              자세히 보기
-            </button>
+  return (
+    <section className="relative bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/50 min-h-screen flex items-center pt-20 overflow-hidden">
+      {/* 흐르는 그라데이션 오브 배경 */}
+      <FlowingGradientOrbs />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
+        <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <div className="inline-block mb-6 px-5 py-2.5 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full border-2 border-blue-300 animate-slide-in-down shadow-md">
+              <span className="text-blue-700 text-sm font-bold flex items-center gap-2">
+                <span className="animate-bounce-subtle">🚀</span>
+                AI 기반 취업 준비 플랫폼
+              </span>
+            </div>
+
+            <h2 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+              <span className="block animate-slide-in-up text-gray-900 drop-shadow-sm">
+                AI와 함께하는
+              </span>
+              <span className="block text-blue-600 min-h-[1.4em] inline-block drop-shadow-md font-extrabold">
+                <TypingEffect
+                  texts={typingTexts}
+                  speed={180}
+                  deleteSpeed={120}
+                  pauseTime={4000}
+                />
+              </span>
+            </h2>
+
+            <p className="text-xl mb-10 text-gray-700 animate-slide-in-up animation-delay-300 leading-relaxed drop-shadow-sm font-medium">
+              이력서, 자기소개서, 포트폴리오를 AI가 분석하고,
+              <br />
+              <span className="text-blue-600 font-bold">
+                실전 같은 모의 면접
+              </span>
+              으로 취업 성공률을 높이세요
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4 animate-slide-in-up animation-delay-600">
+              <button
+                onClick={onStart}
+                className="group relative bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-size-200 bg-pos-0 hover:bg-pos-100 text-white px-10 py-4 rounded-full font-bold shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-105 overflow-hidden"
+              >
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  무료로 시작하기
+                  <span className="transform group-hover:translate-x-2 transition-transform duration-300">
+                    →
+                  </span>
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              </button>
+              <button className="border-3 border-blue-600 text-blue-700 px-10 py-4 rounded-full font-bold hover:bg-blue-600 hover:text-white transition-all duration-300 hover:shadow-xl transform hover:scale-105 bg-white/80 backdrop-blur-sm">
+                자세히 보기
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div className="relative" data-aos="fade-left">
-          <div className="relative z-10 bg-white rounded-2xl shadow-2xl p-8">
-            <div className="aspect-video bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center">
-              <Icons.Video />
+          <div className="relative animate-slide-in-left animation-delay-300">
+            <div className="relative z-10 bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border-2 border-blue-200 hover:shadow-3xl transition-all duration-500 transform hover:scale-105">
+              <div className="aspect-video bg-gradient-to-br from-blue-100 via-indigo-100 to-purple-100 rounded-2xl flex items-center justify-center relative overflow-hidden group">
+                <div className="text-blue-600 relative z-10 transform group-hover:scale-110 transition-transform duration-500 group-hover:rotate-3">
+                  <Icons.Video />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-tr from-blue-300/40 via-transparent to-purple-300/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                {/* 재생 버튼 효과 */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="w-20 h-20 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-2xl animate-pulse-slow">
+                    <svg
+                      className="w-10 h-10 text-blue-600 ml-1"
+                      fill="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-6">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  실시간 AI 면접 연습
+                </h3>
+                <p className="text-gray-700 font-medium">
+                  웹캠을 통한 실전 같은 면접 경험
+                </p>
+              </div>
             </div>
-            <div className="mt-6">
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                실시간 AI 면접 연습
-              </h3>
-              <p className="text-gray-600">웹캠을 통한 실전 같은 면접 경험</p>
-            </div>
+
+            {/* 장식 요소 */}
+            <div className="absolute top-1/2 -right-8 w-24 h-24 border-4 border-blue-400/70 rounded-full animate-spin-slow shadow-lg"></div>
+            <div className="absolute -bottom-8 left-1/2 w-16 h-16 border-4 border-indigo-400/70 rounded-full animate-spin-reverse shadow-lg"></div>
+            <div className="absolute top-10 -left-6 w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full opacity-60 animate-float-gentle shadow-xl"></div>
           </div>
         </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
+// ===== Features (밝은 톤) =====
 const Features = ({
   onGoInterview,
   onOpenPortfolioModal,
@@ -434,82 +693,107 @@ const Features = ({
       title: "이력서 AI 분석",
       description:
         "경력, 학력, 스킬을 AI가 분석하여 경쟁력 있는 이력서로 개선합니다",
+      gradient: "from-blue-500 to-blue-600",
+      bgGradient: "from-blue-50 to-blue-100",
     },
     {
       icon: <Icons.FileText />,
       title: "자기소개서 AI 분석",
       description:
         "AI가 당신의 자기소개서를 깊이 분석하여 강점과 개선점을 제시합니다",
+      gradient: "from-indigo-500 to-indigo-600",
+      bgGradient: "from-indigo-50 to-indigo-100",
+      clickable: true,
+      action: onOpenCoverLetterModal,
     },
     {
       icon: <Icons.Briefcase />,
       title: "포트폴리오 분석",
       description:
         "업계 전문가 수준의 포트폴리오 피드백을 AI가 즉시 제공합니다",
+      gradient: "from-purple-500 to-purple-600",
+      bgGradient: "from-purple-50 to-purple-100",
+      clickable: true,
+      action: onOpenPortfolioModal,
     },
     {
       icon: <Icons.Video />,
       title: "AI 모의 면접",
       description:
         "웹캠 기능으로 실전처럼 면접을 진행하고 실시간 피드백을 받으세요",
+      gradient: "from-pink-500 to-pink-600",
+      bgGradient: "from-pink-50 to-pink-100",
+      clickable: true,
+      action: onGoInterview,
     },
     {
       icon: <Icons.MessageSquare />,
       title: "맞춤형 피드백",
       description:
         "개인별 맞춤 분석으로 면접 스킬을 체계적으로 향상시킬 수 있습니다",
+      gradient: "from-violet-500 to-violet-600",
+      bgGradient: "from-violet-50 to-violet-100",
     },
   ];
 
   return (
-    <section id="features" className="py-20 bg-gray-50">
+    <section
+      id="features"
+      className="py-24 bg-gradient-to-b from-white to-blue-50"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* ... 제목 영역 ... */}
+        <div className="text-center mb-16" data-aos="fade-up">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              AI 기반
+            </span>{" "}
+            주요 기능
+          </h2>
+          <p className="text-xl text-gray-600">
+            취업 성공을 위한 모든 기능을 한 곳에서
+          </p>
+        </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
           {features.map((f, idx) => {
-            const isInterview = f.title === "AI 모의 면접";
-            const isPortfolio = f.title === "포트폴리오 분석";
-            const isCoverLetter = f.title === "자기소개서 AI 분석"; // ✅ 추가
-
-            const isClickable = isInterview || isPortfolio || isCoverLetter;
-
-            const handleClick = () => {
-              if (isInterview) onGoInterview?.();
-              if (isPortfolio) onOpenPortfolioModal?.();
-              if (isCoverLetter) onOpenCoverLetterModal?.(); // ✅ 클릭 시 실행
-            };
+            const handleClick = f.clickable ? f.action : undefined;
 
             return (
               <div
                 key={idx}
-                role={isClickable ? "button" : undefined}
-                tabIndex={isClickable ? 0 : undefined}
-                onClick={isClickable ? handleClick : undefined}
+                role={f.clickable ? "button" : undefined}
+                tabIndex={f.clickable ? 0 : undefined}
+                onClick={handleClick}
                 onKeyDown={
-                  isClickable
+                  f.clickable
                     ? (e) => {
                         if (e.key === "Enter" || e.key === " ") handleClick();
                       }
                     : undefined
                 }
                 className={[
-                  "bg-white rounded-xl p-8 shadow-[0_10px_30px_rgba(0,0,0,0.1)] hover:shadow-[0_15px_40px_rgba(0,0,0,0.15)] transition hover:scale-105",
-                  isClickable
-                    ? "cursor-pointer ring-1 ring-blue-100 hover:ring-blue-300"
-                    : "",
+                  `group bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-gray-100`,
+                  f.clickable ? "cursor-pointer hover:border-transparent" : "",
                 ].join(" ")}
                 data-aos="fade-up"
                 data-aos-delay={idx * 100}
               >
-                <div className="text-blue-600 mb-4">{f.icon}</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                <div
+                  className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${f.bgGradient} mb-5 group-hover:scale-110 transition-transform duration-300`}
+                >
+                  <div
+                    className={`bg-gradient-to-br ${f.gradient} bg-clip-text text-transparent`}
+                  >
+                    {f.icon}
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-3">
                   {f.title}
                 </h3>
-                <p className="text-gray-600">{f.description}</p>
+                <p className="text-gray-600 leading-relaxed">{f.description}</p>
 
-                {isClickable && (
-                  <div className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-blue-600">
+                {f.clickable && (
+                  <div className="mt-6 inline-flex items-center gap-2 text-sm font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent group-hover:gap-3 transition-all">
                     바로 시작하기 <span aria-hidden>→</span>
                   </div>
                 )}
@@ -522,37 +806,46 @@ const Features = ({
   );
 };
 
+// ===== HowItWorks (밝은 톤) =====
 const HowItWorks = () => {
   const steps = [
     {
       number: "01",
       title: "자료 등록",
       description: "이력서/자기소개서/포트폴리오를 업로드하세요",
+      gradient: "from-blue-500 to-indigo-500",
+      bgGradient: "from-blue-50 to-indigo-50",
     },
     {
       number: "02",
       title: "AI 분석",
       description: "AI가 자료를 분석하고 상세한 피드백을 제공합니다",
+      gradient: "from-indigo-500 to-purple-500",
+      bgGradient: "from-indigo-50 to-purple-50",
     },
     {
       number: "03",
       title: "모의 면접",
       description: "웹캠을 켜고 AI와 실전 면접을 진행합니다",
+      gradient: "from-purple-500 to-pink-500",
+      bgGradient: "from-purple-50 to-pink-50",
     },
     {
       number: "04",
       title: "개선 & 성장",
       description: "피드백을 바탕으로 계속 발전해 나가세요",
+      gradient: "from-pink-500 to-rose-500",
+      bgGradient: "from-pink-50 to-rose-50",
     },
   ];
 
   return (
-    <section id="how-it-works" className="py-20 bg-white">
+    <section id="how-it-works" className="py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16" data-aos="fade-up">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
             간단한{" "}
-            <span className="bg-gradient-to-br from-blue-800 to-blue-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
               4단계
             </span>{" "}
             프로세스
@@ -566,23 +859,30 @@ const HowItWorks = () => {
           {steps.map((s, idx) => (
             <div
               key={idx}
-              className="relative"
+              className="relative group"
               data-aos="fade-up"
               data-aos-delay={idx * 100}
             >
               <div className="text-center">
-                <div className="inline-block bg-blue-100 rounded-full w-20 h-20 flex items-center justify-center mb-6">
-                  <span className="text-3xl font-bold text-blue-600">
+                <div
+                  className={`inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br ${s.bgGradient} mb-6 relative group-hover:scale-110 transition-all duration-300 shadow-lg`}
+                >
+                  <span
+                    className={`text-3xl font-bold bg-gradient-to-br ${s.gradient} bg-clip-text text-transparent`}
+                  >
                     {s.number}
                   </span>
+                  <div
+                    className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${s.gradient} opacity-0 group-hover:opacity-10 transition-opacity`}
+                  ></div>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                <h3 className="text-xl font-bold text-gray-900 mb-3">
                   {s.title}
                 </h3>
                 <p className="text-gray-600">{s.description}</p>
               </div>
               {idx < steps.length - 1 && (
-                <div className="hidden lg:block absolute top-10 left-full w-full h-0.5 bg-blue-200 -translate-x-1/2"></div>
+                <div className="hidden lg:block absolute top-12 left-full w-full h-0.5 bg-gradient-to-r from-blue-200 via-indigo-200 to-transparent -translate-x-1/2"></div>
               )}
             </div>
           ))}
@@ -592,32 +892,73 @@ const HowItWorks = () => {
   );
 };
 
+// ===== Statistics (밝은 톤) =====
 const Statistics = () => {
   const stats = [
-    { icon: <Icons.Users />, number: "10,000+", label: "누적 사용자" },
-    { icon: <Icons.TrendingUp />, number: "95%", label: "만족도" },
+    {
+      icon: <Icons.Users />,
+      number: "10,000+",
+      label: "누적 사용자",
+      gradient: "from-blue-500 to-indigo-500",
+      bgGradient: "from-blue-50 to-indigo-50",
+    },
+    {
+      icon: <Icons.TrendingUp />,
+      number: "95%",
+      label: "만족도",
+      gradient: "from-indigo-500 to-purple-500",
+      bgGradient: "from-indigo-50 to-purple-50",
+    },
     {
       icon: <Icons.CheckCircle />,
       number: "50,000+",
       label: "완료된 면접 세션",
+      gradient: "from-purple-500 to-pink-500",
+      bgGradient: "from-purple-50 to-pink-50",
     },
-    { icon: <Icons.Award />, number: "4.8/5.0", label: "평균 개선 점수" },
+    {
+      icon: <Icons.Award />,
+      number: "4.8/5.0",
+      label: "평균 개선 점수",
+      gradient: "from-pink-500 to-rose-500",
+      bgGradient: "from-pink-50 to-rose-50",
+    },
   ];
 
   return (
-    <section className="py-20 blue-gradient">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+    <section className="py-24 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative overflow-hidden">
+      {/* 배경 장식 */}
+      <div className="absolute inset-0">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-300 opacity-20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-300 opacity-20 rounded-full blur-3xl"></div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, index) => (
             <div
               key={index}
-              className="text-center text-white"
+              className={`group text-center bg-white rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-105 border border-gray-100`}
               data-aos="zoom-in"
               data-aos-delay={index * 100}
             >
-              <div className="flex justify-center mb-4">{stat.icon}</div>
-              <div className="text-4xl font-bold mb-2">{stat.number}</div>
-              <div className="text-blue-200 text-lg">{stat.label}</div>
+              <div
+                className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${stat.bgGradient} mb-4 group-hover:scale-110 transition-transform duration-300`}
+              >
+                <div
+                  className={`bg-gradient-to-br ${stat.gradient} bg-clip-text text-transparent`}
+                >
+                  {stat.icon}
+                </div>
+              </div>
+              <div
+                className={`text-4xl font-bold mb-2 bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}
+              >
+                {stat.number}
+              </div>
+              <div className="text-gray-600 text-lg font-medium">
+                {stat.label}
+              </div>
             </div>
           ))}
         </div>
@@ -626,6 +967,7 @@ const Statistics = () => {
   );
 };
 
+// ===== Testimonials (밝은 톤) =====
 const Testimonials = () => {
   const testimonials = [
     {
@@ -635,6 +977,7 @@ const Testimonials = () => {
       content:
         "CareerTalk 덕분에 면접 준비를 체계적으로 할 수 있었어요. AI 피드백이 정말 도움이 되었습니다!",
       rating: 5,
+      gradient: "from-blue-500 to-indigo-500",
     },
     {
       name: "이서연",
@@ -643,6 +986,7 @@ const Testimonials = () => {
       content:
         "자기소개서 분석 기능이 정말 유용했어요. 제가 놓친 부분을 정확히 짚어주더라고요.",
       rating: 5,
+      gradient: "from-indigo-500 to-purple-500",
     },
     {
       name: "박지훈",
@@ -651,6 +995,7 @@ const Testimonials = () => {
       content:
         "실전 같은 모의 면접으로 긴장감도 줄이고 답변도 다듬을 수 있었습니다. 강력 추천!",
       rating: 5,
+      gradient: "from-purple-500 to-pink-500",
     },
     {
       name: "정수아",
@@ -659,26 +1004,30 @@ const Testimonials = () => {
       content:
         "포트폴리오 피드백을 받고 개선했더니 면접관들의 반응이 확실히 달랐어요!",
       rating: 5,
+      gradient: "from-pink-500 to-rose-500",
     },
   ];
 
   return (
-    <section id="testimonials" className="py-20 bg-gray-50">
+    <section id="testimonials" className="py-24 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16" data-aos="fade-up">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            성공한 <span className="text-gradient">사용자 후기</span>
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            성공한{" "}
+            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              사용자 후기
+            </span>
           </h2>
           <p className="text-xl text-gray-600">
             CareerTalk와 함께 꿈의 직장에 합격한 분들의 이야기
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {testimonials.map((t, index) => (
             <div
               key={index}
-              className="bg-white rounded-xl p-6 shadow-[0_10px_30px_rgba(0,0,0,0.1)]"
+              className="group bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-gray-100"
               data-aos="fade-up"
               data-aos-delay={index * 100}
             >
@@ -694,11 +1043,15 @@ const Testimonials = () => {
                   </svg>
                 ))}
               </div>
-              <p className="text-gray-600 mb-6 italic">"{t.content}"</p>
-              <div className="border-t pt-4">
-                <div className="font-semibold text-gray-900">{t.name}</div>
-                <div className="text-sm text-gray-600">{t.role}</div>
-                <div className="text-sm text-primary-600 font-medium">
+              <p className="text-gray-600 mb-6 italic leading-relaxed">
+                "{t.content}"
+              </p>
+              <div className="border-t pt-4 border-gray-100">
+                <div className="font-bold text-gray-900">{t.name}</div>
+                <div className="text-sm text-gray-600 mt-1">{t.role}</div>
+                <div
+                  className={`text-sm font-bold mt-1 bg-gradient-to-r ${t.gradient} bg-clip-text text-transparent`}
+                >
                   {t.company}
                 </div>
               </div>
@@ -710,6 +1063,7 @@ const Testimonials = () => {
   );
 };
 
+// ===== FAQ (밝은 톤) =====
 const FAQ = () => {
   const [openIndex, setOpenIndex] = useState(null);
 
@@ -747,11 +1101,14 @@ const FAQ = () => {
   ];
 
   return (
-    <section id="faq" className="py-20 bg-white">
+    <section id="faq" className="py-24 bg-gradient-to-b from-white to-blue-50">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16" data-aos="fade-up">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            자주 묻는 <span className="text-gradient">질문</span>
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+            자주 묻는{" "}
+            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              질문
+            </span>
           </h2>
           <p className="text-xl text-gray-600">
             궁금한 점이 있으신가요? 여기서 답을 찾아보세요
@@ -762,26 +1119,28 @@ const FAQ = () => {
           {faqs.map((faq, index) => (
             <div
               key={index}
-              className="border border-gray-200 rounded-lg overflow-hidden"
+              className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:border-blue-300 hover:shadow-lg transition-all duration-300"
               data-aos="fade-up"
               data-aos-delay={index * 50}
             >
               <button
-                className="w-full px-6 py-4 text-left flex justify-between items-center hover:bg-gray-50 transition"
+                className="w-full px-6 py-5 text-left flex justify-between items-center hover:bg-blue-50/50 transition-colors"
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
               >
-                <span className="font-semibold text-gray-900">
+                <span className="font-bold text-gray-900 text-lg">
                   {faq.question}
                 </span>
                 <span
-                  className={`transform transition-transform ${openIndex === index ? "rotate-180" : ""}`}
+                  className={`transform transition-transform duration-300 ${
+                    openIndex === index ? "rotate-180" : ""
+                  }`}
                 >
                   <Icons.ChevronDown />
                 </span>
               </button>
               {openIndex === index && (
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-                  <p className="text-gray-600">{faq.answer}</p>
+                <div className="px-6 py-5 bg-gradient-to-br from-blue-50 to-indigo-50 border-t border-blue-100">
+                  <p className="text-gray-700 leading-relaxed">{faq.answer}</p>
                 </div>
               )}
             </div>
@@ -792,57 +1151,71 @@ const FAQ = () => {
   );
 };
 
+// ===== CTA (밝은 톤) =====
 const CTA = ({ onStart }) => (
-  <section className="py-20 blue-gradient">
+  <section className="py-24 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 relative overflow-hidden">
+    <div className="absolute inset-0 opacity-20">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-white rounded-full blur-3xl animate-pulse-smooth"></div>
+    </div>
+
     <div
-      className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center"
+      className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10"
       data-aos="zoom-in"
     >
-      <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+      <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
         지금 바로 면접 준비를 시작하세요
       </h2>
-      <p className="text-xl text-blue-100 mb-8">
+      <p className="text-xl text-blue-100 mb-10">
         수천 명의 취업 성공 스토리에 당신도 함께하세요
       </p>
-      <button className="bg-white text-primary-600 px-10 py-4 rounded-full font-semibold text-lg hover:shadow-2xl transition hover:scale-105">
+      <button
+        onClick={onStart}
+        className="group bg-white text-blue-600 px-12 py-5 rounded-full font-bold text-lg hover:bg-gray-50 hover:shadow-2xl transition-all duration-300 transform hover:scale-105 inline-flex items-center gap-3"
+      >
         무료로 시작하기
+        <span className="transform group-hover:translate-x-2 transition-transform text-xl">
+          →
+        </span>
       </button>
-      <p className="mt-4 text-blue-200">
-        신용카드 등록 없이 무료로 체험 가능합니다
+      <p className="mt-6 text-blue-100">
+        ✓ 신용카드 등록 없이 무료로 체험 가능합니다
       </p>
     </div>
   </section>
 );
 
+// ===== Footer (밝은 톤) =====
 const Footer = () => (
-  <footer className="bg-gray-900 text-white py-12">
+  <footer className="bg-gray-50 text-gray-700 py-12 border-t border-gray-200">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="grid md:grid-cols-4 gap-8 mb-8">
         <div>
-          <h3 className="text-2xl font-bold mb-4">CareerTalk</h3>
-          <p className="text-gray-400">AI 기반 취업 면접 준비의 새로운 기준</p>
+          <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            CareerTalk
+          </h3>
+          <p className="text-gray-600">AI 기반 취업 면접 준비의 새로운 기준</p>
         </div>
 
         <div>
-          <h4 className="font-semibold mb-4">서비스</h4>
-          <ul className="space-y-2 text-gray-400">
+          <h4 className="font-bold mb-4 text-gray-900">서비스</h4>
+          <ul className="space-y-2 text-gray-600">
             <li>
-              <a href="#" className="hover:text-white transition">
+              <a href="#" className="hover:text-blue-600 transition">
                 AI 자기소개서 분석
               </a>
             </li>
             <li>
-              <a href="#" className="hover:text-white transition">
+              <a href="#" className="hover:text-blue-600 transition">
                 포트폴리오 피드백
               </a>
             </li>
             <li>
-              <a href="#" className="hover:text-white transition">
+              <a href="#" className="hover:text-blue-600 transition">
                 모의 면접
               </a>
             </li>
             <li>
-              <a href="#" className="hover:text-white transition">
+              <a href="#" className="hover:text-blue-600 transition">
                 가격 안내
               </a>
             </li>
@@ -850,25 +1223,25 @@ const Footer = () => (
         </div>
 
         <div>
-          <h4 className="font-semibold mb-4">회사</h4>
-          <ul className="space-y-2 text-gray-400">
+          <h4 className="font-bold mb-4 text-gray-900">회사</h4>
+          <ul className="space-y-2 text-gray-600">
             <li>
-              <a href="#" className="hover:text-white transition">
+              <a href="#" className="hover:text-blue-600 transition">
                 회사 소개
               </a>
             </li>
             <li>
-              <a href="#" className="hover:text-white transition">
+              <a href="#" className="hover:text-blue-600 transition">
                 채용
               </a>
             </li>
             <li>
-              <a href="#" className="hover:text-white transition">
+              <a href="#" className="hover:text-blue-600 transition">
                 파트너십
               </a>
             </li>
             <li>
-              <a href="#" className="hover:text-white transition">
+              <a href="#" className="hover:text-blue-600 transition">
                 블로그
               </a>
             </li>
@@ -876,8 +1249,8 @@ const Footer = () => (
         </div>
 
         <div>
-          <h4 className="font-semibold mb-4">문의</h4>
-          <ul className="space-y-3 text-gray-400">
+          <h4 className="font-bold mb-4 text-gray-900">문의</h4>
+          <ul className="space-y-3 text-gray-600">
             <li className="flex items-center gap-2">
               <Icons.Mail />
               <span>contact@careertalk.com</span>
@@ -894,26 +1267,26 @@ const Footer = () => (
         </div>
       </div>
 
-      <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
-        <p className="text-gray-400 text-sm">
+      <div className="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center">
+        <p className="text-gray-600 text-sm">
           © 2026 CareerTalk. All rights reserved.
         </p>
         <div className="flex gap-6 mt-4 md:mt-0">
           <a
             href="#"
-            className="text-gray-400 hover:text-white transition text-sm"
+            className="text-gray-600 hover:text-blue-600 transition text-sm"
           >
             이용약관
           </a>
           <a
             href="#"
-            className="text-gray-400 hover:text-white transition text-sm"
+            className="text-gray-600 hover:text-blue-600 transition text-sm"
           >
             개인정보처리방침
           </a>
           <a
             href="#"
-            className="text-gray-400 hover:text-white transition text-sm"
+            className="text-gray-600 hover:text-blue-600 transition text-sm"
           >
             쿠키 정책
           </a>
@@ -927,9 +1300,8 @@ const Footer = () => (
 export default function Home() {
   const navigate = useNavigate();
 
-  // ⭐ 모달 창 열림/닫힘 상태 관리
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false);
-  const [isCoverLetterModalOpen, setIsCoverLetterModalOpen] = useState(false); // ✅ 추가
+  const [isCoverLetterModalOpen, setIsCoverLetterModalOpen] = useState(false);
 
   useEffect(() => {
     AOS.init({ duration: 1000, once: true, offset: 100 });
@@ -942,11 +1314,10 @@ export default function Home() {
       <Navigation onStart={goInterview} />
       <Hero onStart={goInterview} />
 
-      {/* ⭐ Features에 자기소개서 모달 핸들러 전달 */}
       <Features
         onGoInterview={goInterview}
         onOpenPortfolioModal={() => setIsPortfolioModalOpen(true)}
-        onOpenCoverLetterModal={() => setIsCoverLetterModalOpen(true)} // ✅ 추가
+        onOpenCoverLetterModal={() => setIsCoverLetterModalOpen(true)}
       />
 
       <HowItWorks />
@@ -956,7 +1327,6 @@ export default function Home() {
       <CTA onStart={goInterview} />
       <Footer />
 
-      {/* ⭐ 포트폴리오 업로드 모달 */}
       <PortfolioUploadModal
         isOpen={isPortfolioModalOpen}
         onClose={() => setIsPortfolioModalOpen(false)}
@@ -966,25 +1336,310 @@ export default function Home() {
         }}
       />
 
-      {/* ⭐ 자기소개서 업로드 모달 (기존 컴포넌트를 재활용하거나 새로 만든 것을 연결하세요) */}
       <CIAnalysis
         isOpen={isCoverLetterModalOpen}
         onClose={() => setIsCoverLetterModalOpen(false)}
         onAnalyzeSuccess={() => {
           setIsCoverLetterModalOpen(false);
-          navigate("/cover-letter/result"); // 이동할 결과 페이지 주소
+          navigate("/cover-letter/result");
         }}
       />
 
       <style>{`
-        .blue-gradient { background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); }
-        .text-gradient {
-          background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-      `}</style>
+  /* 흐르는 그라데이션 오브 애니메이션 */
+  @keyframes orb-1 {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+    }
+    33% {
+      transform: translate(100px, 50px) scale(1.1);
+    }
+    66% {
+      transform: translate(-50px, -30px) scale(0.9);
+    }
+  }
+
+  @keyframes orb-2 {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+    }
+    33% {
+      transform: translate(-80px, 60px) scale(1.15);
+    }
+    66% {
+      transform: translate(40px, -40px) scale(0.95);
+    }
+  }
+
+  @keyframes orb-3 {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+    }
+    50% {
+      transform: translate(60px, -50px) scale(1.2);
+    }
+  }
+
+  @keyframes orb-4 {
+    0%, 100% {
+      transform: translate(-50%, -50%) scale(1);
+    }
+    33% {
+      transform: translate(-45%, -55%) scale(1.1);
+    }
+    66% {
+      transform: translate(-55%, -45%) scale(0.9);
+    }
+  }
+
+  .animate-orb-1 {
+    animation: orb-1 25s ease-in-out infinite;
+  }
+
+  .animate-orb-2 {
+    animation: orb-2 30s ease-in-out infinite;
+  }
+
+  .animate-orb-3 {
+    animation: orb-3 28s ease-in-out infinite;
+  }
+
+  .animate-orb-4 {
+    animation: orb-4 35s ease-in-out infinite;
+  }
+
+  /* 작은 오브 플로팅 */
+  @keyframes float-slow-1 {
+    0%, 100% {
+      transform: translate(0, 0);
+    }
+    50% {
+      transform: translate(30px, -40px);
+    }
+  }
+
+  @keyframes float-slow-2 {
+    0%, 100% {
+      transform: translate(0, 0);
+    }
+    50% {
+      transform: translate(-40px, 30px);
+    }
+  }
+
+  @keyframes float-slow-3 {
+    0%, 100% {
+      transform: translate(0, 0);
+    }
+    50% {
+      transform: translate(25px, 35px);
+    }
+  }
+
+  .animate-float-slow-1 {
+    animation: float-slow-1 15s ease-in-out infinite;
+  }
+
+  .animate-float-slow-2 {
+    animation: float-slow-2 18s ease-in-out infinite;
+  }
+
+  .animate-float-slow-3 {
+    animation: float-slow-3 20s ease-in-out infinite;
+  }
+
+  /* 부드러운 펄스 */
+  @keyframes pulse-slow {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.05);
+      opacity: 0.9;
+    }
+  }
+
+  .animate-pulse-slow {
+    animation: pulse-slow 3s ease-in-out infinite;
+  }
+
+  /* 부드러운 플로팅 */
+  @keyframes float-gentle {
+    0%, 100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+    33% {
+      transform: translateY(-20px) rotate(3deg);
+    }
+    66% {
+      transform: translateY(-10px) rotate(-3deg);
+    }
+  }
+
+  .animate-float-gentle {
+    animation: float-gentle 12s ease-in-out infinite;
+  }
+
+  /* 부드러운 바운스 */
+  @keyframes bounce-subtle {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
+
+  .animate-bounce-subtle {
+    animation: bounce-subtle 2s ease-in-out infinite;
+  }
+
+  /* 타이핑 커서 깜빡임 */
+  @keyframes blink {
+    0%, 49% {
+      opacity: 1;
+    }
+    50%, 100% {
+      opacity: 0;
+    }
+  }
+
+  .animate-blink {
+    animation: blink 0.8s infinite;
+    color: #2563eb;
+    font-weight: bold;
+  }
+
+  /* 슬라이드 인 애니메이션 */
+  @keyframes slideInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(40px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .animate-slide-in-down {
+    animation: slideInDown 1s ease-out forwards;
+  }
+
+  .animate-slide-in-up {
+    animation: slideInUp 1s ease-out forwards;
+  }
+
+  .animate-slide-in-left {
+    animation: slideInLeft 1s ease-out forwards;
+  }
+
+  /* 애니메이션 딜레이 */
+  .animation-delay-300 {
+    animation-delay: 0.3s;
+    opacity: 0;
+  }
+
+  .animation-delay-600 {
+    animation-delay: 0.6s;
+    opacity: 0;
+  }
+
+  .animation-delay-900 {
+    animation-delay: 0.9s;
+    opacity: 0;
+  }
+
+  /* 회전 애니메이션 */
+  @keyframes spin-slow {
+    from {
+      transform: rotate(0deg) scale(1);
+    }
+    50% {
+      transform: rotate(180deg) scale(1.1);
+    }
+    to {
+      transform: rotate(360deg) scale(1);
+    }
+  }
+
+  @keyframes spin-reverse {
+    from {
+      transform: rotate(360deg) scale(1);
+    }
+    50% {
+      transform: rotate(180deg) scale(1.1);
+    }
+    to {
+      transform: rotate(0deg) scale(1);
+    }
+  }
+
+  .animate-spin-slow {
+    animation: spin-slow 20s ease-in-out infinite;
+  }
+
+  .animate-spin-reverse {
+    animation: spin-reverse 18s ease-in-out infinite;
+  }
+
+  /* 그라데이션 배경 애니메이션 */
+  .bg-size-200 {
+    background-size: 200% auto;
+  }
+
+  .bg-pos-0 {
+    background-position: 0% center;
+  }
+
+  .bg-pos-100 {
+    background-position: 100% center;
+  }
+
+  /* 그림자 효과 */
+  .shadow-3xl {
+    box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.3);
+  }
+
+  /* 카운터 애니메이션 */
+  @keyframes counter-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .counter-animation {
+    animation: counter-up 1s ease-out;
+  }
+`}</style>
     </>
   );
 }
