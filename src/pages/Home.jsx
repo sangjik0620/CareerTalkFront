@@ -1,4 +1,3 @@
-1;
 import { useEffect, useState, useRef } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
@@ -440,7 +439,6 @@ const WaveBackground = () => (
   </div>
 );
 
-// ===== Components =====
 // ===== Navigation (개선된 헤더) =====
 const Navigation = ({ onStart }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -561,6 +559,7 @@ const Navigation = ({ onStart }) => {
     </nav>
   );
 };
+
 // ===== 새로운 배경 디자인: 흐르는 그라데이션 오브 =====
 const FlowingGradientOrbs = () => {
   return (
@@ -647,6 +646,7 @@ const Hero = ({ onStart }) => {
                   <Icons.Video />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-tr from-blue-300/40 via-transparent to-purple-300/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
                 {/* 재생 버튼 효과 */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <div className="w-20 h-20 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-2xl animate-pulse-slow">
@@ -781,11 +781,7 @@ const Features = ({
                 <div
                   className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${f.bgGradient} mb-5 group-hover:scale-110 transition-transform duration-300`}
                 >
-                  <div
-                    className={`bg-gradient-to-br ${f.gradient} bg-clip-text text-transparent`}
-                  >
-                    {f.icon}
-                  </div>
+                  <div className="text-gray-800 group-hover:text-gray-900 transition-colors">{f.icon}</div>
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">
                   {f.title}
@@ -892,83 +888,8 @@ const HowItWorks = () => {
   );
 };
 
-// ===== Statistics (밝은 톤) =====
-const Statistics = () => {
-  const stats = [
-    {
-      icon: <Icons.Users />,
-      number: "10,000+",
-      label: "누적 사용자",
-      gradient: "from-blue-500 to-indigo-500",
-      bgGradient: "from-blue-50 to-indigo-50",
-    },
-    {
-      icon: <Icons.TrendingUp />,
-      number: "95%",
-      label: "만족도",
-      gradient: "from-indigo-500 to-purple-500",
-      bgGradient: "from-indigo-50 to-purple-50",
-    },
-    {
-      icon: <Icons.CheckCircle />,
-      number: "50,000+",
-      label: "완료된 면접 세션",
-      gradient: "from-purple-500 to-pink-500",
-      bgGradient: "from-purple-50 to-pink-50",
-    },
-    {
-      icon: <Icons.Award />,
-      number: "4.8/5.0",
-      label: "평균 개선 점수",
-      gradient: "from-pink-500 to-rose-500",
-      bgGradient: "from-pink-50 to-rose-50",
-    },
-  ];
-
-  return (
-    <section className="py-24 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative overflow-hidden">
-      {/* 배경 장식 */}
-      <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-300 opacity-20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-300 opacity-20 rounded-full blur-3xl"></div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
-            <div
-              key={index}
-              className={`group text-center bg-white rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:scale-105 border border-gray-100`}
-              data-aos="zoom-in"
-              data-aos-delay={index * 100}
-            >
-              <div
-                className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${stat.bgGradient} mb-4 group-hover:scale-110 transition-transform duration-300`}
-              >
-                <div
-                  className={`bg-gradient-to-br ${stat.gradient} bg-clip-text text-transparent`}
-                >
-                  {stat.icon}
-                </div>
-              </div>
-              <div
-                className={`text-4xl font-bold mb-2 bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}
-              >
-                {stat.number}
-              </div>
-              <div className="text-gray-600 text-lg font-medium">
-                {stat.label}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// ===== Testimonials (밝은 톤) =====
-const Testimonials = () => {
+// ===== TestimonialsInner (후기 '내용만') =====
+const TestimonialsInner = () => {
   const testimonials = [
     {
       name: "김민준",
@@ -1009,56 +930,87 @@ const Testimonials = () => {
   ];
 
   return (
-    <section id="testimonials" className="py-24 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16" data-aos="fade-up">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            성공한{" "}
-            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              사용자 후기
-            </span>
-          </h2>
-          <p className="text-xl text-gray-600">
-            CareerTalk와 함께 꿈의 직장에 합격한 분들의 이야기
-          </p>
-        </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="text-center mb-16" data-aos="fade-up">
+        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+          성공한{" "}
+          <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            사용자 후기
+          </span>
+        </h2>
+        <p className="text-xl text-gray-600">
+          CareerTalk와 함께 꿈의 직장에 합격한 분들의 이야기
+        </p>
+      </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {testimonials.map((t, index) => (
-            <div
-              key={index}
-              className="group bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-gray-100"
-              data-aos="fade-up"
-              data-aos-delay={index * 100}
-            >
-              <div className="flex mb-4">
-                {[...Array(t.rating)].map((_, i) => (
-                  <svg
-                    key={i}
-                    className="w-5 h-5 text-yellow-400"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                  </svg>
-                ))}
-              </div>
-              <p className="text-gray-600 mb-6 italic leading-relaxed">
-                "{t.content}"
-              </p>
-              <div className="border-t pt-4 border-gray-100">
-                <div className="font-bold text-gray-900">{t.name}</div>
-                <div className="text-sm text-gray-600 mt-1">{t.role}</div>
-                <div
-                  className={`text-sm font-bold mt-1 bg-gradient-to-r ${t.gradient} bg-clip-text text-transparent`}
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {testimonials.map((t, index) => (
+          <div
+            key={index}
+            className="group bg-white rounded-2xl p-6 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-gray-100"
+            data-aos="fade-up"
+            data-aos-delay={index * 100}
+          >
+            <div className="flex mb-4">
+              {[...Array(t.rating)].map((_, i) => (
+                <svg
+                  key={i}
+                  className="w-5 h-5 text-yellow-400"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
                 >
-                  {t.company}
-                </div>
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              ))}
+            </div>
+
+            <p className="text-gray-600 mb-6 italic leading-relaxed">
+              "{t.content}"
+            </p>
+
+            <div className="border-t pt-4 border-gray-100">
+              <div className="font-bold text-gray-900">{t.name}</div>
+              <div className="text-sm text-gray-600 mt-1">{t.role}</div>
+              <div
+                className={`text-sm font-bold mt-1 bg-gradient-to-r ${t.gradient} bg-clip-text text-transparent`}
+              >
+                {t.company}
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
+    </div>
+  );
+};
+
+// ===== Statistics (껍데기: 그라데이션 배경 유지 + 내용은 후기) =====
+const Statistics = () => {
+  return (
+    <section
+      id="testimonials"
+      className="py-24 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative overflow-hidden"
+    >
+      {/* 배경 장식 그대로 */}
+      <div className="absolute inset-0">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-300 opacity-20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-300 opacity-20 rounded-full blur-3xl"></div>
+      </div>
+
+      {/* ✅ 내용만 후기 */}
+      <div className="relative z-10">
+        <TestimonialsInner />
+      </div>
+    </section>
+  );
+};
+
+// ===== Testimonials (껍데기: 흰 배경 유지 + 내용은 통계) =====
+const Testimonials = () => {
+  return (
+    <section className="py-24 bg-white">
+      {/* ✅ 내용만 통계 */}
+      <StatisticsInner />
     </section>
   );
 };
@@ -1188,7 +1140,7 @@ const CTA = ({ onStart }) => (
 const Footer = () => (
   <footer className="bg-gray-50 text-gray-700 py-12 border-t border-gray-200">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="grid md:grid-cols-4 gap-8 mb-8">
+      <div className="grid md:grid-cols-2 gap-8 mb-8 items-start">
         <div>
           <h3 className="text-2xl font-bold mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
             CareerTalk
@@ -1196,98 +1148,23 @@ const Footer = () => (
           <p className="text-gray-600">AI 기반 취업 면접 준비의 새로운 기준</p>
         </div>
 
-        <div>
-          <h4 className="font-bold mb-4 text-gray-900">서비스</h4>
-          <ul className="space-y-2 text-gray-600">
-            <li>
-              <a href="#" className="hover:text-blue-600 transition">
-                AI 자기소개서 분석
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-blue-600 transition">
-                포트폴리오 피드백
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-blue-600 transition">
-                모의 면접
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-blue-600 transition">
-                가격 안내
-              </a>
-            </li>
-          </ul>
-        </div>
-
-        <div>
-          <h4 className="font-bold mb-4 text-gray-900">회사</h4>
-          <ul className="space-y-2 text-gray-600">
-            <li>
-              <a href="#" className="hover:text-blue-600 transition">
-                회사 소개
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-blue-600 transition">
-                채용
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-blue-600 transition">
-                파트너십
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:text-blue-600 transition">
-                블로그
-              </a>
-            </li>
-          </ul>
-        </div>
-
-        <div>
-          <h4 className="font-bold mb-4 text-gray-900">문의</h4>
-          <ul className="space-y-3 text-gray-600">
-            <li className="flex items-center gap-2">
-              <Icons.Mail />
-              <span>contact@careertalk.com</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <Icons.Phone />
-              <span>02-1234-5678</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <Icons.MapPin />
-              <span>서울시 강남구 테헤란로</span>
-            </li>
-          </ul>
+        <div className="md:text-right">
+          <p className="text-gray-900 font-bold whitespace-nowrap">
+            해당 홈페이지는 교육용으로 만들어진 홈페이지입니다.
+          </p>
         </div>
       </div>
 
       <div className="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center">
-        <p className="text-gray-600 text-sm">
-          © 2026 CareerTalk. All rights reserved.
-        </p>
+        <p className="text-gray-600 text-sm">© 2026 CareerTalk. All rights reserved.</p>
         <div className="flex gap-6 mt-4 md:mt-0">
-          <a
-            href="#"
-            className="text-gray-600 hover:text-blue-600 transition text-sm"
-          >
+          <a href="#" className="text-gray-600 hover:text-blue-600 transition text-sm">
             이용약관
           </a>
-          <a
-            href="#"
-            className="text-gray-600 hover:text-blue-600 transition text-sm"
-          >
+          <a href="#" className="text-gray-600 hover:text-blue-600 transition text-sm">
             개인정보처리방침
           </a>
-          <a
-            href="#"
-            className="text-gray-600 hover:text-blue-600 transition text-sm"
-          >
+          <a href="#" className="text-gray-600 hover:text-blue-600 transition text-sm">
             쿠키 정책
           </a>
         </div>
@@ -1319,10 +1196,8 @@ export default function Home() {
         onOpenPortfolioModal={() => setIsPortfolioModalOpen(true)}
         onOpenCoverLetterModal={() => setIsCoverLetterModalOpen(true)}
       />
-
       <HowItWorks />
       <Statistics />
-      <Testimonials />
       <FAQ />
       <CTA onStart={goInterview} />
       <Footer />
@@ -1348,297 +1223,96 @@ export default function Home() {
       <style>{`
   /* 흐르는 그라데이션 오브 애니메이션 */
   @keyframes orb-1 {
-    0%, 100% {
-      transform: translate(0, 0) scale(1);
-    }
-    33% {
-      transform: translate(100px, 50px) scale(1.1);
-    }
-    66% {
-      transform: translate(-50px, -30px) scale(0.9);
-    }
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(100px, 50px) scale(1.1); }
+    66% { transform: translate(-50px, -30px) scale(0.9); }
   }
-
   @keyframes orb-2 {
-    0%, 100% {
-      transform: translate(0, 0) scale(1);
-    }
-    33% {
-      transform: translate(-80px, 60px) scale(1.15);
-    }
-    66% {
-      transform: translate(40px, -40px) scale(0.95);
-    }
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(-80px, 60px) scale(1.15); }
+    66% { transform: translate(40px, -40px) scale(0.95); }
   }
-
   @keyframes orb-3 {
-    0%, 100% {
-      transform: translate(0, 0) scale(1);
-    }
-    50% {
-      transform: translate(60px, -50px) scale(1.2);
-    }
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(60px, -50px) scale(1.2); }
   }
-
   @keyframes orb-4 {
-    0%, 100% {
-      transform: translate(-50%, -50%) scale(1);
-    }
-    33% {
-      transform: translate(-45%, -55%) scale(1.1);
-    }
-    66% {
-      transform: translate(-55%, -45%) scale(0.9);
-    }
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    33% { transform: translate(-45%, -55%) scale(1.1); }
+    66% { transform: translate(-55%, -45%) scale(0.9); }
   }
 
-  .animate-orb-1 {
-    animation: orb-1 25s ease-in-out infinite;
-  }
-
-  .animate-orb-2 {
-    animation: orb-2 30s ease-in-out infinite;
-  }
-
-  .animate-orb-3 {
-    animation: orb-3 28s ease-in-out infinite;
-  }
-
-  .animate-orb-4 {
-    animation: orb-4 35s ease-in-out infinite;
-  }
+  .animate-orb-1 { animation: orb-1 25s ease-in-out infinite; }
+  .animate-orb-2 { animation: orb-2 30s ease-in-out infinite; }
+  .animate-orb-3 { animation: orb-3 28s ease-in-out infinite; }
+  .animate-orb-4 { animation: orb-4 35s ease-in-out infinite; }
 
   /* 작은 오브 플로팅 */
-  @keyframes float-slow-1 {
-    0%, 100% {
-      transform: translate(0, 0);
-    }
-    50% {
-      transform: translate(30px, -40px);
-    }
-  }
-
-  @keyframes float-slow-2 {
-    0%, 100% {
-      transform: translate(0, 0);
-    }
-    50% {
-      transform: translate(-40px, 30px);
-    }
-  }
-
-  @keyframes float-slow-3 {
-    0%, 100% {
-      transform: translate(0, 0);
-    }
-    50% {
-      transform: translate(25px, 35px);
-    }
-  }
-
-  .animate-float-slow-1 {
-    animation: float-slow-1 15s ease-in-out infinite;
-  }
-
-  .animate-float-slow-2 {
-    animation: float-slow-2 18s ease-in-out infinite;
-  }
-
-  .animate-float-slow-3 {
-    animation: float-slow-3 20s ease-in-out infinite;
-  }
+  @keyframes float-slow-1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(30px,-40px)} }
+  @keyframes float-slow-2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-40px,30px)} }
+  @keyframes float-slow-3 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(25px,35px)} }
+  .animate-float-slow-1 { animation: float-slow-1 15s ease-in-out infinite; }
+  .animate-float-slow-2 { animation: float-slow-2 18s ease-in-out infinite; }
+  .animate-float-slow-3 { animation: float-slow-3 20s ease-in-out infinite; }
 
   /* 부드러운 펄스 */
-  @keyframes pulse-slow {
-    0%, 100% {
-      transform: scale(1);
-      opacity: 1;
-    }
-    50% {
-      transform: scale(1.05);
-      opacity: 0.9;
-    }
-  }
-
-  .animate-pulse-slow {
-    animation: pulse-slow 3s ease-in-out infinite;
-  }
+  @keyframes pulse-slow { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.05);opacity:.9} }
+  .animate-pulse-slow { animation: pulse-slow 3s ease-in-out infinite; }
 
   /* 부드러운 플로팅 */
   @keyframes float-gentle {
-    0%, 100% {
-      transform: translateY(0px) rotate(0deg);
-    }
-    33% {
-      transform: translateY(-20px) rotate(3deg);
-    }
-    66% {
-      transform: translateY(-10px) rotate(-3deg);
-    }
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    33% { transform: translateY(-20px) rotate(3deg); }
+    66% { transform: translateY(-10px) rotate(-3deg); }
   }
-
-  .animate-float-gentle {
-    animation: float-gentle 12s ease-in-out infinite;
-  }
+  .animate-float-gentle { animation: float-gentle 12s ease-in-out infinite; }
 
   /* 부드러운 바운스 */
-  @keyframes bounce-subtle {
-    0%, 100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-5px);
-    }
-  }
-
-  .animate-bounce-subtle {
-    animation: bounce-subtle 2s ease-in-out infinite;
-  }
+  @keyframes bounce-subtle { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+  .animate-bounce-subtle { animation: bounce-subtle 2s ease-in-out infinite; }
 
   /* 타이핑 커서 깜빡임 */
-  @keyframes blink {
-    0%, 49% {
-      opacity: 1;
-    }
-    50%, 100% {
-      opacity: 0;
-    }
-  }
-
-  .animate-blink {
-    animation: blink 0.8s infinite;
-    color: #2563eb;
-    font-weight: bold;
-  }
+  @keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+  .animate-blink { animation: blink 0.8s infinite; color:#2563eb; font-weight:bold; }
 
   /* 슬라이드 인 애니메이션 */
-  @keyframes slideInDown {
-    from {
-      opacity: 0;
-      transform: translateY(-30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes slideInUp {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes slideInLeft {
-    from {
-      opacity: 0;
-      transform: translateX(40px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
-  .animate-slide-in-down {
-    animation: slideInDown 1s ease-out forwards;
-  }
-
-  .animate-slide-in-up {
-    animation: slideInUp 1s ease-out forwards;
-  }
-
-  .animate-slide-in-left {
-    animation: slideInLeft 1s ease-out forwards;
-  }
+  @keyframes slideInDown { from{opacity:0;transform:translateY(-30px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes slideInUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes slideInLeft { from{opacity:0;transform:translateX(40px)} to{opacity:1;transform:translateX(0)} }
+  .animate-slide-in-down { animation: slideInDown 1s ease-out forwards; }
+  .animate-slide-in-up { animation: slideInUp 1s ease-out forwards; }
+  .animate-slide-in-left { animation: slideInLeft 1s ease-out forwards; }
 
   /* 애니메이션 딜레이 */
-  .animation-delay-300 {
-    animation-delay: 0.3s;
-    opacity: 0;
-  }
-
-  .animation-delay-600 {
-    animation-delay: 0.6s;
-    opacity: 0;
-  }
-
-  .animation-delay-900 {
-    animation-delay: 0.9s;
-    opacity: 0;
-  }
+  .animation-delay-300 { animation-delay: 0.3s; opacity: 0; }
+  .animation-delay-600 { animation-delay: 0.6s; opacity: 0; }
+  .animation-delay-900 { animation-delay: 0.9s; opacity: 0; }
 
   /* 회전 애니메이션 */
   @keyframes spin-slow {
-    from {
-      transform: rotate(0deg) scale(1);
-    }
-    50% {
-      transform: rotate(180deg) scale(1.1);
-    }
-    to {
-      transform: rotate(360deg) scale(1);
-    }
+    from { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(180deg) scale(1.1); }
+    to { transform: rotate(360deg) scale(1); }
   }
-
   @keyframes spin-reverse {
-    from {
-      transform: rotate(360deg) scale(1);
-    }
-    50% {
-      transform: rotate(180deg) scale(1.1);
-    }
-    to {
-      transform: rotate(0deg) scale(1);
-    }
+    from { transform: rotate(360deg) scale(1); }
+    50% { transform: rotate(180deg) scale(1.1); }
+    to { transform: rotate(0deg) scale(1); }
   }
-
-  .animate-spin-slow {
-    animation: spin-slow 20s ease-in-out infinite;
-  }
-
-  .animate-spin-reverse {
-    animation: spin-reverse 18s ease-in-out infinite;
-  }
+  .animate-spin-slow { animation: spin-slow 20s ease-in-out infinite; }
+  .animate-spin-reverse { animation: spin-reverse 18s ease-in-out infinite; }
 
   /* 그라데이션 배경 애니메이션 */
-  .bg-size-200 {
-    background-size: 200% auto;
-  }
-
-  .bg-pos-0 {
-    background-position: 0% center;
-  }
-
-  .bg-pos-100 {
-    background-position: 100% center;
-  }
+  .bg-size-200 { background-size: 200% auto; }
+  .bg-pos-0 { background-position: 0% center; }
+  .bg-pos-100 { background-position: 100% center; }
 
   /* 그림자 효과 */
-  .shadow-3xl {
-    box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.3);
-  }
+  .shadow-3xl { box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.3); }
 
   /* 카운터 애니메이션 */
-  @keyframes counter-up {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .counter-animation {
-    animation: counter-up 1s ease-out;
-  }
+  @keyframes counter-up { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+  .counter-animation { animation: counter-up 1s ease-out; }
 `}</style>
     </>
   );
