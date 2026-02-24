@@ -21,8 +21,14 @@
   min-height: 100vh;
   color: var(--text);
   background: linear-gradient(to bottom, #f8fafc 0%, #e0e7ff 100%);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Noto Sans KR", Arial;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    "Noto Sans KR",
+    Arial;
 }
 
 .iaPage::before,
@@ -139,7 +145,9 @@
   font-weight: 700;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 .iaBtn:hover {
   transform: scale(1.03);
@@ -166,7 +174,10 @@
   color: #64748b;
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
-  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease,
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
     color 0.2s ease;
 }
 .iaTab:hover {
@@ -618,7 +629,6 @@
   width: 100%;
   background: #fff;
   border: 0;
-  cursor: pointer;
   padding: 12px;
   display: flex;
   align-items: center;
@@ -893,6 +903,74 @@
   font-weight: 900;
   color: #7f1d1d;
 }
+/* Capability feedback UI (right panel tidy) */
+.iaActionGroup {
+  grid-template-columns: 190px 1fr;
+}
+
+.iaFeedbackRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 980px) {
+  .iaFeedbackRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.iaFeedbackBlock {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  background: #fff;
+  display: grid;
+  gap: 6px;
+}
+
+.iaFeedbackBlock .k {
+  font-size: 12px;
+  font-weight: 950;
+  letter-spacing: -0.2px;
+  color: #334155;
+}
+
+.iaFeedbackBlock .v {
+  font-size: 13px;
+  line-height: 1.6;
+  font-weight: 850;
+  color: #27304a;
+  word-break: keep-all;
+}
+
+.iaFeedbackBlock.good {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.22);
+}
+
+.iaFeedbackBlock.bad {
+  background: rgba(239, 68, 68, 0.07);
+  border-color: rgba(239, 68, 68, 0.18);
+}
+
+.iaActionCard {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  padding: 12px;
+}
+
+.iaActionCardTitle {
+  font-size: 12px;
+  font-weight: 950;
+  color: #334155;
+  margin-bottom: 6px;
+}
+
+.iaActionListClean {
+  margin-top: 8px;
+}
 
 /* Compare summary */
 .iaCompareSummary {
@@ -1004,7 +1082,230 @@
   color: var(--brand-700) !important;
 }
 .iaPage.pdf-mode {
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial !important;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    Arial !important;
   -webkit-font-smoothing: antialiased;
   text-rendering: geometricPrecision;
+}
+/* ===== Home.jsx 톤 매칭 오버라이드 (append) ===== */
+
+.iaPage {
+  --bg: #f6f9ff;
+  --surface: #ffffff;
+  --surface2: rgba(59, 130, 246, 0.06);
+  --text: #0f172a;
+  --muted: #64748b;
+  --line: #e2e8f0;
+
+  --brand: #2563eb;
+  --brand-700: #4f46e5;
+  --brand-ink: #1e3a8a;
+
+  background: linear-gradient(180deg, #eff6ff 0%, #eef2ff 55%, #ffffff 100%);
+}
+
+.iaPage::before {
+  background: rgba(59, 130, 246, 0.08);
+}
+.iaPage::after {
+  background: rgba(79, 70, 229, 0.06);
+}
+
+/* Top (glass like Home navigation) */
+.iaTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px;
+
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 24px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+
+  position: sticky;
+  top: 14px;
+  z-index: 5;
+}
+
+.iaTopLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.iaBrand {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  background: linear-gradient(90deg, #2563eb 0%, #4f46e5 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  flex: 0 0 auto;
+}
+
+.iaTopTitles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.iaTopTitle {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: #0f172a;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.iaTopSubtitle {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.iaTopActions {
+  display: flex;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+/* Buttons */
+.iaBtn {
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: rgba(255, 255, 255, 0.9);
+  color: #0f172a;
+
+  border-radius: 999px;
+  height: 40px;
+  padding: 0 16px;
+  font-weight: 800;
+
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+  cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.iaBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(15, 23, 42, 0.12);
+  border-color: rgba(203, 213, 225, 0.95);
+}
+
+.iaBtn:active {
+  transform: translateY(0px);
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.1);
+}
+
+.iaBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.iaBtnPrimary {
+  border: none;
+  background: linear-gradient(90deg, #2563eb 0%, #4f46e5 100%);
+  color: #fff;
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.25);
+}
+
+.iaBtnPrimary:hover {
+  box-shadow: 0 16px 30px rgba(37, 99, 235, 0.32);
+}
+
+/* Tabs */
+.iaTab {
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  background: rgba(255, 255, 255, 0.8);
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  border-radius: 999px;
+  height: 38px;
+  padding: 0 14px;
+  font-weight: 800;
+  color: #334155;
+
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+  transition:
+    background 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.iaTab:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.1);
+  border-color: rgba(203, 213, 225, 1);
+}
+
+.iaTab.on {
+  border: none;
+  background: linear-gradient(90deg, #2563eb 0%, #4f46e5 100%);
+  color: #fff;
+  box-shadow: 0 14px 26px rgba(37, 99, 235, 0.22);
+}
+
+/* Cards (glass) */
+.iaCard {
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 24px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.1);
+
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+/* PDF 모드에서 glass/스티키 제거 (캡쳐 안정화) */
+.iaPage.pdf-mode .iaTop {
+  position: relative !important;
+  top: auto !important;
+
+  background: #fff !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  border: none !important;
+
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+
+  padding: 14px 16px !important;
+}
+
+.iaPage.pdf-mode .iaCard,
+.iaPage.pdf-mode .iaBox,
+.iaPage.pdf-mode .iaKpiCard,
+.iaPage.pdf-mode .iaQItem {
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
