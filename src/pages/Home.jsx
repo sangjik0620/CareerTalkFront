@@ -4,6 +4,7 @@ import "aos/dist/aos.css";
 import { useNavigate } from "react-router-dom";
 import PortfolioUploadModal from "../components/portfolio/PortfolioUploadModal";
 import CIAnalysis from "./ClAnalysis";
+import logo from "../img/logo.png";
 
 // ===== Icons (SVG) =====
 const Icons = {
@@ -465,10 +466,12 @@ const Navigation = ({ onStart }) => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          <div className="flex items-center">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              CareerTalk
-            </h1>
+          <div className="flex justify-between items-center h-32">
+            <img
+              src={logo}
+              alt="CareerTalk Logo"
+              className="h-44 w-auto object-contain"
+            />
           </div>
 
           {/* Desktop Menu */}
@@ -781,7 +784,9 @@ const Features = ({
                 <div
                   className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${f.bgGradient} mb-5 group-hover:scale-110 transition-transform duration-300`}
                 >
-                  <div className="text-gray-800 group-hover:text-gray-900 transition-colors">{f.icon}</div>
+                  <div className="text-gray-800 group-hover:text-gray-900 transition-colors">
+                    {f.icon}
+                  </div>
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-3">
                   {f.title}
@@ -1156,15 +1161,26 @@ const Footer = () => (
       </div>
 
       <div className="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center">
-        <p className="text-gray-600 text-sm">© 2026 CareerTalk. All rights reserved.</p>
+        <p className="text-gray-600 text-sm">
+          © 2026 CareerTalk. All rights reserved.
+        </p>
         <div className="flex gap-6 mt-4 md:mt-0">
-          <a href="#" className="text-gray-600 hover:text-blue-600 transition text-sm">
+          <a
+            href="#"
+            className="text-gray-600 hover:text-blue-600 transition text-sm"
+          >
             이용약관
           </a>
-          <a href="#" className="text-gray-600 hover:text-blue-600 transition text-sm">
+          <a
+            href="#"
+            className="text-gray-600 hover:text-blue-600 transition text-sm"
+          >
             개인정보처리방침
           </a>
-          <a href="#" className="text-gray-600 hover:text-blue-600 transition text-sm">
+          <a
+            href="#"
+            className="text-gray-600 hover:text-blue-600 transition text-sm"
+          >
             쿠키 정책
           </a>
         </div>
