@@ -12,6 +12,8 @@ import PortfolioResultPage from "./components/portfolio/PortfolioResultPage"; //
 import Login from "./pages/Login";  
 import Signup from "./pages/Signup";
 import SocialSignup from "./pages/SocialSignup";
+import Evaluation from "./pages/Evaluation";
+import PfAnalysis from "./pages/PfAnalysis";
 
 function App() {
   return (
