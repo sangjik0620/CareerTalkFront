@@ -78,9 +78,11 @@ const PortfolioUploadModal = ({ isOpen, onClose }) => {
       setIsAnalyzing(false);
       onClose();
 
-      // ⭐ 핵심: 결과 페이지로 이동하면서 state에 데이터를 담아 보냅니다.
+      const result = response.data;
 
-      navigate("/portfolio/result", { state: { analysisData: response.data } });
+      navigate(`/portfolio/result/${result.analysisId}`, {
+        state: { analysisData: result },
+      });
     } catch (error) {
       console.error("분석 실패:", error);
       alert("분석 중 에러가 발생했습니다.");
