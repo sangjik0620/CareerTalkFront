@@ -3,7 +3,7 @@ import React, { useRef, useState } from "react";
 function CIAnalysis({ isOpen, onClose }) {
   const [mode, setMode] = useState("HOME"); // HOME(PDF) | FORM
 
-  // ⭐ 2. isOpen이 false면 아무것도 화면에 그리지 않습니다. (모달 닫힘)
+ 
   if (!isOpen) return null;
 
   return (
@@ -223,7 +223,6 @@ function FormView() {
   );
 }
 
-/** ===== Styles (메인 페이지 톤 맞춤) ===== */
 
 const overlayStyle = {
   position: "fixed",
