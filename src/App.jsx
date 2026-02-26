@@ -7,7 +7,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 // 페이지 및 컴포넌트 임포트
 import Home from "./pages/Home";
 import InAnalysis from "./pages/InAnalysis";
-import PfAnalysis from "./pages/PfAnalysis";
 import InterviewSession from "./pages/interview/InterviewSession";
 import InterviewSelect from "./pages/interview/InterviewSelect"; // 이름을 InterviewSelect로 수정
 import PortfolioResultPage from "./components/portfolio/PortfolioResultPage"; // 결과 페이지 임포트 추가
@@ -23,8 +22,11 @@ function App() {
         <Route path="/interview/result" element={<InAnalysis />} />
 
         {/* 포트폴리오 관련 라우트 */}
-        <Route path="/portfolio" element={<PfAnalysis />} />
-        <Route path="/portfolio/result" element={<PortfolioResultPage />} />
+
+        <Route
+          path="/portfolio/result/:analysisId"
+          element={<PortfolioResultPage />}
+        />
       </Routes>
     </BrowserRouter>
   );

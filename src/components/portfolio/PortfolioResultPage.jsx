@@ -1,24 +1,62 @@
-import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useLocation, useParams, useNavigate } from "react-router-dom"; // ⭐ useParams, useNavigate 추가!
 import PortfolioSummaryCard from "./PortfolioSummaryCard";
 import PortfolioRadarChart from "./PortfolioRadarChart";
 import PortfolioQuestionItem from "./PortfolioQuestionItem";
 
 const PortfolioResultPage = () => {
+  const { analysisId } = useParams(); // ⭐ 1. 주소창에서 분석 번호(analysisId) 가져오기
   const location = useLocation();
+  const navigate = useNavigate(); // ⭐ 2. 페이지 이동을 위한 훅
 
-  const [currentData, setCurrentData] = useState(location.state?.analysisData);
+  // state로 넘어온 데이터가 있으면 그걸 쓰고, 없으면 null로 시작
+  const [currentData, setCurrentData] = useState(
+    location.state?.analysisData || null,
+  );
+  const [isLoading, setIsLoading] = useState(!currentData); // 초기 데이터 없으면 로딩 켜기
   const [isReanalyzing, setIsReanalyzing] = useState(false);
 
-  //  이제 백엔드에서 넘겨준 currentData.portfolioId 를 아주 잘 찾을 수 있습니다!
+  // 재분석 API를 찌르기 위해 포트폴리오 번호 찾기
   const portfolioId = currentData?.portfolioId;
+
+  // ⭐ 3. 새로고침 하거나 URL이 바뀔 때 백엔드에서 데이터 가져오기!
+  useEffect(() => {
+    // 이미 데이터가 있고, 그 데이터의 ID가 현재 주소창의 ID와 같으면 서버 통신 안 함
+    if (currentData && String(currentData.analysisId) === String(analysisId)) {
+      setIsLoading(false);
+      return;
+    }
+
+    const fetchResultData = async () => {
+      setIsLoading(true);
+      try {
+        // 백엔드 GET API 호출
+        const response = await fetch(
+          `http://localhost:8080/api/portfolios/${analysisId}/result`,
+        );
+        if (!response.ok) throw new Error("결과를 불러오지 못했습니다.");
+
+        const data = await response.json();
+        setCurrentData(data);
+      } catch (error) {
+        console.error(error);
+        alert("데이터를 불러오는데 실패했습니다.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (analysisId) {
+      fetchResultData();
+    }
+  }, [analysisId]); // 주소창 번호가 바뀔 때마다 실행
 
   const handleReanalyze = async () => {
     if (!portfolioId) {
       alert("포트폴리오 식별 정보가 없어 재분석할 수 없습니다.");
       return;
     }
-    if (!window.confirm("재분석할까요?")) return;
+    if (!window.confirm("재분석할까요")) return;
 
     setIsReanalyzing(true);
     try {
@@ -32,8 +70,12 @@ const PortfolioResultPage = () => {
       if (!response.ok) throw new Error("재분석 실패");
 
       const newData = await response.json();
-      setCurrentData(newData);
-      alert(" 재분석이 완료되었습니다!");
+      alert("재분석이 완료되었습니다!");
+
+      // ⭐ 4. 핵심: 재분석이 끝나면 새로운 분석 번호가 담긴 URL로 샥! 이동합니다!
+      navigate(`/portfolio/result/${newData.analysisId}`, {
+        state: { analysisData: newData },
+      });
     } catch (error) {
       console.error(error);
       alert("재분석 중 문제가 발생했습니다.");
@@ -42,6 +84,19 @@ const PortfolioResultPage = () => {
     }
   };
 
+  // ⭐ 로딩 중일 때 보여줄 화면
+  if (isLoading) {
+    return (
+      <div className="flex flex-col justify-center items-center h-screen bg-gray-50">
+        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-gray-600 font-medium">
+          분석 결과를 불러오는 중입니다...
+        </p>
+      </div>
+    );
+  }
+
+  // 데이터가 없을 때 보여줄 화면
   if (!currentData) {
     return (
       <div className="flex flex-col justify-center items-center h-screen bg-gray-50">
@@ -56,7 +111,7 @@ const PortfolioResultPage = () => {
 
   return (
     <div className="max-w-5xl mx-auto p-6 bg-gray-50 min-h-screen pt-10 relative">
-      {/* 상단 제목 영역 (버튼은 아래로 이사 갔습니다!) */}
+      {/* 상단 제목 영역 */}
       <h1 className="text-3xl font-extrabold text-gray-900 mb-8 tracking-tight">
         포트폴리오 분석 결과
       </h1>
@@ -90,7 +145,7 @@ const PortfolioResultPage = () => {
         </div>
       </div>
 
-      {/*  우측 하단으로 이동한 재분석 버튼 영역 */}
+      {/* 우측 하단 재분석 버튼 */}
       <div className="flex justify-end pb-10">
         <button
           onClick={handleReanalyze}
