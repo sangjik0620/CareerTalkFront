@@ -11,6 +11,9 @@ import PfAnalysis from "./pages/PfAnalysis";
 import InterviewSession from "./pages/interview/InterviewSession";
 import InterviewSelect from "./pages/interview/InterviewSelect"; // 이름을 InterviewSelect로 수정
 import PortfolioResultPage from "./components/portfolio/PortfolioResultPage"; // 결과 페이지 임포트 추가
+import Login from "./pages/Login";  
+import Signup from "./pages/Signup";
+import SocialSignup from "./pages/SocialSignup";
 
 function App() {
   return (
@@ -25,6 +28,13 @@ function App() {
         {/* 포트폴리오 관련 라우트 */}
         <Route path="/portfolio" element={<PfAnalysis />} />
         <Route path="/portfolio/result" element={<PortfolioResultPage />} />
+
+        {/* 로그인 관련 라우트 */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+
+        {/* 소셜 로그인 관련 라우트 */}
+        <Route path="/social-signup" element={<SocialSignup />} />
       </Routes>
     </BrowserRouter>
   );
