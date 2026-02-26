@@ -10,6 +10,7 @@ import InAnalysis from "./pages/InAnalysis";
 import InterviewSession from "./pages/interview/InterviewSession";
 import InterviewSelect from "./pages/interview/InterviewSelect"; // 이름을 InterviewSelect로 수정
 import PortfolioResultPage from "./components/portfolio/PortfolioResultPage"; // 결과 페이지 임포트 추가
+import Evaluation from "./pages/Evaluation";
 
 function App() {
   return (
@@ -19,7 +20,7 @@ function App() {
         {/* 면접 관련 라우트 */}
         <Route path="/interview/select" element={<InterviewSelect />} />
         <Route path="/interview/session" element={<InterviewSession />} />
-        <Route path="/interview/result" element={<InAnalysis />} />
+        <Route path="/interview/result" element={<Evaluation />} />
 
         {/* 포트폴리오 관련 라우트 */}
 
