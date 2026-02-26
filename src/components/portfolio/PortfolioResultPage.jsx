@@ -1,74 +1,84 @@
-import React from "react";
-// ⭐ 경로를 ./ (같은 폴더) 로 수정했습니다!
+import React, { useState } from "react";
+import { useLocation } from "react-router-dom";
 import PortfolioSummaryCard from "./PortfolioSummaryCard";
 import PortfolioRadarChart from "./PortfolioRadarChart";
 import PortfolioQuestionItem from "./PortfolioQuestionItem";
 
-// 화면에 띄워볼 임시(Dummy) 데이터
-const DUMMY_DATA = {
-  targetJob: "백엔드 개발자",
-  oneLineReview:
-    "탄탄한 기본기를 바탕으로 문제 해결 과정이 돋보이는 훌륭한 포트폴리오입니다.",
-  summaryDetail:
-    "지원자님은 Spring Boot와 JPA를 활용한 백엔드 아키텍처 설계에 높은 이해도를 보여주고 있습니다. 특히 대용량 트래픽 문제를 식별하고 캐싱을 통해 해결한 '문제 해결력'이 매우 인상적입니다. 다만, 팀원들과 어떻게 의견을 조율하며 프로젝트를 진행했는지에 대한 '협업·소통' 관련 기록이 조금 더 보완된다면 완벽할 것 같습니다.",
-
-  chartData: [
-    { subject: "직무 적합성", score: 90, fullMark: 100 },
-    { subject: "문제 해결력", score: 95, fullMark: 100 },
-    { subject: "프로젝트 완성도", score: 85, fullMark: 100 },
-    { subject: "협업·소통", score: 60, fullMark: 100 },
-    { subject: "성장 잠재력", score: 80, fullMark: 100 },
-  ],
-
-  questions: [
-    {
-      q: "포트폴리오를 보면 캐싱을 적용해 성능을 개선하셨는데, 이때 발생할 수 있는 '데이터 정합성' 문제는 어떻게 해결하셨나요?",
-      intent:
-        "단순히 기술을 써본 것을 넘어, 기술의 한계점까지 깊이 이해하고 있는지 검증",
-    },
-    {
-      q: "팀 프로젝트 진행 시 의견 충돌이 발생했을 때, 본인만의 조율 방식이 있다면 사례를 들어 설명해주세요.",
-      intent: "협업 능력 및 소프트 스킬 파악",
-    },
-    {
-      q: "이 프로젝트를 다시 처음부터 개발한다면, 아키텍처 측면에서 어떤 부분을 다르게 설계하고 싶으신가요?",
-      intent: "프로젝트를 통한 본인의 성장 포인트와 논리적 사고력 확인",
-    },
-  ],
-};
-
 const PortfolioResultPage = () => {
+  const location = useLocation();
+
+  const [currentData, setCurrentData] = useState(location.state?.analysisData);
+  const [isReanalyzing, setIsReanalyzing] = useState(false);
+
+  //  이제 백엔드에서 넘겨준 currentData.portfolioId 를 아주 잘 찾을 수 있습니다!
+  const portfolioId = currentData?.portfolioId;
+
+  const handleReanalyze = async () => {
+    if (!portfolioId) {
+      alert("포트폴리오 식별 정보가 없어 재분석할 수 없습니다.");
+      return;
+    }
+    if (!window.confirm("재분석할까요?")) return;
+
+    setIsReanalyzing(true);
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/portfolios/${portfolioId}/reanalyze`,
+        {
+          method: "POST",
+        },
+      );
+
+      if (!response.ok) throw new Error("재분석 실패");
+
+      const newData = await response.json();
+      setCurrentData(newData);
+      alert(" 재분석이 완료되었습니다!");
+    } catch (error) {
+      console.error(error);
+      alert("재분석 중 문제가 발생했습니다.");
+    } finally {
+      setIsReanalyzing(false);
+    }
+  };
+
+  if (!currentData) {
+    return (
+      <div className="flex flex-col justify-center items-center h-screen bg-gray-50">
+        <span className="text-5xl mb-4">😮</span>
+        <p className="text-gray-500 font-medium">아직 분석 결과가 없습니다.</p>
+        <p className="text-gray-400 text-sm mt-2">
+          포트폴리오를 먼저 업로드해 주세요!
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-5xl mx-auto p-6 bg-gray-50 min-h-screen pt-10">
+    <div className="max-w-5xl mx-auto p-6 bg-gray-50 min-h-screen pt-10 relative">
+      {/* 상단 제목 영역 (버튼은 아래로 이사 갔습니다!) */}
       <h1 className="text-3xl font-extrabold text-gray-900 mb-8 tracking-tight">
         포트폴리오 분석 결과
       </h1>
 
-      {/* 1. 상단: 요약 카드 컴포넌트 렌더링 */}
       <PortfolioSummaryCard
-        targetJob={DUMMY_DATA.targetJob}
-        oneLineReview={DUMMY_DATA.oneLineReview}
-        summaryDetail={DUMMY_DATA.summaryDetail}
+        targetJob={currentData.targetJob}
+        overallScore={currentData.overallScore}
+        oneLineReview={currentData.oneLineReview}
+        summaryDetail={currentData.summaryDetail}
       />
 
-      {/* 하단: 차트와 질문 리스트를 좌우로 배치 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        {/* 2. 왼쪽: 레이더 차트 컴포넌트 렌더링 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 mb-8">
         <div className="h-[400px]">
-          {" "}
-          {/* 차트가 들어갈 높이를 잡아줍니다 */}
-          <PortfolioRadarChart data={DUMMY_DATA.chartData} />
+          <PortfolioRadarChart data={currentData.chartData} />
         </div>
 
-        {/* 3. 오른쪽: 질문 리스트 컴포넌트 렌더링 */}
         <div className="bg-white shadow-lg rounded-xl p-6 h-fit border border-gray-100">
           <h3 className="text-lg font-bold text-gray-800 mb-5 flex items-center gap-2">
-            <span></span> 실전 대비 면접 질문
+            <span>🔍</span> 실전 대비 면접 질문
           </h3>
-
           <div className="space-y-1">
-            {/* map 함수를 써서 질문 개수만큼 QuestionItem을 찍어냅니다! */}
-            {DUMMY_DATA.questions.map((item, idx) => (
+            {currentData.questions.map((item, idx) => (
               <PortfolioQuestionItem
                 key={idx}
                 index={idx}
@@ -78,6 +88,40 @@ const PortfolioResultPage = () => {
             ))}
           </div>
         </div>
+      </div>
+
+      {/*  우측 하단으로 이동한 재분석 버튼 영역 */}
+      <div className="flex justify-end pb-10">
+        <button
+          onClick={handleReanalyze}
+          disabled={isReanalyzing}
+          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white shadow-md transition-all 
+            ${isReanalyzing ? "bg-gray-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg active:scale-95"}`}
+        >
+          {isReanalyzing ? (
+            <>
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <span>재분석 중...</span>
+            </>
+          ) : (
+            <>
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+              <span> 재분석</span>
+            </>
+          )}
+        </button>
       </div>
     </div>
   );
