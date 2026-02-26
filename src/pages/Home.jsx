@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import PortfolioUploadModal from "../components/portfolio/PortfolioUploadModal";
 import CIAnalysis from "./ClAnalysis";
 import logo from "../img/logo.png";
+import Resume from "./Resume";
 
 // ===== Icons (SVG) =====
 const Icons = {
@@ -737,6 +738,7 @@ const Features = ({
   onGoInterview,
   onOpenPortfolioModal,
   onOpenCoverLetterModal,
+  onOpenResumeModal,
 }) => {
   const features = [
     {
@@ -746,6 +748,8 @@ const Features = ({
         "경력, 학력, 스킬을 AI가 분석하여 경쟁력 있는 이력서로 개선합니다",
       gradient: "from-blue-500 to-blue-600",
       bgGradient: "from-blue-50 to-blue-100",
+      clickable: true,
+      action: onOpenResumeModal,
     },
     {
       icon: <Icons.FileText />,
@@ -1247,6 +1251,7 @@ export default function Home() {
 
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false);
   const [isCoverLetterModalOpen, setIsCoverLetterModalOpen] = useState(false);
+  const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
 
   useEffect(() => {
     AOS.init({ duration: 1000, once: true, offset: 100 });
@@ -1293,6 +1298,7 @@ export default function Home() {
         onGoInterview={goInterview}
         onOpenPortfolioModal={() => setIsPortfolioModalOpen(true)}
         onOpenCoverLetterModal={() => setIsCoverLetterModalOpen(true)}
+        onOpenResumeModal={() => setIsResumeModalOpen(true)}
       />
       <HowItWorks />
       <Statistics />
@@ -1315,6 +1321,15 @@ export default function Home() {
         onAnalyzeSuccess={() => {
           setIsCoverLetterModalOpen(false);
           navigate("/cover-letter/result");
+        }}
+      />
+
+      <Resume
+        isOpen={isResumeModalOpen}
+        onClose={() => setIsResumeModalOpen(false)}
+        onAnalyzeSuccess={() => {
+          setIsResumeModalOpen(false);
+          navigate("/resume/result")
         }}
       />
 
