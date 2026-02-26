@@ -14,6 +14,8 @@ import Signup from "./pages/Signup";
 import SocialSignup from "./pages/SocialSignup";
 import Evaluation from "./pages/Evaluation";
 import PfAnalysis from "./pages/PfAnalysis";
+import Resume from "./pages/Resume";
+import RsResume from "./pages/RsResume";
 
 function App() {
   return (
@@ -28,6 +30,10 @@ function App() {
         {/* 포트폴리오 관련 라우트 */}
         <Route path="/portfolio" element={<PfAnalysis />} />
         <Route path="/portfolio/result" element={<PortfolioResultPage />} />
+
+        {/* 이력서 관련 라우트 */}
+        <Route path="/resume" element={<Resume />} />
+        <Route path="/resume/result" element={<RsResume />} />
 
         {/* 로그인 관련 라우트 */}
         <Route path="/login" element={<Login />} />
