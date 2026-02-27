@@ -1,525 +1,638 @@
-import React, { useRef, useState } from "react";
+// /src/pages/ClAnalysis.jsx
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-function CIAnalysis({ isOpen, onClose }) {
-  const [mode, setMode] = useState("HOME"); // HOME(PDF) | FORM
+const JOB_CATEGORIES = [
+  "기획∙전략",
+  "마케팅∙홍보∙조사",
+  "회계∙세무∙재무",
+  "인사∙노무∙HRD",
+  "총무∙법무∙사무",
+  "IT개발∙데이터",
+  "디자인",
+  "영업∙판매∙무역",
+  "고객상담∙TM",
+  "구매∙자재∙물류",
+  "상품기획∙MD",
+  "운전∙운송∙배송",
+  "서비스",
+  "생산",
+  "건설∙건축",
+  "의료",
+  "연구∙R&D",
+  "교육",
+  "미디어∙문화∙스포츠",
+  "금융∙보험",
+  "공공∙복지",
+];
+
+const ClAnalysis = ({ isOpen, onClose }) => {
+  const navigate = useNavigate();
+
+  // HOME(PDF) | FORM(텍스트 입력)
+  const [mode, setMode] = useState("HOME");
+
+  // 공통 입력
   const [jobRole, setJobRole] = useState("");
   const [jobDetail, setJobDetail] = useState("");
 
-  const roleLabel = (v) => {
-    const map = {
-      backend: "백엔드 개발",
-      frontend: "프론트엔드 개발",
-      fullstack: "풀스택 개발",
-      data: "데이터/AI",
-      design: "디자인",
-      marketing: "마케팅",
-      barista: "바리스타",
-      etc: "기타",
-    };
-    return map[v] || v;
-  };
+  // HOME: 파일 업로드
+  const inputRef = useRef(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // FORM: 입력폼
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+
+  // 단계: input -> confirm -> analyzing
+  const [viewStep, setViewStep] = useState("input");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  // 모달 닫힐 때 초기화
+  useEffect(() => {
+    if (!isOpen) {
+      setMode("HOME");
+      setJobRole("");
+      setJobDetail("");
+      setSelectedFile(null);
+      setIsDragging(false);
+      setTitle("");
+      setContent("");
+      setViewStep("input");
+      setIsAnalyzing(false);
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
-  return (
-    <div style={overlayStyle} onClick={onClose}>
-      <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
-        <div style={headerStyle}>
-          <h2 style={titleStyle}>
-            {mode === "HOME" ? "PDF 업로드" : "자소서 입력폼"}
-          </h2>
+  // ✅ PDF만 허용
+  const validateAndSetFile = (file) => {
+    if (!file) return false;
 
-          <div style={{ display: "flex", gap: 8 }}>
-            <button
-              style={btnOutline}
-              onClick={() =>
-                setMode((prev) => (prev === "HOME" ? "FORM" : "HOME"))
-              }
-            >
-              {mode === "HOME" ? "입력폼 작성" : "PDF 업로드"}
-            </button>
-            <button style={btnGhost} onClick={onClose}>
-              닫기
-            </button>
-          </div>
-        </div>
-
-        {/* body */}
-        <div style={modalInnerStyle}>
-          <label style={labelStyle}>직군</label>
-
-          <select
-            style={inputStyle}
-            value={jobRole}
-            onChange={(e) => setJobRole(e.target.value)}
-          >
-            <option value="">직군을 선택하세요</option>
-            <option value="backend">기획∙전략</option>
-            <option value="backend">마케팅∙홍보∙조사</option>
-            <option value="backend">회계∙세무∙재무</option>
-            <option value="backend">인사∙노무∙HRD</option>
-            <option value="backend">총무∙법무∙사무</option>
-            <option value="backend">IT개발∙데이터</option>
-            <option value="backend">디자인</option>
-            <option value="backend">영업∙판매∙무역</option>
-            <option value="backend">고객상담∙TM</option>
-            <option value="backend">구매∙자재∙물류</option>
-            <option value="backend">상품기획∙MD</option>
-            <option value="backend">운전∙운송∙배송</option>
-            <option value="backend">서비스</option>
-            <option value="backend">생산</option>
-            <option value="backend">건설∙건축</option>
-            <option value="backend">의료</option>
-            <option value="backend">연구∙R&D</option>
-            <option value="backend">교육</option>
-            <option value="backend">미디어∙문화∙스포츠</option>
-            <option value="backend">금융∙보험</option>
-            <option value="backend">공공∙복지</option>
-          </select>
-          <label style={labelStyle}>세부 직무 (선택)</label>
-          <input
-            style={inputStyle}
-            value={jobDetail}
-            onChange={(e) => setJobDetail(e.target.value)}
-            placeholder="세부 직무를 입력하세요"
-          />
-
-          {/* 화면 컨텐츠 */}
-          {mode === "HOME" && <PdfDropzoneView jobRole={jobRole} />}
-          {mode === "FORM" && (
-            <FormView
-              jobRole={jobRole}
-              job
-              Detail={jobDetail}
-              onClose={onClose}
-            />
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// HOME 화면: PDF 드래그&드롭 + 파일 선택
-function PdfDropzoneView({ jobRole }) {
-  const inputRef = useRef(null);
-  const [file, setFile] = useState(null);
-  const [isDragging, setIsDragging] = useState(false);
-
-  const handlePickFile = () => inputRef.current?.click();
-  const acceptPdf = (f) => f && f.type === "application/pdf";
-
-  const handleFile = (f) => {
-    if (!acceptPdf(f)) {
-      alert("PDF 파일만 업로드할 수 있어요.");
-      return;
+    const isPdf = /\.pdf$/i.test(file.name);
+    if (!isPdf) {
+      alert("PDF 파일만 업로드해 주세요.");
+      return false;
     }
-    setFile(f);
+
+    const maxSize = 50 * 1024 * 1024;
+    if (file.size > maxSize) {
+      alert("파일 용량 제한(50MB)을 초과했습니다.");
+      return false;
+    }
+
+    setSelectedFile(file);
+    return true;
   };
 
-  const onDragEnter = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
+  const canAnalyzeHome = !!jobRole && !!selectedFile;
+  const canAnalyzeForm =
+    !!jobRole &&
+    !!title.trim() &&
+    !!content.trim() &&
+    content.trim().length >= 30;
+
+  const handleAnalyzeClick = () => {
+    if (mode === "HOME" && !canAnalyzeHome) return;
+    if (mode === "FORM" && !canAnalyzeForm) return;
+    setViewStep("confirm");
   };
 
-  const onDragOver = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
+  // ✅ 백엔드 없이: localStorage 저장 + 결과 페이지 이동
+  const handleConfirmAnalyze = async () => {
+    setViewStep("analyzing");
+    setIsAnalyzing(true);
+
+    try {
+      const analysisId = Date.now(); // ✅ 절대 undefined 안 됨
+
+      if (mode === "FORM") {
+        localStorage.setItem(
+          "ci_draft",
+          JSON.stringify({
+            mode,
+            jobRole,
+            jobDetail,
+            title: title.trim(),
+            content: content.trim(),
+          }),
+        );
+      } else {
+        // 파일은 localStorage에 저장 불가 → 메타만 저장(백엔드 붙이면 실제 업로드)
+        localStorage.setItem(
+          "ci_draft",
+          JSON.stringify({
+            mode,
+            jobRole,
+            jobDetail,
+            fileName: selectedFile?.name,
+            fileSize: selectedFile?.size,
+          }),
+        );
+      }
+
+      // 로딩 연출(원하면 제거 가능)
+      await new Promise((r) => setTimeout(r, 900));
+
+      setIsAnalyzing(false);
+      onClose?.();
+
+      navigate(`/analysis/result/${analysisId}`);
+    } catch (err) {
+      console.error(err);
+      alert("분석 중 에러가 발생했습니다.");
+      setIsAnalyzing(false);
+      setViewStep("input");
+    }
   };
 
-  const onDragLeave = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
-
-  const onDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-    const dropped = e.dataTransfer.files?.[0];
-    if (dropped) handleFile(dropped);
-  };
+  const headerTitle = mode === "HOME" ? "PDF 업로드" : "자소서 입력폼";
+  const headerDesc =
+    mode === "HOME"
+      ? "직군 정보 입력 후 PDF 파일을 업로드해 주세요."
+      : "직군 정보 입력 후 자기소개서를 작성해 주세요.";
 
   return (
-    <div style={{ marginTop: 14 }}>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="application/pdf"
-        style={{ display: "none" }}
-        onChange={(e) => {
-          const f = e.target.files?.[0];
-          if (f) handleFile(f);
-        }}
-      />
-
+    <div
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm transition-opacity"
+      onClick={onClose}
+    >
       <div
-        style={{
-          ...dropzoneStyle,
-          ...(isDragging ? dropzoneActiveStyle : {}),
-        }}
-        onDragEnter={onDragEnter}
-        onDragOver={onDragOver}
-        onDragLeave={onDragLeave}
-        onDrop={onDrop}
-        onClick={handlePickFile}
-        role="button"
-        tabIndex={0}
+        className="bg-white rounded-2xl shadow-xl w-[95%] max-w-2xl h-[640px] overflow-hidden flex flex-col relative"
+        onClick={(e) => e.stopPropagation()}
       >
-        <div style={dropzoneTitleStyle}>
-          PDF를 드래그해서 놓거나 클릭해서 업로드
-        </div>
-
-        <div style={dropzoneDescStyle}>
-          {jobRole
-            ? "직군 선택됨 → 업로드 후 분석 정확도가 올라가요"
-            : "직군을 먼저 선택하면 분석 정확도가 좋아져요"}
-        </div>
-
-        <div style={{ marginTop: 14 }}>
-          <span style={chipStyle}>PDF</span>
-          <span style={{ ...chipStyle, marginLeft: 8 }}>최대 10MB(예정)</span>
-        </div>
-      </div>
-
-      {file && (
-        <div style={fileCardStyle}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              gap: 10,
-            }}
-          >
-            <div>
-              <div style={{ fontWeight: 800, color: "#0b1b3a" }}>
-                {file.name}
+        {/* ======================= [3] 로딩 화면 ======================= */}
+        {viewStep === "analyzing" ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-8 animate-fade-in">
+            <svg
+              className="animate-spin h-14 w-14 text-blue-600 mb-6"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              AI 자기소개서 분석 진행 중
+            </h3>
+            <p className="text-sm text-gray-500 text-center leading-relaxed">
+              업로드/입력된 내용을 기반으로 분석 준비 중입니다.
+              <br />
+              (현재는 백엔드 연결 전이라 화면 전환만 진행됩니다.)
+            </p>
+          </div>
+        ) : viewStep === "confirm" ? (
+          /* ======================= [2] 확인 화면 ======================= */
+          <div className="flex flex-col h-full animate-fade-in">
+            <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-white shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">
+                    분석 요청 확인
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    입력하신 정보가 맞는지 마지막으로 확인해 주세요.
+                  </p>
+                </div>
               </div>
-              <div style={mutedTextStyle}>
-                {(file.size / 1024).toFixed(1)} KB · PDF 선택됨
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 p-2 transition-colors"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-8 flex-1 bg-gray-50/50 flex flex-col items-center justify-center overflow-y-auto min-h-0">
+              <div className="text-center mb-6">
+                <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                  <svg
+                    className="w-7 h-7"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2.5"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-1">
+                  분석 준비 완료!
+                </h3>
+                <p className="text-sm text-gray-500">
+                  아래 정보로 분석 화면으로 이동합니다.
+                </p>
+              </div>
+
+              <div className="w-full max-w-md bg-white border border-gray-200 rounded-2xl shadow-sm p-1">
+                <div className="flex flex-col">
+                  {/* 직군 */}
+                  <Row label="지원 직군" value={jobRole} />
+
+                  {/* 세부직무 */}
+                  {jobDetail?.trim() ? (
+                    <>
+                      <Divider />
+                      <Row label="세부 직무" value={jobDetail} />
+                    </>
+                  ) : null}
+
+                  <Divider />
+                  <Row label="분석 방식" value={headerTitle} />
+
+                  {mode === "HOME" ? (
+                    <>
+                      <Divider />
+                      <Row
+                        label="업로드 파일"
+                        value={selectedFile?.name || ""}
+                        sub={`용량: ${(
+                          (selectedFile?.size || 0) /
+                          (1024 * 1024)
+                        ).toFixed(2)} MB`}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <Divider />
+                      <Row label="제목" value={title} />
+                      <Divider />
+                      <Row
+                        label="내용(미리보기)"
+                        value={content}
+                        sub={`글자수: ${content.length.toLocaleString()}자`}
+                        multiline
+                      />
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
-            <button style={btnGhost} onClick={() => setFile(null)}>
-              제거
-            </button>
+            <div className="px-8 py-5 border-t border-gray-100 bg-white flex justify-end gap-3 shrink-0">
+              <button
+                onClick={() => setViewStep("input")}
+                className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50 transition-colors text-sm"
+              >
+                이전으로
+              </button>
+              <button
+                onClick={handleConfirmAnalyze}
+                className="px-6 py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 shadow-md transition-all active:scale-[0.99] text-sm"
+              >
+                분석 시작
+              </button>
+            </div>
           </div>
+        ) : (
+          /* ======================= [1] 기본 입력 화면 ======================= */
+          <div className="flex flex-col h-full animate-fade-in">
+            <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-white shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">
+                    {headerTitle}
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-0.5">{headerDesc}</p>
+                </div>
+              </div>
 
-          <div
-            style={{
-              display: "flex",
-              gap: 8,
-              marginTop: 12,
-              justifyContent: "flex-end",
-            }}
-          >
-            <button
-              style={btnOutline}
-              onClick={() => alert("다음 단계: 텍스트 추출 API 연결")}
-              disabled={!jobRole}
-              title={!jobRole ? "직군을 먼저 선택하세요" : ""}
-            >
-              텍스트 추출(예정)
-            </button>
-            <button
-              style={btnPrimary}
-              onClick={() => alert("다음 단계: 추출→분석→저장 연결")}
-              disabled={!jobRole}
-              title={!jobRole ? "직군을 먼저 선택하세요" : ""}
-            >
-              분석 시작(예정)
-            </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() =>
+                    setMode((prev) => (prev === "HOME" ? "FORM" : "HOME"))
+                  }
+                  className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50 transition-colors text-sm"
+                >
+                  {mode === "HOME" ? "입력폼 작성" : "PDF 업로드"}
+                </button>
+
+                <button
+                  onClick={onClose}
+                  className="text-gray-400 hover:text-gray-600 p-2 transition-colors"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="p-8 flex-1 flex flex-col gap-6 bg-gray-50/50 overflow-y-auto min-h-0">
+              {/* 공통 입력 */}
+              <div className="flex flex-col gap-6 shrink-0">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    지원 직군 <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={jobRole}
+                    onChange={(e) => setJobRole(e.target.value)}
+                    className="w-full bg-white border border-gray-300 text-gray-900 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors cursor-pointer"
+                  >
+                    <option value="" disabled>
+                      직군을 선택해 주세요
+                    </option>
+                    {JOB_CATEGORIES.map((cat, i) => (
+                      <option key={i} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    세부 직무{" "}
+                    <span className="text-gray-400 font-normal">(선택)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={jobDetail}
+                    onChange={(e) => setJobDetail(e.target.value)}
+                    placeholder="예) 백엔드 개발자 / 신입"
+                    className="w-full bg-white border border-gray-300 text-gray-900 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors placeholder-gray-400"
+                  />
+                </div>
+              </div>
+
+              {/* HOME: PDF 업로드 */}
+              {mode === "HOME" ? (
+                <div className="flex flex-col flex-1 mt-2 min-h-[160px]">
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    PDF 업로드 <span className="text-red-500">*</span>
+                  </label>
+
+                  <div
+                    className={`relative border-2 border-dashed rounded-2xl flex flex-col justify-center items-center p-8 transition-all duration-200 bg-blue-50/70 flex-1 h-full
+                      ${
+                        isDragging
+                          ? "border-blue-500 bg-blue-100"
+                          : "border-blue-300 hover:border-blue-400 hover:bg-blue-50"
+                      }`}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDragging(true);
+                    }}
+                    onDragLeave={() => setIsDragging(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsDragging(false);
+                      validateAndSetFile(e.dataTransfer.files?.[0]);
+                    }}
+                  >
+                    <input
+                      ref={inputRef}
+                      type="file"
+                      id="fileInput"
+                      className="hidden"
+                      onChange={(e) => validateAndSetFile(e.target.files?.[0])}
+                      accept=".pdf"
+                    />
+
+                    <label
+                      htmlFor="fileInput"
+                      className="cursor-pointer flex flex-col items-center w-full h-full justify-center"
+                    >
+                      {selectedFile ? (
+                        <div className="flex flex-col items-center gap-3">
+                          <svg
+                            className="w-12 h-12 text-blue-500 mb-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="1.5"
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                            />
+                          </svg>
+
+                          <span
+                            className="text-lg font-bold text-gray-900 break-all line-clamp-2 max-w-xs text-center px-2"
+                            title={selectedFile.name}
+                          >
+                            {selectedFile.name}
+                          </span>
+
+                          <span className="text-sm text-blue-600 font-bold mt-1 bg-white border border-blue-200 px-4 py-1.5 rounded-full shadow-sm hover:bg-blue-50 transition-colors">
+                            파일 다시 선택하기
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setSelectedFile(null);
+                            }}
+                            className="mt-2 text-xs text-gray-500 underline hover:text-gray-700"
+                          >
+                            선택 해제
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-2 text-center animate-fade-in">
+                          <svg
+                            className="w-10 h-10 text-blue-400 mb-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="1.5"
+                              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                            />
+                          </svg>
+                          <span className="text-lg font-bold text-gray-800">
+                            파일 선택하기
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            PDF(.pdf) 지원
+                          </span>
+                          <p className="text-xs text-gray-400 mt-2">
+                            최대 50MB까지 업로드 가능합니다.
+                          </p>
+                        </div>
+                      )}
+                    </label>
+                  </div>
+                </div>
+              ) : (
+                /* FORM: 입력폼 */
+                <div className="flex flex-col gap-6">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-800 mb-2">
+                      제목 <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="예) 네이버 백엔드 지원"
+                      className="w-full bg-white border border-gray-300 text-gray-900 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors placeholder-gray-400"
+                    />
+                  </div>
+
+                  <div className="flex flex-col flex-1 min-h-[220px]">
+                    <label className="block text-sm font-semibold text-gray-800 mb-2">
+                      자기소개서 내용 <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      value={content}
+                      onChange={(e) => setContent(e.target.value)}
+                      placeholder="자기소개서 내용을 입력하세요 (최소 30자 권장)"
+                      className="w-full min-h-[220px] bg-white border border-gray-300 text-gray-900 rounded-2xl p-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors placeholder-gray-400 resize-none"
+                    />
+                    <div className="mt-2 text-xs text-gray-400">
+                      글자수: {content.length.toLocaleString()}자
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="px-8 py-5 border-t border-gray-100 bg-white flex justify-end shrink-0">
+              <button
+                onClick={handleAnalyzeClick}
+                disabled={mode === "HOME" ? !canAnalyzeHome : !canAnalyzeForm}
+                className={`px-8 py-2.5 font-bold rounded-lg transition-all text-sm
+                  ${
+                    mode === "HOME"
+                      ? !canAnalyzeHome
+                        ? "bg-blue-100 text-blue-400 cursor-not-allowed"
+                        : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow-md active:scale-[0.98]"
+                      : !canAnalyzeForm
+                        ? "bg-blue-100 text-blue-400 cursor-not-allowed"
+                        : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow-md active:scale-[0.98]"
+                  }`}
+              >
+                분석하기
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
+};
+
+function Divider() {
+  return <div className="h-px bg-gray-100 mx-4"></div>;
 }
 
-function FormView({ jobRole, jobDetail, onClose }) {
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const navigate = useNavigate();
-
-  const titlePlaceholder =
-    jobRole === "backend"
-      ? "예) 네이버 백엔드 지원"
-      : jobRole === "frontend"
-        ? "예) 카카오 프론트엔드 지원"
-        : jobRole === "fullstack"
-          ? "예) 토스 풀스택 지원"
-          : jobRole === "data"
-            ? "예) 쿠팡 데이터/AI 지원"
-            : jobRole === "design"
-              ? "예) 라인 UX 디자이너 지원"
-              : jobRole === "marketing"
-                ? "예) 당근 마케팅 지원"
-                : jobRole === "barista"
-                  ? "예) 스타벅스 바리스타 지원"
-                  : "예) 00회사 지원";
-
-  const handleSave = async () => {
-    try {
-      const fakeAnalysisId = 1;
-
-      localStorage.setItem(
-        "ci_draft",
-        JSON.stringify({
-          title,
-          content,
-          jobRole,
-          jobDetail,
-        }),
-      );
-
-      onClose?.();
-      navigate(`/analysis/result/${fakeAnalysisId}`);
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
+function Row({ label, value, sub, multiline }) {
   return (
-    <div style={{ marginTop: 14 }}>
-      <label style={labelStyle}>제목</label>
-      <input
-        style={inputStyle}
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder={titlePlaceholder}
-      />
-
-      <label style={labelStyle}>내용</label>
-      <textarea
-        style={textareaStyle}
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        placeholder="자소서 내용을 입력하세요"
-      />
-
-      <div style={mutedTextStyle}>글자수: {content.length}자</div>
-
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          gap: 8,
-          marginTop: 14,
-        }}
-      >
-        <button style={btnOutline} onClick={() => setContent("")}>
-          내용 비우기
-        </button>
-        <button
-          style={btnPrimary}
-          onClick={handleSave}
-          disabled={!jobRole || !title.trim() || !content.trim()}
-          title={!jobRole ? "직군을 먼저 선택하세요" : ""}
+    <div className="flex items-start gap-4 p-4 hover:bg-gray-50 transition-colors rounded-xl">
+      <div className="p-2.5 bg-gray-100 text-gray-600 rounded-lg shrink-0 mt-0.5">
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
         >
-          분석 및 저장
-        </button>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          />
+        </svg>
+      </div>
+
+      <div className="overflow-hidden w-full">
+        <span className="text-xs text-gray-400 font-bold block mb-0.5">
+          {label}
+        </span>
+
+        {multiline ? (
+          <p className="text-[13px] text-gray-700 leading-relaxed line-clamp-4 whitespace-pre-wrap">
+            {value}
+          </p>
+        ) : (
+          <span className="text-[15px] font-bold text-gray-900 break-all line-clamp-2">
+            {value}
+          </span>
+        )}
+
+        {sub ? (
+          <span className="text-[11px] text-gray-400 block mt-0.5">{sub}</span>
+        ) : null}
       </div>
     </div>
   );
 }
 
-/** ===== Styles ===== */
-
-const overlayStyle = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(10, 30, 80, 0.45)",
-  backdropFilter: "blur(6px)",
-  WebkitBackdropFilter: "blur(6px)",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  padding: 16,
-  zIndex: 9999,
-};
-
-const modalStyle = {
-  width: "min(760px, 100%)",
-  background: "#fff",
-  borderRadius: 22,
-  border: "1px solid rgba(15, 60, 160, 0.10)",
-  boxShadow: "0 18px 60px rgba(0,0,0,0.22)",
-  overflow: "hidden",
-};
-
-const headerStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  gap: 10,
-  padding: "16px 18px",
-  borderBottom: "1px solid rgba(15, 60, 160, 0.08)",
-  background:
-    "linear-gradient(180deg, rgba(245,250,255,1) 0%, rgba(255,255,255,1) 60%)",
-};
-
-const titleStyle = {
-  margin: 0,
-  fontSize: 16,
-  fontWeight: 900,
-  color: "#0b1b3a",
-};
-
-const modalInnerStyle = { padding: 18 };
-
-const jobBarStyle = {
-  display: "flex",
-  alignItems: "center",
-  gap: 10,
-};
-
-const jobLabelStyle = {
-  display: "block",
-  marginTop: 10,
-  fontWeight: 800,
-  color: "#0b1b3a",
-  fontSize: 13,
-};
-
-const jobSelectStyle = {
-  flex: 1,
-  padding: "10px 12px",
-  borderRadius: 12,
-  border: "1px solid rgba(15, 60, 160, 0.14)",
-  outline: "none",
-  background: "#fff",
-  color: "#0b1b3a",
-  fontWeight: 700,
-};
-
-const jobChipStyle = {
-  padding: "8px 10px",
-  borderRadius: 999,
-  border: "1px solid rgba(31,85,255,0.25)",
-  background: "linear-gradient(180deg, #ffffff 0%, #f6f9ff 100%)",
-  color: "#1f55ff",
-  fontSize: 12,
-  fontWeight: 900,
-};
-
-const dropzoneStyle = {
-  border: "2px dashed rgba(31,85,255,0.35)",
-  borderRadius: 18,
-  padding: 26,
-  textAlign: "center",
-  cursor: "pointer",
-  background: "linear-gradient(180deg, #f4f8ff 0%, #ffffff 100%)",
-  boxShadow: "0 10px 26px rgba(10, 30, 80, 0.06)",
-  transition: "all 0.15s ease",
-};
-
-const dropzoneActiveStyle = {
-  borderColor: "#1f55ff",
-  boxShadow: "0 16px 36px rgba(31,85,255,0.18)",
-  transform: "translateY(-1px)",
-};
-
-const dropzoneTitleStyle = {
-  fontWeight: 900,
-  color: "#0b1b3a",
-  fontSize: 15,
-};
-
-const dropzoneDescStyle = {
-  marginTop: 6,
-  fontSize: 12,
-  color: "rgba(11,27,58,0.65)",
-};
-
-const chipStyle = {
-  display: "inline-block",
-  padding: "6px 10px",
-  borderRadius: 999,
-  fontSize: 12,
-  fontWeight: 800,
-  color: "#1f55ff",
-  border: "1px solid rgba(31,85,255,0.25)",
-  background: "#fff",
-};
-
-const fileCardStyle = {
-  marginTop: 14,
-  border: "1px solid rgba(15, 60, 160, 0.12)",
-  borderRadius: 18,
-  padding: 14,
-  background: "#fff",
-};
-
-const labelStyle = {
-  display: "block",
-  marginTop: 10,
-  fontWeight: 800,
-  color: "#0b1b3a",
-  fontSize: 13,
-};
-
-const inputStyle = {
-  width: "100%",
-  boxSizing: "border-box",
-  padding: "12px 12px",
-  marginTop: 6,
-  borderRadius: 14,
-  border: "1px solid rgba(15, 60, 160, 0.14)",
-  outline: "none",
-};
-
-const textareaStyle = {
-  width: "100%",
-  boxSizing: "border-box",
-  height: 160,
-  padding: "12px 12px",
-  marginTop: 6,
-  borderRadius: 14,
-  border: "1px solid rgba(15, 60, 160, 0.14)",
-  outline: "none",
-  resize: "vertical",
-};
-
-const mutedTextStyle = {
-  fontSize: 12,
-  color: "rgba(11,27,58,0.65)",
-  marginTop: 8,
-};
-
-const btnBase = {
-  padding: "10px 14px",
-  borderRadius: 999,
-  fontSize: 13,
-  fontWeight: 800,
-  cursor: "pointer",
-  transition: "all 0.15s ease",
-};
-
-const btnPrimary = {
-  ...btnBase,
-  background: "#1f55ff",
-  color: "#fff",
-  border: "1px solid #1f55ff",
-  boxShadow: "0 10px 22px rgba(31,85,255,0.25)",
-};
-
-const btnOutline = {
-  ...btnBase,
-  background: "#fff",
-  color: "#1f55ff",
-  border: "1px solid rgba(31,85,255,0.35)",
-};
-
-const btnGhost = {
-  ...btnBase,
-  background: "transparent",
-  color: "#0b1b3a",
-  border: "1px solid rgba(15, 60, 160, 0.15)",
-};
-
-export default CIAnalysis;
+export default ClAnalysis;
