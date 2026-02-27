@@ -13,6 +13,8 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import SocialSignup from "./pages/SocialSignup";
 import Evaluation from "./pages/Evaluation";
+import CIAnalysis from "./pages/ClAnalysis";
+import CIAnalysisResult from "./pages/CIAnalysisResult";
 import Resume from "./pages/Resume";
 import RsResume from "./pages/RsResume";
 
@@ -21,6 +23,12 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
+        {/* 자기소개서 분석 결과 */}
+        <Route
+          path="/analysis/result/:analysisId"
+          element={<CIAnalysisResult />}
+        />
+
         {/* 면접 관련 라우트 */}
         <Route path="/interview/select" element={<InterviewSelect />} />
         <Route path="/interview/session" element={<InterviewSession />} />
