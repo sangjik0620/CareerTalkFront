@@ -4,32 +4,35 @@ const PortfolioQuestionItem = ({ index, question, intent }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="border border-gray-200 rounded-lg mb-3 overflow-hidden bg-white">
-      {/* 질문 영역 (클릭 시 열림/닫힘) */}
+    <div className="border border-[#0F3CA01F] rounded-2xl bg-gradient-to-b from-white to-[#f6f9ff] shadow-[0_10px_26px_rgba(10,30,80,0.06)] overflow-hidden flex flex-col h-fit">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full text-left p-4 hover:bg-gray-50 flex justify-between items-start transition-colors"
+        // ⭐ items-start 대신 items-center를 주고 패딩을 조절하여 딱 맞게 정렬!
+        className="w-full text-left py-4 px-5 flex gap-4 items-center hover:bg-white/50 transition-colors"
       >
-        <div className="flex items-start gap-3">
-          <span className="bg-indigo-100 text-indigo-700 font-bold px-2 py-0.5 rounded text-sm shrink-0 mt-0.5">
-            Q{index + 1}
-          </span>
-          <span className="font-medium text-gray-800 break-keep leading-snug">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-[#1f55ff] border border-[#1f55ff40] bg-white shrink-0 shadow-sm">
+          Q{index + 1}
+        </div>
+        <div className="flex-1 min-w-0">
+          <span className="text-[14px] text-[#0b1b3a] font-bold leading-snug break-keep">
             {question}
           </span>
         </div>
-        <span className="text-gray-400 text-sm shrink-0 ml-4 mt-0.5">
-          {isOpen ? "▲ 접기" : "▼ 의도 보기"}
-        </span>
+        <div className="shrink-0 text-gray-400 text-xs font-bold">
+          {isOpen ? "▲" : "▼"}
+        </div>
       </button>
 
-      {/* 질문 의도 영역 (isOpen이 true일 때만 보임) */}
       {isOpen && (
-        <div className="bg-indigo-50 p-4 border-t border-indigo-100 animate-fade-in-down">
-          <span className="text-xs font-bold text-indigo-500 uppercase tracking-wide">
-            질문 의도
-          </span>
-          <p className="text-sm text-gray-800 mt-1 font-medium"> {intent}</p>
+        <div className="px-5 pb-5 animate-fade-in-down">
+          <div className="border-t border-[#0F3CA014] pt-3 mt-1">
+            <span className="inline-block px-2 py-1 rounded bg-[#1f55ff1A] text-[#1f55ff] text-[11px] font-bold mb-1.5">
+              질문 의도
+            </span>
+            <p className="text-[13px] text-[#0b1b3a]/80 leading-relaxed font-medium">
+              {intent}
+            </p>
+          </div>
         </div>
       )}
     </div>
