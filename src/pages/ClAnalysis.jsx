@@ -26,6 +26,8 @@ const JOB_CATEGORIES = [
   "공공∙복지",
 ];
 
+const API_BASE = "http://localhost:8080";
+
 const ClAnalysis = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
 
@@ -52,25 +54,38 @@ const ClAnalysis = ({ isOpen, onClose }) => {
   // 모달 닫힐 때 초기화
   useEffect(() => {
     if (!isOpen) {
-      setMode("HOME");
-      setJobRole("");
-      setJobDetail("");
-      setSelectedFile(null);
-      setIsDragging(false);
-      setTitle("");
-      setContent("");
-      setViewStep("input");
-      setIsAnalyzing(false);
+      resetAll();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
+
+  const resetAll = () => {
+    setMode("HOME");
+    setJobRole("");
+    setJobDetail("");
+    setSelectedFile(null);
+    setIsDragging(false);
+    setTitle("");
+    setContent("");
+    setViewStep("input");
+    setIsAnalyzing(false);
+  };
+
+  const handleClose = () => {
+    onClose?.();
+    // 닫자마자 초기화하고 싶으면 아래 유지, 아니면 제거
+    // resetAll();
+  };
 
   if (!isOpen) return null;
 
-  // ✅ PDF만 허용
+  // PDF만 허용
   const validateAndSetFile = (file) => {
     if (!file) return false;
 
-    const isPdf = /\.pdf$/i.test(file.name);
+    // ✅ MIME + 확장자 모두 체크 (브라우저마다 type이 비는 경우 대비)
+    const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+
     if (!isPdf) {
       alert("PDF 파일만 업로드해 주세요.");
       return false;
@@ -93,61 +108,68 @@ const ClAnalysis = ({ isOpen, onClose }) => {
     !!content.trim() &&
     content.trim().length >= 30;
 
+  // ✅ [추가] 분석하기 버튼 클릭: confirm 화면으로 이동만
   const handleAnalyzeClick = () => {
-    if (mode === "HOME" && !canAnalyzeHome) return;
-    if (mode === "FORM" && !canAnalyzeForm) return;
+    const ok = mode === "HOME" ? canAnalyzeHome : canAnalyzeForm;
+    if (!ok) return;
     setViewStep("confirm");
   };
 
-  // ✅ 백엔드 없이: localStorage 저장 + 결과 페이지 이동
+  // ✅ confirm에서 “분석 시작” 눌렀을 때: mode에 따라 API 분기
   const handleConfirmAnalyze = async () => {
     setViewStep("analyzing");
     setIsAnalyzing(true);
 
     try {
-      const analysisId = Date.now(); // ✅ 절대 undefined 안 됨
+      let result;
 
       if (mode === "FORM") {
-        localStorage.setItem(
-          "ci_draft",
-          JSON.stringify({
-            mode,
+        // ✅ 텍스트 분석
+        const res = await fetch(`${API_BASE}/api/ci/analyze/text`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
             jobRole,
             jobDetail,
-            title: title.trim(),
-            content: content.trim(),
+            title,
+            content,
           }),
-        );
+        });
+
+        if (!res.ok) throw new Error("텍스트 분석 API 응답 실패");
+        result = await res.json();
       } else {
-        // 파일은 localStorage에 저장 불가 → 메타만 저장(백엔드 붙이면 실제 업로드)
-        localStorage.setItem(
-          "ci_draft",
-          JSON.stringify({
-            mode,
-            jobRole,
-            jobDetail,
-            fileName: selectedFile?.name,
-            fileSize: selectedFile?.size,
-          }),
-        );
+        // ✅ PDF 분석 (multipart)
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        formData.append("jobRole", jobRole);
+        if (jobDetail?.trim()) formData.append("jobDetail", jobDetail);
+
+        const res = await fetch(`${API_BASE}/api/ci/analyze/pdf`, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!res.ok) throw new Error("PDF 분석 API 응답 실패");
+        result = await res.json();
       }
 
-      // 로딩 연출(원하면 제거 가능)
-      await new Promise((r) => setTimeout(r, 900));
-
       setIsAnalyzing(false);
-      onClose?.();
+      handleClose();
 
-      navigate(`/analysis/result/${analysisId}`);
-    } catch (err) {
-      console.error(err);
-      alert("분석 중 에러가 발생했습니다.");
+      // ✅ result 페이지로 이동 + state로 결과 전달
+      navigate(`/analysis/result/${result.analysisId}`, {
+        state: { result },
+      });
+    } catch (e) {
+      console.error(e);
+      alert("분석 중 오류가 발생했습니다. (백엔드/콘솔 확인)");
       setIsAnalyzing(false);
       setViewStep("input");
     }
   };
 
-  const headerTitle = mode === "HOME" ? "PDF 업로드" : "자소서 입력폼";
+  const headerTitle = mode === "HOME" ? "자기소개서 분석" : "자기소개서 입력폼";
   const headerDesc =
     mode === "HOME"
       ? "직군 정보 입력 후 PDF 파일을 업로드해 주세요."
@@ -156,7 +178,7 @@ const ClAnalysis = ({ isOpen, onClose }) => {
   return (
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm transition-opacity"
-      onClick={onClose}
+      onClick={handleClose}
     >
       <div
         className="bg-white rounded-2xl shadow-xl w-[95%] max-w-2xl h-[640px] overflow-hidden flex flex-col relative"
@@ -178,20 +200,20 @@ const ClAnalysis = ({ isOpen, onClose }) => {
                 r="10"
                 stroke="currentColor"
                 strokeWidth="4"
-              ></circle>
+              />
               <path
                 className="opacity-75"
                 fill="currentColor"
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              ></path>
+              />
             </svg>
             <h3 className="text-xl font-bold text-gray-900 mb-2">
               AI 자기소개서 분석 진행 중
             </h3>
             <p className="text-sm text-gray-500 text-center leading-relaxed">
-              업로드/입력된 내용을 기반으로 분석 준비 중입니다.
+              업로드/입력된 내용을 기반으로 분석 중입니다.
               <br />
-              (현재는 백엔드 연결 전이라 화면 전환만 진행됩니다.)
+              잠시만 기다려 주세요.
             </p>
           </div>
         ) : viewStep === "confirm" ? (
@@ -224,7 +246,7 @@ const ClAnalysis = ({ isOpen, onClose }) => {
                 </div>
               </div>
               <button
-                onClick={onClose}
+                onClick={handleClose}
                 className="text-gray-400 hover:text-gray-600 p-2 transition-colors"
               >
                 <svg
@@ -264,16 +286,13 @@ const ClAnalysis = ({ isOpen, onClose }) => {
                   분석 준비 완료!
                 </h3>
                 <p className="text-sm text-gray-500">
-                  아래 정보로 분석 화면으로 이동합니다.
+                  아래 정보로 AI 분석을 시작합니다.
                 </p>
               </div>
 
               <div className="w-full max-w-md bg-white border border-gray-200 rounded-2xl shadow-sm p-1">
                 <div className="flex flex-col">
-                  {/* 직군 */}
                   <Row label="지원 직군" value={jobRole} />
-
-                  {/* 세부직무 */}
                   {jobDetail?.trim() ? (
                     <>
                       <Divider />
@@ -322,14 +341,15 @@ const ClAnalysis = ({ isOpen, onClose }) => {
               </button>
               <button
                 onClick={handleConfirmAnalyze}
-                className="px-6 py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 shadow-md transition-all active:scale-[0.99] text-sm"
+                disabled={isAnalyzing}
+                className="px-6 py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 shadow-md transition-all active:scale-[0.99] text-sm disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                분석 시작
+                {isAnalyzing ? "분석 중..." : "분석 시작"}
               </button>
             </div>
           </div>
         ) : (
-          /* ======================= [1] 기본 입력 화면 ======================= */
+          /* ======================= 기본 입력 화면 ======================= */
           <div className="flex flex-col h-full animate-fade-in">
             <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-white shrink-0">
               <div className="flex items-center gap-3">
@@ -358,16 +378,17 @@ const ClAnalysis = ({ isOpen, onClose }) => {
 
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() =>
-                    setMode((prev) => (prev === "HOME" ? "FORM" : "HOME"))
-                  }
+                  onClick={() => {
+                    setMode((prev) => (prev === "HOME" ? "FORM" : "HOME"));
+                    setViewStep("input"); // 안전
+                  }}
                   className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50 transition-colors text-sm"
                 >
                   {mode === "HOME" ? "입력폼 작성" : "PDF 업로드"}
                 </button>
 
                 <button
-                  onClick={onClose}
+                  onClick={handleClose}
                   className="text-gray-400 hover:text-gray-600 p-2 transition-colors"
                 >
                   <svg
@@ -456,7 +477,7 @@ const ClAnalysis = ({ isOpen, onClose }) => {
                       id="fileInput"
                       className="hidden"
                       onChange={(e) => validateAndSetFile(e.target.files?.[0])}
-                      accept=".pdf"
+                      accept="application/pdf,.pdf"
                     />
 
                     <label
@@ -590,7 +611,7 @@ const ClAnalysis = ({ isOpen, onClose }) => {
 };
 
 function Divider() {
-  return <div className="h-px bg-gray-100 mx-4"></div>;
+  return <div className="h-px bg-gray-100 mx-4" />;
 }
 
 function Row({ label, value, sub, multiline }) {
