@@ -1,497 +1,554 @@
-import { useMemo, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
-const Icons = {
-  Upload: () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="shrink-0"
-    >
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="17 8 12 3 7 8" />
-      <line x1="12" y1="3" x2="12" y2="15" />
-    </svg>
-  ),
-  Download: () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="shrink-0"
-    >
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-      <polyline points="7 10 12 15 17 10" />
-      <line x1="12" y1="15" x2="12" y2="3" />
-    </svg>
-  ),
-  X: () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="22"
-      height="22"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
-  ),
-  ChevronDown: () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="shrink-0"
-    >
-      <polyline points="6 9 12 15 18 9" />
-    </svg>
-  ),
-  Check: () => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="shrink-0"
-    >
-      <path d="M20 6 9 17l-5-5" />
-    </svg>
-  ),
-};
-
-const JOB_GROUPS = [
-  {
-    label: "IT·개발",
-    items: [
-      "백엔드 개발자",
-      "프론트엔드 개발자",
-      "풀스택 개발자",
-      "모바일 앱 개발자",
-      "데이터 엔지니어",
-      "데이터 분석가",
-      "AI/ML 엔지니어",
-      "DevOps/인프라",
-      "보안/정보보호",
-      "QA/테스터",
-      "게임 개발자",
-      "PM/PO(IT)",
-    ],
-  },
-  {
-    label: "디자인",
-    items: ["UI/UX 디자이너", "그래픽 디자이너", "BX/브랜딩", "영상/모션", "3D/모델링"],
-  },
-  {
-    label: "경영·사무",
-    items: ["인사(HR)", "총무", "재무/회계", "전략기획", "법무", "구매/자재"],
-  },
-  {
-    label: "마케팅·영업",
-    items: ["마케팅", "퍼포먼스 마케팅", "콘텐츠 마케팅", "영업", "해외영업", "CS/고객지원"],
-  },
-  {
-    label: "기타",
-    items: ["연구원", "생산/품질", "물류/SCM", "교육/강사", "의료/보건", "서비스"],
-  },
+const JOB_CATEGORIES = [
+  "기획∙전략",
+  "마케팅∙홍보∙조사",
+  "회계∙세무∙재무",
+  "인사∙노무∙HRD",
+  "총무∙법무∙사무",
+  "IT개발∙데이터",
+  "디자인",
+  "영업∙판매∙무역",
+  "고객상담∙TM",
+  "구매∙자재∙물류",
+  "상품기획∙MD",
+  "운전∙운송∙배송",
+  "서비스",
+  "생산",
+  "건설∙건축",
+  "의료",
+  "연구∙R&D",
+  "교육",
+  "미디어∙문화∙스포츠",
+  "금융∙보험",
+  "공공∙복지",
 ];
 
-export default function Resume({ isOpen, onClose, onAnalyzeSuccess  }) {
-  const [jobType, setJobType] = useState("");
-  const [expYears, setExpYears] = useState("");
-  const [file, setFile] = useState(null);
+export default function Resume({ isOpen, onClose, onAnalyzeSuccess }) {
+  const [selectedFile, setSelectedFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [openModal, setOpenModal] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  const groupedOptions = useMemo(() => JOB_GROUPS, []);
+  const [jobCategory, setJobCategory] = useState("");
+  const [detailedPosition, setDetailedPosition] = useState("");
 
-  // ✅ ESC로 닫기(ClAnalysis 방식)
+  const [viewStep, setViewStep] = useState("input"); // input | confirm | analyzing
+  const navigate = useNavigate();
+
   useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") onClose?.();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
-
-  // 파일 선택 공통
-  const handleFile = (selectedFile) => {
-    if (!selectedFile) return;
-
-    // docx 체크
-    const isDocx =
-      selectedFile.type ===
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-      selectedFile.name.toLowerCase().endsWith(".docx");
-
-    if (!isDocx) {
-      alert("docx 파일만 업로드 가능합니다.");
-      return;
+    if (!isOpen) {
+      setSelectedFile(null);
+      setJobCategory("");
+      setDetailedPosition("");
+      setIsDragging(false);
+      setIsAnalyzing(false);
+      setViewStep("input");
     }
+  }, [isOpen]);
 
-    // 10MB 제한 예시 (원래 너 코드에 맞춰 조절 가능)
-    const maxSize = 10 * 1024 * 1024;
-    if (selectedFile.size > maxSize) {
-      alert("파일 크기는 10MB 이하로 업로드해주세요.");
-      return;
-    }
-
-    setFile(selectedFile);
-  };
-
-  const onDragOver = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
-
-  const onDragLeave = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
-
-  const onDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-
-    const dropped = e.dataTransfer?.files?.[0];
-    handleFile(dropped);
-  };
-
-  const onFileChange = (e) => {
-    const picked = e.target.files?.[0];
-    handleFile(picked);
-  };
-
-  const removeFile = () => setFile(null);
-
-  const handleTemplateDownload = () => {
-    // TODO: 서버 다운로드 연결 (예: window.location.href="/api/resume/template")
-    alert("서버 템플릿 다운로드 API로 연결하세요.");
-  };
-
-  const handleAnalyze = () => {
-    // 간단 검증 예시 (원래 너 로직에 맞춰 조절 가능)
-    if (!jobType) {
-      alert("지원 직군을 선택해주세요.");
-      return;
-    }
-    if (!expYears) {
-      alert("경력을 입력해주세요.");
-      return;
-    }
-    if (!file) {
-      alert("docx 파일을 업로드해주세요.");
-      return;
-    }
-
-    // 여기서 실제 분석 요청 로직으로 연결하면 됨
-    // 우선 확인 모달 오픈
-    setOpenModal(true);
-  };
-
-  // ✅ 모달 닫혀있으면 렌더링 자체 안함
   if (!isOpen) return null;
 
-  return (
-    // ✅ (핵심) 화면 전체 오버레이 + 바깥 클릭 시 닫기
-    <div
-      className="fixed inset-0 z-[900] flex items-center justify-center px-4 bg-black/50 backdrop-blur-[2px]"
-      role="dialog"
-      aria-modal="true"
-      aria-label="이력서 분석"
-      onMouseDown={() => onClose?.()}
-    >
-      {/* ✅ 모달 박스: 여기 클릭은 닫히면 안됨 */}
-      <div
-        className="w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl bg-gray-50 shadow-[0_20px_60px_rgba(0,0,0,0.25)]"
-        onMouseDown={(e) => e.stopPropagation()}
-      >
-        {/* ✅ 상단 헤더 + 닫기 */}
-        <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 rounded-t-2xl">
-          <h2 className="text-lg font-bold text-gray-900">이력서 분석</h2>
-          <button
-            type="button"
-            onClick={() => onClose?.()}
-            className="p-2 rounded-full hover:bg-gray-100 transition"
-            aria-label="닫기"
-          >
-            <Icons.X />
-          </button>
-        </div>
+  const validateAndSetFile = (file) => {
+    if (!file) return false;
 
-        {/* ===== 기존 화면 내용 ===== */}
-        <main className="pt-10 pb-20">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Title */}
-            <div className="text-center mb-10">
-              <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-gray-900">
-                AI 이력서 분석
-              </h1>
-              <p className="mt-3 text-gray-600">
-                직군/경력을 입력하고 <span className="font-semibold">docx</span> 이력서를 업로드하면
-                분석 결과와 면접 예상 질문을 제공합니다.
+    const isDocx =
+      file.type ===
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      /\.docx$/i.test(file.name);
+
+    if (!isDocx) {
+      alert("DOCX(.docx) 파일만 업로드해 주세요.");
+      return false;
+    }
+
+    const maxSize = 20 * 1024 * 1024; // 20MB
+    if (file.size > maxSize) {
+      alert("파일 용량 제한(20MB)을 초과했습니다.");
+      return false;
+    }
+
+    setSelectedFile(file);
+    return true;
+  };
+
+  const canAnalyze = Boolean(jobCategory && detailedPosition && selectedFile);
+
+  const handleAnalyzeClick = () => {
+    if (!canAnalyze) return;
+    setViewStep("confirm");
+  };
+
+  const handleConfirmAnalyze = async () => {
+    setViewStep("analyzing");
+    setIsAnalyzing(true);
+
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+    formData.append("jobCategory", jobCategory);
+    formData.append("detailedPosition", detailedPosition);
+
+    try {
+      // ✅ 서버 엔드포인트는 프로젝트에 맞게 조정하세요.
+      // 예: /api/resumes/analyze
+      const response = await axios.post(
+        "http://localhost:8080/api/resumes/analyze",
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+
+      const result = response.data;
+
+      setIsAnalyzing(false);
+      onClose?.();
+
+      // 부모가 성공 콜백을 쓰는 경우 대비
+      onAnalyzeSuccess?.(result);
+
+      // 결과 페이지 라우팅도 프로젝트에 맞게 조정 가능
+      // 예: /resume/result/:analysisId
+      if (result?.analysisId) {
+        navigate(`/resume/result/${result.analysisId}`, {
+          state: { analysisData: result },
+        });
+      } else {
+        // analysisId가 없다면 그대로 데이터만 전달
+        navigate(`/resume/result`, { state: { analysisData: result } });
+      }
+    } catch (error) {
+      console.error("분석 실패:", error);
+      alert("분석 중 에러가 발생했습니다.");
+      setIsAnalyzing(false);
+      setViewStep("input");
+    }
+  };
+
+  const handleTemplateDownload = () => {
+    // ✅ 서버 템플릿 다운로드 API에 맞게 변경하세요.
+    // 예: window.location.href = "http://localhost:8080/api/resumes/template";
+    window.location.href = "http://localhost:8080/api/resumes/template";
+  };
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm transition-opacity">
+      <div className="bg-white rounded-2xl shadow-xl w-[95%] max-w-2xl h-[640px] overflow-hidden flex flex-col relative">
+        {/* ======================= [3] 로딩 화면 ======================= */}
+        {viewStep === "analyzing" ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-8 animate-fade-in">
+            <svg
+              className="animate-spin h-14 w-14 text-blue-600 mb-6"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              AI 이력서 분석 진행 중
+            </h3>
+            <p className="text-sm text-gray-500 text-center leading-relaxed">
+              업로드된 데이터를 기반으로 직무 역량을 평가하고 있습니다.
+              <br />
+              약 1~2분 정도 소요될 수 있습니다.
+            </p>
+          </div>
+        ) : viewStep === "confirm" ? (
+          /* ======================= [2] 확인 화면 ======================= */
+          <div className="flex flex-col h-full animate-fade-in">
+            <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-white shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">
+                    분석 요청 확인
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    입력하신 정보가 맞는지 마지막으로 확인해 주세요.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 p-2 transition-colors"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-8 flex-1 bg-gray-50/50 flex flex-col items-center justify-center overflow-y-auto min-h-0">
+              <div className="text-center mb-6">
+                <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                  <svg
+                    className="w-7 h-7"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2.5"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-1">
+                  분석 준비 완료!
+                </h3>
+                <p className="text-sm text-gray-500">
+                  아래 정보로 AI 분석을 시작합니다.
+                </p>
+              </div>
+
+              <div className="w-full max-w-md bg-white border border-gray-200 rounded-2xl shadow-sm p-1">
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors rounded-xl">
+                    <div className="p-2.5 bg-gray-100 text-gray-600 rounded-lg shrink-0">
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-400 font-bold block mb-0.5">
+                        지원 직군
+                      </span>
+                      <span className="text-[15px] font-bold text-gray-900">
+                        {jobCategory}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="h-px bg-gray-100 mx-4" />
+
+                  <div className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors rounded-xl">
+                    <div className="p-2.5 bg-gray-100 text-gray-600 rounded-lg shrink-0">
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-400 font-bold block mb-0.5">
+                        상세 포지션
+                      </span>
+                      <span className="text-[15px] font-bold text-gray-900">
+                        {detailedPosition}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="h-px bg-gray-100 mx-4" />
+
+                  <div className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors rounded-xl">
+                    <div className="p-2.5 bg-gray-100 text-gray-600 rounded-lg shrink-0">
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M12 4v16m8-8H4"
+                        />
+                      </svg>
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-xs text-gray-400 font-bold block mb-0.5">
+                        업로드 파일
+                      </span>
+                      <span
+                        className="text-[15px] font-bold text-gray-900 break-all line-clamp-2"
+                        title={selectedFile?.name}
+                      >
+                        {selectedFile?.name}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-xs text-gray-400 mt-6 text-center leading-relaxed">
+                분석을 시작하면 잠시 후 결과 페이지로 이동합니다.
+                <br />
+                계속 진행하시겠습니까?
               </p>
             </div>
 
-            {/* Card */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-              <div className="p-6 sm:p-8">
-                {/* Inputs */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {/* Job Type */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-2">
-                      지원 직군
-                    </label>
-                    <div className="relative">
-                      <select
-                        value={jobType}
-                        onChange={(e) => setJobType(e.target.value)}
-                        className="w-full appearance-none rounded-xl border border-gray-200 bg-white px-4 py-3 pr-10 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-                      >
-                        <option value="">직군을 선택하세요</option>
-                        {groupedOptions.map((group) => (
-                          <optgroup key={group.label} label={group.label}>
-                            {group.items.map((item) => (
-                              <option key={item} value={item}>
-                                {item}
-                              </option>
-                            ))}
-                          </optgroup>
-                        ))}
-                      </select>
-                      <div className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                        <Icons.ChevronDown />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Experience */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-800 mb-2">
-                      현재 경력(년)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.5"
-                      value={expYears}
-                      onChange={(e) => setExpYears(e.target.value)}
-                      placeholder="예: 2"
-                      className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+            <div className="px-8 py-5 border-t border-gray-100 bg-white flex justify-end gap-3 shrink-0">
+              <button
+                onClick={() => setViewStep("input")}
+                className="px-5 py-2.5 text-sm font-bold rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
+              >
+                돌아가기
+              </button>
+              <button
+                onClick={handleConfirmAnalyze}
+                disabled={isAnalyzing}
+                className="px-6 py-2.5 text-sm font-bold rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow-md active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                분석 시작하기
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* ======================= [1] 기본 입력 화면 ======================= */
+          <div className="flex flex-col h-full animate-fade-in">
+            <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-white shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                     />
-                  </div>
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">
+                    이력서 분석
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    이력서 양식을 다운로드 후 양식에 맞춰 Docx 파일로 업로드
+                    해주세요.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 p-2 transition-colors"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-8 flex-1 flex flex-col gap-6 bg-gray-50/50 overflow-y-auto min-h-0">
+              <div className="flex flex-col gap-6 shrink-0">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    지원 직군 <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={jobCategory}
+                    onChange={(e) => setJobCategory(e.target.value)}
+                    className="w-full bg-white border border-gray-300 text-gray-900 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors cursor-pointer"
+                  >
+                    <option value="" disabled>
+                      직군을 선택해 주세요
+                    </option>
+                    {JOB_CATEGORIES.map((cat, i) => (
+                      <option key={i} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                {/* Upload Area */}
-                <div className="mt-6">
+                <div>
                   <label className="block text-sm font-semibold text-gray-800 mb-2">
-                    이력서 업로드 (docx)
+                    상세 포지션 <span className="text-red-500">*</span>
                   </label>
+                  <input
+                    type="text"
+                    value={detailedPosition}
+                    onChange={(e) => setDetailedPosition(e.target.value)}
+                    placeholder="예) 프론트엔드 개발자 / 3년차"
+                    className="w-full bg-white border border-gray-300 text-gray-900 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors placeholder-gray-400"
+                  />
+                </div>
+              </div>
 
-                  <div
-                    onDragOver={onDragOver}
-                    onDragLeave={onDragLeave}
-                    onDrop={onDrop}
-                    className={[
-                      "relative rounded-2xl border-2 border-dashed p-6 sm:p-8 transition",
+              <div className="flex flex-col flex-1 mt-2 min-h-[160px]">
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  파일 업로드 <span className="text-red-500">*</span>
+                </label>
+
+                <div
+                  className={`relative border-2 border-dashed rounded-2xl flex flex-col justify-center items-center p-8 transition-all duration-200 bg-blue-50/70 flex-1 h-full
+                    ${
                       isDragging
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 bg-gray-50 hover:bg-gray-100/60",
-                    ].join(" ")}
+                        ? "border-blue-500 bg-blue-100"
+                        : "border-blue-300 hover:border-blue-400 hover:bg-blue-50"
+                    }`}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDragging(false);
+                    validateAndSetFile(e.dataTransfer.files[0]);
+                  }}
+                >
+                  <input
+                    type="file"
+                    id="fileInput"
+                    className="hidden"
+                    onChange={(e) => validateAndSetFile(e.target.files[0])}
+                    accept=".docx"
+                  />
+                  <label
+                    htmlFor="fileInput"
+                    className="cursor-pointer flex flex-col items-center w-full h-full justify-center"
                   >
-                    <input
-                      type="file"
-                      accept=".docx"
-                      onChange={onFileChange}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      aria-label="docx 업로드"
-                    />
-
-                    <div className="flex flex-col sm:flex-row items-center gap-4">
-                      <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white border border-gray-200 text-gray-700">
-                        <Icons.Upload />
-                      </div>
-
-                      <div className="flex-1 text-center sm:text-left">
-                        <p className="text-gray-900 font-semibold">
-                          드래그&드롭 또는 클릭해서 파일을 선택하세요
-                        </p>
-                        <p className="text-sm text-gray-500 mt-1">
-                          지원 형식: .docx / 최대 10MB
-                        </p>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={handleTemplateDownload}
-                        className="inline-flex items-center gap-2 rounded-xl bg-white border border-gray-200 px-4 py-2.5 text-gray-800 font-semibold hover:bg-gray-50 transition shadow-sm"
-                      >
-                        <Icons.Download />
-                        이력서 양식 다운로드
-                      </button>
-                    </div>
-
-                    {/* Selected file */}
-                    {file && (
-                      <div className="mt-5 flex items-center justify-between gap-3 rounded-xl bg-white border border-gray-200 px-4 py-3">
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 truncate">
-                            {file.name}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {(file.size / 1024 / 1024).toFixed(2)} MB
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={removeFile}
-                          className="p-2 rounded-full hover:bg-gray-100 transition text-gray-600"
-                          aria-label="파일 제거"
+                    {selectedFile ? (
+                      <div className="flex flex-col items-center gap-3">
+                        <svg
+                          className="w-12 h-12 text-blue-500 mb-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
                         >
-                          <Icons.X />
-                        </button>
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="1.5"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+
+                        <span
+                          className="text-lg font-bold text-gray-900 break-all line-clamp-2 max-w-xs text-center px-2"
+                          title={selectedFile.name}
+                        >
+                          {selectedFile.name}
+                        </span>
+                        <span className="text-sm text-blue-600 font-bold mt-1 bg-white border border-blue-200 px-4 py-1.5 rounded-full shadow-sm hover:bg-blue-50 transition-colors">
+                          파일 다시 선택하기
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2 text-center animate-fade-in">
+                        <svg
+                          className="w-10 h-10 text-blue-400 mb-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="1.5"
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                          />
+                        </svg>
+                        <span className="text-lg font-bold text-gray-800">
+                          파일 선택하기
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          DOCX(.docx) 지원
+                        </span>
+                        <p className="text-xs text-gray-400 mt-2">
+                          최대 20MB까지 업로드 가능합니다.
+                        </p>
                       </div>
                     )}
-                  </div>
-                </div>
-
-                {/* Analyze button */}
-                <div className="mt-8">
-                  <button
-                    type="button"
-                    onClick={handleAnalyze}
-                    className="w-full rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 text-white font-black tracking-tight shadow-lg hover:opacity-95 active:opacity-90 transition"
-                  >
-                    이력서 분석하기
-                  </button>
-
-                  <p className="mt-3 text-center text-sm text-gray-500">
-                    업로드한 문서는 분석 목적 외 저장되지 않도록 처리하세요.
-                  </p>
+                  </label>
                 </div>
               </div>
             </div>
-          </div>
-        </main>
 
-        {/* ===== 확인 모달(openModal) ===== */}
-        {openModal && (
-          <div
-            className="fixed inset-0 z-[999] flex items-center justify-center px-4"
-            onMouseDown={() => setOpenModal(false)} // 바깥 클릭 닫기
-            role="dialog"
-            aria-modal="true"
-            aria-label="분석 요청 확인"
-          >
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" />
+            <div className="px-8 py-5 border-t border-gray-100 bg-white flex items-center justify-between shrink-0">
+              <button
+                type="button"
+                onClick={handleTemplateDownload}
+                className="px-4 py-2.5 text-sm font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors"
+              >
+                이력서 양식 다운로드
+              </button>
 
-            <div
-              className="relative w-full max-w-xl bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.25)] overflow-hidden"
-              onMouseDown={(e) => e.stopPropagation()} // ✅ 내부 클릭은 닫히면 안됨
-            >
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                <h3 className="text-base font-bold text-gray-900">분석 요청 확인</h3>
-                <button
-                  type="button"
-                  onClick={() => setOpenModal(false)}
-                  className="p-2 rounded-full hover:bg-gray-100 transition"
-                  aria-label="닫기"
-                >
-                  <Icons.X />
-                </button>
-              </div>
-
-              <div className="px-6 py-5">
-                <div className="space-y-3 text-sm text-gray-700">
-                  <p className="flex items-center gap-2">
-                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-700">
-                      <Icons.Check />
-                    </span>
-                    <span>
-                      지원 직군: <b className="text-gray-900">{jobType}</b>
-                    </span>
-                  </p>
-
-                  <p className="flex items-center gap-2">
-                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-700">
-                      <Icons.Check />
-                    </span>
-                    <span>
-                      경력: <b className="text-gray-900">{expYears}년</b>
-                    </span>
-                  </p>
-
-                  <p className="flex items-center gap-2">
-                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-50 text-blue-700">
-                      <Icons.Check />
-                    </span>
-                    <span className="min-w-0">
-                      파일:{" "}
-                      <b className="text-gray-900 break-all">
-                        {file ? file.name : "-"}
-                      </b>
-                    </span>
-                  </p>
-                </div>
-
-                <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setOpenModal(false)}
-                    className="flex-1 rounded-xl bg-white border border-gray-200 px-4 py-3 font-bold text-gray-800 hover:bg-gray-50 transition"
-                  >
-                    취소
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setOpenModal(false);
-                      // ✅ 여기서 실제 API 호출(문서 파싱 -> LLM 분석 요청)로 연결
-                      alert("여기에 분석 API 호출 로직을 연결하세요.");
-                    }}
-                    className="flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 font-black text-white hover:opacity-95 transition"
-                  >
-                    분석 요청
-                  </button>
-                </div>
-
-                <p className="mt-4 text-xs text-gray-500">
-                  확인을 누르면 문서 파싱 후 분석이 진행됩니다.
-                </p>
-              </div>
+              <button
+                onClick={handleAnalyzeClick}
+                disabled={!canAnalyze}
+                className={`px-8 py-2.5 font-bold rounded-lg transition-all text-sm
+                  ${
+                    !canAnalyze
+                      ? "bg-blue-100 text-blue-400 cursor-not-allowed"
+                      : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow-md active:scale-[0.98]"
+                  }`}
+              >
+                분석하기
+              </button>
             </div>
           </div>
         )}
