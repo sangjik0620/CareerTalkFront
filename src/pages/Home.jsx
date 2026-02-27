@@ -1,10 +1,11 @@
 import { useEffect, useState, useRef } from "react";
 import AOS from "aos";
 import "aos/dist/aos.css";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import PortfolioUploadModal from "../components/portfolio/PortfolioUploadModal";
 import CIAnalysis from "./ClAnalysis";
 import logo from "../img/logo.png";
+import Resume from "./Resume";
 
 // ===== Icons (SVG) =====
 const Icons = {
@@ -445,11 +446,22 @@ const Navigation = ({ onStart }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
+  // 로그인 상태 관리
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')));
+
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // 로그아웃
+  const handleLogout = () => {
+    localStorage.removeItem('user'); // 스토리지 비우기
+    setUser(null); // 상태 초기화
+    alert("로그아웃 되었습니다.");
+    window.location.href = "/";
+  };
 
   const handleStart = () => {
     onStart?.();
@@ -500,6 +512,26 @@ const Navigation = ({ onStart }) => {
             >
               FAQ
             </a>
+            {user ? (
+              <div className="flex items-center space-x-4">
+                <span className={`font-semibold ${scrolled ? "text-primary-600" : "text-white"}`}>
+                  {user.nickname}님
+                </span>
+                <button 
+                  onClick={handleLogout}
+                  className={`hover:text-red-500 transition ${scrolled ? "text-gray-700" : "text-white"}`}
+                >
+                  로그아웃
+                </button>
+              </div>
+            ) : (
+              <a 
+                href="/login" 
+                className={`hover:text-primary-600 transition ${scrolled ? "text-gray-700" : "text-white"}`}
+              >
+                로그인
+              </a>
+            )}
 
             <button
               onClick={handleStart}
@@ -549,6 +581,23 @@ const Navigation = ({ onStart }) => {
             >
               FAQ
             </a>
+            {user ? (
+              <>
+                <div className="px-3 py-2 text-primary-600 font-bold border-b border-gray-100">
+                  {user.nickname}님 환영합니다
+                </div>
+                <button 
+                  onClick={handleLogout}
+                  className="w-full text-left px-3 py-2 text-red-500 hover:bg-red-50 rounded-md"
+                >
+                  로그아웃
+                </button>
+              </>
+            ) : (
+              <a href="/login" className="block px-3 py-2 text-gray-700 hover:bg-primary-50 rounded-md">
+                로그인
+              </a>
+            )}
 
             <button
               onClick={handleStart}
@@ -689,6 +738,7 @@ const Features = ({
   onGoInterview,
   onOpenPortfolioModal,
   onOpenCoverLetterModal,
+  onOpenResumeModal,
 }) => {
   const features = [
     {
@@ -698,6 +748,8 @@ const Features = ({
         "경력, 학력, 스킬을 AI가 분석하여 경쟁력 있는 이력서로 개선합니다",
       gradient: "from-blue-500 to-blue-600",
       bgGradient: "from-blue-50 to-blue-100",
+      clickable: true,
+      action: onOpenResumeModal,
     },
     {
       icon: <Icons.FileText />,
@@ -1192,13 +1244,48 @@ const Footer = () => (
 // ===== Home Page =====
 export default function Home() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // ⭐ 1. 자물쇠 역할을 할 Ref 생성 (리렌더링 되어도 값이 유지됨)
+  const isProcessed = useRef(false);
 
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false);
   const [isCoverLetterModalOpen, setIsCoverLetterModalOpen] = useState(false);
+  const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
 
   useEffect(() => {
     AOS.init({ duration: 1000, once: true, offset: 100 });
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const isLoginSuccess = params.get('loginSuccess');
+
+    // ⭐ 2. 성공 파라미터가 있고, 아직 처리된 적이 없을 때만 실행
+    if (isLoginSuccess === 'true' && !isProcessed.current) {
+      
+      // 3. 즉시 자물쇠를 잠금 (두 번째 실행이 들어와도 여기서 차단됨)
+      isProcessed.current = true;
+
+      const userData = {
+        email: params.get('email'),
+        nickname: params.get('nickname'),
+        targetJob: params.get('targetJob'),
+      };
+
+      // 4. 데이터 저장
+      localStorage.setItem('user', JSON.stringify(userData));
+
+      // 5. 주소창 미리 깨끗하게 청소
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      // 6. 알림창 띄우기 (이제 진짜 딱 한 번만 뜹니다)
+      alert(`${userData.nickname}님, 소셜 로그인이 완료되었습니다!`);
+
+      // 7. 메인으로 이동하며 새로고침
+      window.location.href = '/'; 
+    }
+  }, [location]);
 
   const goInterview = () => navigate("/interview/select");
 
@@ -1211,6 +1298,7 @@ export default function Home() {
         onGoInterview={goInterview}
         onOpenPortfolioModal={() => setIsPortfolioModalOpen(true)}
         onOpenCoverLetterModal={() => setIsCoverLetterModalOpen(true)}
+        onOpenResumeModal={() => setIsResumeModalOpen(true)}
       />
       <HowItWorks />
       <Statistics />
@@ -1233,6 +1321,15 @@ export default function Home() {
         onAnalyzeSuccess={() => {
           setIsCoverLetterModalOpen(false);
           navigate("/cover-letter/result");
+        }}
+      />
+
+      <Resume
+        isOpen={isResumeModalOpen}
+        onClose={() => setIsResumeModalOpen(false)}
+        onAnalyzeSuccess={() => {
+          setIsResumeModalOpen(false);
+          navigate("/resume/result")
         }}
       />
 
