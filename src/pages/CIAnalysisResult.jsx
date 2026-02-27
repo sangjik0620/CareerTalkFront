@@ -1,11 +1,15 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 export default function CIAnalysisResult() {
   const { analysisId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // 더미 데이터 추후 변경예정
+  // ✅ ClAnalysis에서 navigate(..., { state: { result } })로 넘긴 값
+  const passedResult = location.state?.result;
+
+  // 더미 데이터 (fallback)
   const mock = useMemo(
     () => ({
       analysisId,
@@ -40,14 +44,37 @@ export default function CIAnalysisResult() {
   const [tab, setTab] = useState("ORIGINAL");
 
   // AI 개선본 상태
-  const [rewrite, setRewrite] = useState(""); // 개선본 텍스트
-  const [rewriteNotes, setRewriteNotes] = useState([]); // 변경 요약
+  const [rewrite, setRewrite] = useState("");
+  const [rewriteNotes, setRewriteNotes] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [toast, setToast] = useState("");
 
+  // ✅ 데이터 세팅: state 우선 → localStorage → mock
   useEffect(() => {
+    if (passedResult) {
+      setData(passedResult);
+      return;
+    }
+
+    const raw = localStorage.getItem("ci_result");
+    if (raw) {
+      try {
+        setData(JSON.parse(raw));
+        return;
+      } catch {
+        // ignore
+      }
+    }
+
     setData(mock);
-  }, [mock]);
+  }, [passedResult, mock]);
+
+  // ✅ 새로고침 대비: state로 받은 결과를 저장
+  useEffect(() => {
+    if (passedResult) {
+      localStorage.setItem("ci_result", JSON.stringify(passedResult));
+    }
+  }, [passedResult]);
 
   if (!data) return null;
 
@@ -243,7 +270,7 @@ export default function CIAnalysisResult() {
         </div>
 
         <div style={questionGridStyle}>
-          {data.questions.map((q, idx) => (
+          {(data.questions || []).map((q, idx) => (
             <div key={idx} style={questionCardStyle}>
               <div style={qIndexStyle}>Q{idx + 1}</div>
               <div style={qTextStyle}>{q}</div>
@@ -316,8 +343,7 @@ async function fakeGenerateRewrite({ title, content }) {
   };
 }
 
-/*스타일------------------*/
-
+/* ===== 스타일 (너가 준 그대로) ===== */
 const pageStyle = {
   minHeight: "100vh",
   background: "#f4f8ff",
