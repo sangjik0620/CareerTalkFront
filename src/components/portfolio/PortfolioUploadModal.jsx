@@ -1,19 +1,29 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom"; // ⭐ 페이지 이동을 위해 추가
+import { useNavigate } from "react-router-dom";
 
 const JOB_CATEGORIES = [
-  "IT/소프트웨어",
-  "데이터/AI",
-  "디자인/UI·UX",
-  "기획/PM/PO",
-  "마케팅/PR",
-  "영업/고객지원",
-  "인사/총무",
-  "경영/전략",
-  "미디어/콘텐츠",
-  "건축/엔지니어링",
-  "기타",
+  "기획∙전략",
+  "마케팅∙홍보∙조사",
+  "회계∙세무∙재무",
+  "인사∙노무∙HRD",
+  "총무∙법무∙사무",
+  "IT개발∙데이터",
+  "디자인",
+  "영업∙판매∙무역",
+  "고객상담∙TM",
+  "구매∙자재∙물류",
+  "상품기획∙MD",
+  "운전∙운송∙배송",
+  "서비스",
+  "생산",
+  "건설∙건축",
+  "의료",
+  "연구∙R&D",
+  "교육",
+  "미디어∙문화∙스포츠",
+  "금융∙보험",
+  "공공∙복지",
 ];
 
 const PortfolioUploadModal = ({ isOpen, onClose }) => {
@@ -23,15 +33,20 @@ const PortfolioUploadModal = ({ isOpen, onClose }) => {
   const [jobCategory, setJobCategory] = useState("");
   const [detailedPosition, setDetailedPosition] = useState("");
 
-  const navigate = useNavigate(); // ⭐ navigate 함수 선언
+  const [viewStep, setViewStep] = useState("input");
+
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (isOpen && e.key === "Escape" && !isAnalyzing) onClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, isAnalyzing, onClose]);
+    if (!isOpen) {
+      setSelectedFile(null);
+      setJobCategory("");
+      setDetailedPosition("");
+      setIsDragging(false);
+      setIsAnalyzing(false);
+      setViewStep("input");
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -50,18 +65,19 @@ const PortfolioUploadModal = ({ isOpen, onClose }) => {
     return true;
   };
 
-  const handleAnalyzeClick = async () => {
+  const handleAnalyzeClick = () => {
     if (!selectedFile || !jobCategory) return;
+    setViewStep("confirm");
+  };
 
+  const handleConfirmAnalyze = async () => {
+    setViewStep("analyzing");
     setIsAnalyzing(true);
 
     const formData = new FormData();
     formData.append("file", selectedFile);
-
-    // ⭐ 1. DB 저장용 대분류 (필수)
     formData.append("jobCategory", jobCategory);
 
-    // ⭐ 2. AI 분석용 상세 포지션 (입력했을 때만 추가)
     if (detailedPosition) {
       formData.append("detailedPosition", detailedPosition);
     }
@@ -87,119 +103,417 @@ const PortfolioUploadModal = ({ isOpen, onClose }) => {
       console.error("분석 실패:", error);
       alert("분석 중 에러가 발생했습니다.");
       setIsAnalyzing(false);
+      setViewStep("input");
     }
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
-      onClick={!isAnalyzing ? onClose : undefined}
-    >
-      <div
-        className={`bg-white rounded-2xl shadow-2xl w-[90%] max-w-md p-6 ${isAnalyzing ? "min-h-[300px] flex flex-col justify-center" : ""}`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {isAnalyzing ? (
-          <div className="flex flex-col items-center justify-center py-10">
-            <div className="w-16 h-16 border-4 border-gray-100 border-t-indigo-600 rounded-full animate-spin mb-6"></div>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm transition-opacity">
+      <div className="bg-white rounded-2xl shadow-xl w-[95%] max-w-2xl h-[640px] overflow-hidden flex flex-col relative">
+        {/* ======================= [3] 로딩 화면 ======================= */}
+        {viewStep === "analyzing" ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-8 animate-fade-in">
+            <svg
+              className="animate-spin h-14 w-14 text-blue-600 mb-6"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
             <h3 className="text-xl font-bold text-gray-900 mb-2">
-              포트폴리오 분석 중
+              AI 포트폴리오 분석 진행 중
             </h3>
-            <p className="text-gray-500 text-sm">잠시만 기다려 주세요...</p>
+            <p className="text-sm text-gray-500 text-center leading-relaxed">
+              업로드된 데이터를 기반으로 직무 역량을 평가하고 있습니다.
+              <br />약 1~2분 정도 소요될 수 있습니다.
+            </p>
+          </div>
+        ) : viewStep === "confirm" ? (
+          /* ======================= [2] 확인 화면 ======================= */
+          <div className="flex flex-col h-full animate-fade-in">
+            <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-white shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">
+                    분석 요청 확인
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    입력하신 정보가 맞는지 마지막으로 확인해 주세요.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-600 p-2 transition-colors"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div className="p-8 flex-1 bg-gray-50/50 flex flex-col items-center justify-center overflow-y-auto min-h-0">
+              <div className="text-center mb-6">
+                <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                  <svg
+                    className="w-7 h-7"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2.5"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-1">
+                  분석 준비 완료!
+                </h3>
+                <p className="text-sm text-gray-500">
+                  아래 정보로 AI 분석을 시작합니다.
+                </p>
+              </div>
+
+              <div className="w-full max-w-md bg-white border border-gray-200 rounded-2xl shadow-sm p-1">
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors rounded-xl">
+                    <div className="p-2.5 bg-gray-100 text-gray-600 rounded-lg shrink-0">
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <span className="text-xs text-gray-400 font-bold block mb-0.5">
+                        지원 직군
+                      </span>
+                      <span className="text-[15px] font-bold text-gray-900">
+                        {jobCategory}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="h-px bg-gray-100 mx-4"></div>
+
+                  {detailedPosition && (
+                    <>
+                      <div className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors rounded-xl">
+                        <div className="p-2.5 bg-gray-100 text-gray-600 rounded-lg shrink-0">
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                            />
+                          </svg>
+                        </div>
+                        <div>
+                          <span className="text-xs text-gray-400 font-bold block mb-0.5">
+                            상세 포지션
+                          </span>
+                          <span className="text-[15px] font-bold text-gray-900">
+                            {detailedPosition}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="h-px bg-gray-100 mx-4"></div>
+                    </>
+                  )}
+
+                  <div className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors rounded-xl">
+                    <div className="p-2.5 bg-blue-50 text-blue-600 rounded-lg shrink-0">
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                    </div>
+                    <div className="overflow-hidden w-full">
+                      <span className="text-xs text-blue-500 font-bold block mb-0.5">
+                        업로드된 파일
+                      </span>
+                      <span
+                        className="text-[15px] font-bold text-gray-900 break-all line-clamp-2"
+                        title={selectedFile?.name}
+                      >
+                        {selectedFile?.name}
+                      </span>
+                      <span className="text-[11px] text-gray-400 block mt-0.5">
+                        용량: {(selectedFile?.size / (1024 * 1024)).toFixed(2)}{" "}
+                        MB
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-8 py-5 border-t border-gray-100 bg-white flex justify-end gap-3 shrink-0">
+              <button
+                onClick={() => setViewStep("input")}
+                className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50 transition-colors text-sm"
+              >
+                이전으로
+              </button>
+              <button
+                onClick={handleConfirmAnalyze}
+                className="px-6 py-2.5 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 shadow-md transition-all active:scale-[0.99] text-sm"
+              >
+                분석 시작
+              </button>
+            </div>
           </div>
         ) : (
-          <>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-900">
-                📂 포트폴리오 분석 설정
-              </h2>
+          /* ======================= [1] 기본 입력 화면 ======================= */
+          <div className="flex flex-col h-full animate-fade-in">
+            <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-white shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900">
+                    포트폴리오 분석
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-0.5">
+                    직군 정보 입력 후 PDF/PPTX 파일을 업로드해 주세요.
+                  </p>
+                </div>
+              </div>
               <button
                 onClick={onClose}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 p-2 transition-colors"
               >
-                ✕
-              </button>
-            </div>
-            <div className="space-y-4 mb-5 p-4 bg-gray-50 rounded-xl">
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">
-                  지원 직무군 *
-                </label>
-                <select
-                  value={jobCategory}
-                  onChange={(e) => setJobCategory(e.target.value)}
-                  className="w-full border rounded-lg p-2.5 text-sm"
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <option value="">직무군 선택</option>
-                  {JOB_CATEGORIES.map((cat, i) => (
-                    <option key={i} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">
-                  상세 포지션 (선택)
-                </label>
-                <input
-                  type="text"
-                  value={detailedPosition}
-                  onChange={(e) => setDetailedPosition(e.target.value)}
-                  placeholder="예: 프론트엔드 개발자"
-                  className="w-full border rounded-lg p-2.5 text-sm"
-                />
-              </div>
-            </div>
-            <div
-              className={`border-2 border-dashed rounded-xl p-8 text-center ${isDragging ? "border-indigo-500 bg-indigo-50" : "border-gray-300"}`}
-              onDragOver={(e) => {
-                e.preventDefault();
-                setIsDragging(true);
-              }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setIsDragging(false);
-                validateAndSetFile(e.dataTransfer.files[0]);
-              }}
-            >
-              <input
-                type="file"
-                id="fileInput"
-                className="hidden"
-                onChange={(e) => validateAndSetFile(e.target.files[0])}
-                accept=".pdf,.pptx"
-              />
-              <label htmlFor="fileInput" className="cursor-pointer">
-                <span className="text-4xl mb-3 block">📄</span>
-                {selectedFile ? (
-                  <span className="text-sm font-semibold text-indigo-600">
-                    {selectedFile.name}
-                  </span>
-                ) : (
-                  <span className="text-sm text-gray-500">
-                    파일을 업로드하세요
-                  </span>
-                )}
-              </label>
-            </div>
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={onClose}
-                className="flex-1 px-4 py-2.5 bg-gray-100 rounded-lg"
-              >
-                취소
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
               </button>
+            </div>
+
+            <div className="p-8 flex-1 flex flex-col gap-6 bg-gray-50/50 overflow-y-auto min-h-0">
+              <div className="flex flex-col gap-6 shrink-0">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    지원 직군 <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={jobCategory}
+                    onChange={(e) => setJobCategory(e.target.value)}
+                    className="w-full bg-white border border-gray-300 text-gray-900 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors cursor-pointer"
+                  >
+                    <option value="" disabled>
+                      직군을 선택해 주세요
+                    </option>
+                    {JOB_CATEGORIES.map((cat, i) => (
+                      <option key={i} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-800 mb-2">
+                    상세 포지션{" "}
+                    <span className="text-gray-400 font-normal">(선택)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={detailedPosition}
+                    onChange={(e) => setDetailedPosition(e.target.value)}
+                    placeholder="예) 프론트엔드 개발자 / 3년차"
+                    className="w-full bg-white border border-gray-300 text-gray-900 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors placeholder-gray-400"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col flex-1 mt-2 min-h-[160px]">
+                <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  파일 업로드 <span className="text-red-500">*</span>
+                </label>
+
+                <div
+                  className={`relative border-2 border-dashed rounded-2xl flex flex-col justify-center items-center p-8 transition-all duration-200 bg-blue-50/70 flex-1 h-full
+                    ${isDragging ? "border-blue-500 bg-blue-100" : "border-blue-300 hover:border-blue-400 hover:bg-blue-50"}`}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDragging(false);
+                    validateAndSetFile(e.dataTransfer.files[0]);
+                  }}
+                >
+                  <input
+                    type="file"
+                    id="fileInput"
+                    className="hidden"
+                    onChange={(e) => validateAndSetFile(e.target.files[0])}
+                    accept=".pdf,.pptx"
+                  />
+                  <label
+                    htmlFor="fileInput"
+                    className="cursor-pointer flex flex-col items-center w-full h-full justify-center"
+                  >
+                    {selectedFile ? (
+                      <div className="flex flex-col items-center gap-3">
+                        <svg
+                          className="w-12 h-12 text-blue-500 mb-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="1.5"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                        <span
+                          className="text-lg font-bold text-gray-900 break-all line-clamp-2 max-w-xs text-center px-2"
+                          title={selectedFile.name}
+                        >
+                          {selectedFile.name}
+                        </span>
+                        <span className="text-sm text-blue-600 font-bold mt-1 bg-white border border-blue-200 px-4 py-1.5 rounded-full shadow-sm hover:bg-blue-50 transition-colors">
+                          파일 다시 선택하기
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2 text-center animate-fade-in">
+                        <svg
+                          className="w-10 h-10 text-blue-400 mb-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="1.5"
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                          />
+                        </svg>
+                        <span className="text-lg font-bold text-gray-800">
+                          파일 선택하기
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          PDF(.pdf), PPTX(.pptx) 지원
+                        </span>
+                        <p className="text-xs text-gray-400 mt-2">
+                          최대 50MB까지 업로드 가능합니다.
+                        </p>
+                      </div>
+                    )}
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-8 py-5 border-t border-gray-100 bg-white flex justify-end shrink-0">
               <button
                 onClick={handleAnalyzeClick}
                 disabled={!selectedFile || !jobCategory}
-                className="flex-1 px-4 py-2.5 bg-indigo-600 text-white rounded-lg disabled:opacity-50"
+                className={`px-8 py-2.5 font-bold rounded-lg transition-all text-sm
+                  ${
+                    !selectedFile || !jobCategory
+                      ? "bg-blue-100 text-blue-400 cursor-not-allowed"
+                      : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow-md active:scale-[0.98]"
+                  }`}
               >
-                정밀 분석 시작
+                분석하기
               </button>
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>
