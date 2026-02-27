@@ -1,9 +1,25 @@
 import React, { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function CIAnalysis({ isOpen, onClose }) {
   const [mode, setMode] = useState("HOME"); // HOME(PDF) | FORM
+  const [jobRole, setJobRole] = useState("");
+  const [jobDetail, setJobDetail] = useState("");
 
- 
+  const roleLabel = (v) => {
+    const map = {
+      backend: "백엔드 개발",
+      frontend: "프론트엔드 개발",
+      fullstack: "풀스택 개발",
+      data: "데이터/AI",
+      design: "디자인",
+      marketing: "마케팅",
+      barista: "바리스타",
+      etc: "기타",
+    };
+    return map[v] || v;
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -30,17 +46,64 @@ function CIAnalysis({ isOpen, onClose }) {
           </div>
         </div>
 
-        {/* Body */}
+        {/* body */}
         <div style={modalInnerStyle}>
-          {mode === "HOME" && <PdfDropzoneView />}
-          {mode === "FORM" && <FormView />}
+          <label style={labelStyle}>직군</label>
+
+          <select
+            style={inputStyle}
+            value={jobRole}
+            onChange={(e) => setJobRole(e.target.value)}
+          >
+            <option value="">직군을 선택하세요</option>
+            <option value="backend">기획∙전략</option>
+            <option value="backend">마케팅∙홍보∙조사</option>
+            <option value="backend">회계∙세무∙재무</option>
+            <option value="backend">인사∙노무∙HRD</option>
+            <option value="backend">총무∙법무∙사무</option>
+            <option value="backend">IT개발∙데이터</option>
+            <option value="backend">디자인</option>
+            <option value="backend">영업∙판매∙무역</option>
+            <option value="backend">고객상담∙TM</option>
+            <option value="backend">구매∙자재∙물류</option>
+            <option value="backend">상품기획∙MD</option>
+            <option value="backend">운전∙운송∙배송</option>
+            <option value="backend">서비스</option>
+            <option value="backend">생산</option>
+            <option value="backend">건설∙건축</option>
+            <option value="backend">의료</option>
+            <option value="backend">연구∙R&D</option>
+            <option value="backend">교육</option>
+            <option value="backend">미디어∙문화∙스포츠</option>
+            <option value="backend">금융∙보험</option>
+            <option value="backend">공공∙복지</option>
+          </select>
+          <label style={labelStyle}>세부 직무 (선택)</label>
+          <input
+            style={inputStyle}
+            value={jobDetail}
+            onChange={(e) => setJobDetail(e.target.value)}
+            placeholder="세부 직무를 입력하세요"
+          />
+
+          {/* 화면 컨텐츠 */}
+          {mode === "HOME" && <PdfDropzoneView jobRole={jobRole} />}
+          {mode === "FORM" && (
+            <FormView
+              jobRole={jobRole}
+              job
+              Detail={jobDetail}
+              onClose={onClose}
+            />
+          )}
         </div>
       </div>
     </div>
   );
 }
+
 // HOME 화면: PDF 드래그&드롭 + 파일 선택
-function PdfDropzoneView() {
+function PdfDropzoneView({ jobRole }) {
   const inputRef = useRef(null);
   const [file, setFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -83,7 +146,7 @@ function PdfDropzoneView() {
   };
 
   return (
-    <div>
+    <div style={{ marginTop: 14 }}>
       <input
         ref={inputRef}
         type="file"
@@ -111,8 +174,11 @@ function PdfDropzoneView() {
         <div style={dropzoneTitleStyle}>
           PDF를 드래그해서 놓거나 클릭해서 업로드
         </div>
+
         <div style={dropzoneDescStyle}>
-          업로드 후 텍스트 추출 → 분석 점수 & 예상 질문 5개 생성
+          {jobRole
+            ? "직군 선택됨 → 업로드 후 분석 정확도가 올라가요"
+            : "직군을 먼저 선택하면 분석 정확도가 좋아져요"}
         </div>
 
         <div style={{ marginTop: 14 }}>
@@ -155,12 +221,16 @@ function PdfDropzoneView() {
             <button
               style={btnOutline}
               onClick={() => alert("다음 단계: 텍스트 추출 API 연결")}
+              disabled={!jobRole}
+              title={!jobRole ? "직군을 먼저 선택하세요" : ""}
             >
               텍스트 추출(예정)
             </button>
             <button
               style={btnPrimary}
               onClick={() => alert("다음 단계: 추출→분석→저장 연결")}
+              disabled={!jobRole}
+              title={!jobRole ? "직군을 먼저 선택하세요" : ""}
             >
               분석 시작(예정)
             </button>
@@ -171,23 +241,57 @@ function PdfDropzoneView() {
   );
 }
 
-function FormView() {
+function FormView({ jobRole, jobDetail, onClose }) {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const navigate = useNavigate();
 
-  const handleSave = () => {
-    console.log("저장:", { title, content });
-    alert("콘솔에 데이터 찍힘");
+  const titlePlaceholder =
+    jobRole === "backend"
+      ? "예) 네이버 백엔드 지원"
+      : jobRole === "frontend"
+        ? "예) 카카오 프론트엔드 지원"
+        : jobRole === "fullstack"
+          ? "예) 토스 풀스택 지원"
+          : jobRole === "data"
+            ? "예) 쿠팡 데이터/AI 지원"
+            : jobRole === "design"
+              ? "예) 라인 UX 디자이너 지원"
+              : jobRole === "marketing"
+                ? "예) 당근 마케팅 지원"
+                : jobRole === "barista"
+                  ? "예) 스타벅스 바리스타 지원"
+                  : "예) 00회사 지원";
+
+  const handleSave = async () => {
+    try {
+      const fakeAnalysisId = 1;
+
+      localStorage.setItem(
+        "ci_draft",
+        JSON.stringify({
+          title,
+          content,
+          jobRole,
+          jobDetail,
+        }),
+      );
+
+      onClose?.();
+      navigate(`/analysis/result/${fakeAnalysisId}`);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   return (
-    <div>
+    <div style={{ marginTop: 14 }}>
       <label style={labelStyle}>제목</label>
       <input
         style={inputStyle}
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        placeholder="예) 00회사 백엔드 지원"
+        placeholder={titlePlaceholder}
       />
 
       <label style={labelStyle}>내용</label>
@@ -214,7 +318,8 @@ function FormView() {
         <button
           style={btnPrimary}
           onClick={handleSave}
-          disabled={!title.trim() || !content.trim()}
+          disabled={!jobRole || !title.trim() || !content.trim()}
+          title={!jobRole ? "직군을 먼저 선택하세요" : ""}
         >
           분석 및 저장
         </button>
@@ -223,6 +328,7 @@ function FormView() {
   );
 }
 
+/** ===== Styles ===== */
 
 const overlayStyle = {
   position: "fixed",
@@ -264,8 +370,41 @@ const titleStyle = {
   color: "#0b1b3a",
 };
 
-const modalInnerStyle = {
-  padding: 18,
+const modalInnerStyle = { padding: 18 };
+
+const jobBarStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+};
+
+const jobLabelStyle = {
+  display: "block",
+  marginTop: 10,
+  fontWeight: 800,
+  color: "#0b1b3a",
+  fontSize: 13,
+};
+
+const jobSelectStyle = {
+  flex: 1,
+  padding: "10px 12px",
+  borderRadius: 12,
+  border: "1px solid rgba(15, 60, 160, 0.14)",
+  outline: "none",
+  background: "#fff",
+  color: "#0b1b3a",
+  fontWeight: 700,
+};
+
+const jobChipStyle = {
+  padding: "8px 10px",
+  borderRadius: 999,
+  border: "1px solid rgba(31,85,255,0.25)",
+  background: "linear-gradient(180deg, #ffffff 0%, #f6f9ff 100%)",
+  color: "#1f55ff",
+  fontSize: 12,
+  fontWeight: 900,
 };
 
 const dropzoneStyle = {
