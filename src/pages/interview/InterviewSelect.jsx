@@ -1,58 +1,426 @@
-// src/pages/InterviewSelect.jsx
-import { useMemo, useState } from "react";
+// src/pages/interview/InterviewSelect.jsx
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import PortfolioUploadModal from "../../components/portfolio/PortfolioUploadModal";
+import ClAnalysis from "../ClAnalysis";
+import Resume from "../Resume";
 
 const FILE_META = {
   resume: {
     label: "이력서",
     desc: "경력 및 학력 기반 질문",
-    accepts: [".pdf", ".doc", ".docx"],
     color: "blue",
     icon: "📄",
     gradient: "from-blue-500 to-indigo-500",
     bgGradient: "from-blue-50 to-indigo-50",
+    emptyIcon: "📋",
+    emptyMsg: "아직 분석된 이력서가 없어요",
+    emptyHint: "이력서를 업로드하고 AI 분석을 받아보세요",
+    analyzeLabel: "이력서 분석하기",
+    emptyColor: "blue",
   },
   coverLetter: {
     label: "자기소개서",
     desc: "동기 및 역량 기반 질문",
-    accepts: [".pdf", ".doc", ".docx", ".txt"],
     color: "purple",
     icon: "✍️",
     gradient: "from-purple-500 to-pink-500",
     bgGradient: "from-purple-50 to-pink-50",
+    emptyIcon: "📝",
+    emptyMsg: "아직 분석된 자기소개서가 없어요",
+    emptyHint: "자기소개서를 업로드하고 AI 분석을 받아보세요",
+    analyzeLabel: "자기소개서 분석하기",
+    emptyColor: "purple",
   },
   portfolio: {
     label: "포트폴리오",
     desc: "프로젝트 경험 기반 질문",
-    accepts: [".pdf", ".ppt", ".pptx"],
     color: "green",
     icon: "💼",
     gradient: "from-green-500 to-teal-500",
     bgGradient: "from-green-50 to-teal-50",
+    emptyIcon: "🗂️",
+    emptyMsg: "아직 분석된 포트폴리오가 없어요",
+    emptyHint: "포트폴리오를 업로드하고 AI 분석을 받아보세요",
+    analyzeLabel: "포트폴리오 분석하기",
+    emptyColor: "teal",
   },
 };
 
-// 흐르는 그라데이션 오브 배경 (홈 화면과 동일)
-const FlowingGradientOrbs = () => {
+const EMPTY_COLOR_MAP = {
+  blue: {
+    bg: "bg-blue-50",
+    border: "border-blue-200",
+    iconBg: "bg-blue-100",
+    text: "text-blue-700",
+    btn: "bg-blue-600 hover:bg-blue-700",
+    dot: "bg-blue-300",
+    badge: "bg-blue-100 text-blue-600 border-blue-200",
+    ring: "ring-blue-300",
+  },
+  purple: {
+    bg: "bg-purple-50",
+    border: "border-purple-200",
+    iconBg: "bg-purple-100",
+    text: "text-purple-700",
+    btn: "bg-purple-600 hover:bg-purple-700",
+    dot: "bg-purple-300",
+    badge: "bg-purple-100 text-purple-600 border-purple-200",
+    ring: "ring-purple-300",
+  },
+  teal: {
+    bg: "bg-teal-50",
+    border: "border-teal-200",
+    iconBg: "bg-teal-100",
+    text: "text-teal-700",
+    btn: "bg-teal-600 hover:bg-teal-700",
+    dot: "bg-teal-300",
+    badge: "bg-teal-100 text-teal-600 border-teal-200",
+    ring: "ring-teal-300",
+  },
+};
+
+// ─────────────────────────────────────────────
+// DB fetch 함수 (실제 API로 교체)
+// ─────────────────────────────────────────────
+const fetchUserAnalyses = async () => {
+  // TODO: 실제 API로 교체
+  return {
+    resume: [
+      // {
+      //   id: "r1",
+      //   title: "2024 상반기 이력서",
+      //   fileName: "resume_2024_1H.pdf",
+      //   analyzedAt: "2024-03-15",
+      //   score: 88,
+      //   keywords: ["React", "TypeScript", "3년 경력"],
+      // },
+      // {
+      //   id: "r2",
+      //   title: "스타트업 지원용 이력서",
+      //   fileName: "resume_startup.pdf",
+      //   analyzedAt: "2024-05-02",
+      //   score: 92,
+      //   keywords: ["Node.js", "AWS", "풀스택"],
+      // },
+      // {
+      //   id: "r2",
+      //   title: "스타트업 지원용 이력서",
+      //   fileName: "resume_startup.pdf",
+      //   analyzedAt: "2024-05-02",
+      //   score: 92,
+      //   keywords: ["Node.js", "AWS", "풀스택"],
+      // },
+    ],
+    coverLetter: [],
+    portfolio: [],
+  };
+};
+
+// ─────────────────────────────────────────────
+// 배경 오브 애니메이션
+// ─────────────────────────────────────────────
+const FlowingGradientOrbs = () => (
+  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-gradient-to-br from-blue-400/20 via-indigo-400/10 to-transparent rounded-full blur-3xl animate-orb-1" />
+    <div className="absolute top-1/4 right-0 w-[700px] h-[700px] bg-gradient-to-bl from-indigo-400/20 via-purple-400/10 to-transparent rounded-full blur-3xl animate-orb-2" />
+    <div className="absolute bottom-0 left-1/4 w-[550px] h-[550px] bg-gradient-to-tr from-purple-400/20 via-blue-400/10 to-transparent rounded-full blur-3xl animate-orb-3" />
+  </div>
+);
+
+// ─────────────────────────────────────────────
+// 점수 뱃지
+// ─────────────────────────────────────────────
+const ScoreBadge = ({ score }) => {
+  const color =
+    score >= 90
+      ? "bg-emerald-100 text-emerald-700 border-emerald-300"
+      : score >= 75
+      ? "bg-blue-100 text-blue-700 border-blue-300"
+      : "bg-amber-100 text-amber-700 border-amber-300";
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-gradient-to-br from-blue-400/20 via-indigo-400/10 to-transparent rounded-full blur-3xl animate-orb-1"></div>
-      <div className="absolute top-1/4 right-0 w-[700px] h-[700px] bg-gradient-to-bl from-indigo-400/20 via-purple-400/10 to-transparent rounded-full blur-3xl animate-orb-2"></div>
-      <div className="absolute bottom-0 left-1/4 w-[550px] h-[550px] bg-gradient-to-tr from-purple-400/20 via-blue-400/10 to-transparent rounded-full blur-3xl animate-orb-3"></div>
-    </div>
+    <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${color}`}>
+      {score}점
+    </span>
   );
 };
 
+// ─────────────────────────────────────────────
+// 카드 내부 빈 상태 UI
+// ─────────────────────────────────────────────
+function CardEmptyState({ meta, onClickAnalyze }) {
+  const c = EMPTY_COLOR_MAP[meta.emptyColor];
+
+  return (
+    <div className={`rounded-2xl border-2 border-dashed ${c.border} ${c.bg} p-6 text-center`}>
+      <div className="relative inline-flex items-center justify-center mb-4">
+        <div
+          className={`w-16 h-16 ${c.iconBg} rounded-2xl flex items-center justify-center
+                      animate-empty-float shadow-inner`}
+        >
+          <span className="text-3xl">{meta.emptyIcon}</span>
+        </div>
+
+        <span
+          className={`absolute -top-1 -right-1 w-3 h-3 ${c.dot} rounded-full
+                       animate-ping opacity-75`}
+        />
+        <span className={`absolute -top-1 -right-1 w-3 h-3 ${c.dot} rounded-full`} />
+      </div>
+
+      <p className={`font-bold text-sm mb-1 ${c.text}`}>{meta.emptyMsg}</p>
+      <p className="text-gray-400 text-xs mb-5 leading-relaxed">{meta.emptyHint}</p>
+
+      <button
+        type="button"
+        onClick={onClickAnalyze}
+        className={`inline-flex items-center gap-2 ${c.btn} text-white
+                    text-xs font-bold px-4 py-2 rounded-full
+                    transition-all duration-300 hover:scale-105 hover:shadow-lg
+                    active:scale-95`}
+      >
+        <span>✨</span>
+        {meta.analyzeLabel}
+        <span className="text-[10px] opacity-80">→</span>
+      </button>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// 전체 빈 상태 배너
+// ─────────────────────────────────────────────
+function GlobalEmptyBanner({ onNavigate }) {
+  const steps = [
+    { icon: "📤", label: "문서 업로드", desc: "이력서·자소서·포폴" },
+    { icon: "🤖", label: "AI 분석", desc: "강점·약점 파악" },
+    { icon: "🎤", label: "면접 시작", desc: "맞춤형 질문 생성" },
+  ];
+
+  return (
+    <div className="mb-12 relative overflow-hidden rounded-3xl border-2 border-dashed border-blue-200 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-10 text-center animate-slide-in-up shadow-lg">
+      <div className="absolute -top-10 -left-10 w-40 h-40 bg-blue-200/30 rounded-full blur-2xl pointer-events-none" />
+      <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-purple-200/30 rounded-full blur-2xl pointer-events-none" />
+
+      <div className="relative inline-flex items-center justify-center mb-6">
+        <div className="w-24 h-24 bg-white rounded-3xl flex items-center justify-center shadow-xl border-2 border-blue-100 animate-empty-float">
+          <span className="text-5xl">🗃️</span>
+        </div>
+        <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center shadow-md animate-bounce-subtle">
+          <span className="text-white text-sm font-bold">!</span>
+        </div>
+      </div>
+
+      <h3 className="text-2xl font-bold text-gray-900 mb-2">아직 분석된 자료가 없어요</h3>
+      <p className="text-gray-500 mb-8 leading-relaxed max-w-md mx-auto">
+        면접을 시작하려면 먼저 문서를 분석해야 해요.
+        <br />
+        AI가 자료를 분석한 후, 이 화면에서 선택하면 됩니다.
+      </p>
+
+      <div className="flex items-center justify-center gap-2 mb-8 flex-wrap">
+        {steps.map((step, i) => (
+          <div key={step.label} className="flex items-center gap-2">
+            <div className="flex flex-col items-center">
+              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-md border border-gray-100 mb-1">
+                <span className="text-2xl">{step.icon}</span>
+              </div>
+              <span className="text-xs font-bold text-gray-700">{step.label}</span>
+              <span className="text-[10px] text-gray-400">{step.desc}</span>
+            </div>
+            {i < steps.length - 1 && (
+              <span className="text-gray-300 text-xl font-light mb-4 mx-1">→</span>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <p className="text-xs text-gray-400 mt-4">
+        분석 후 이 페이지로 돌아오면 자료를 선택할 수 있어요
+      </p>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// 개별 분석 결과 선택 카드
+// ─────────────────────────────────────────────
+function AnalysisItemCard({ item, isSelected, onSelect, gradient }) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={[
+        "w-full text-left p-4 rounded-2xl border-2 transition-all duration-300",
+        "hover:shadow-md hover:-translate-y-0.5",
+        isSelected
+          ? `border-transparent bg-gradient-to-br ${gradient} shadow-lg ring-2 ring-offset-2 ring-blue-400`
+          : "border-gray-200 bg-white hover:border-blue-300",
+      ].join(" ")}
+    >
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <span className={`font-bold text-sm leading-tight ${isSelected ? "text-white" : "text-gray-900"}`}>
+          {item.title}
+        </span>
+        <ScoreBadge score={item.score} />
+      </div>
+
+      <p className={`text-xs truncate mb-2 ${isSelected ? "text-white/80" : "text-gray-500"}`}>
+        📎 {item.fileName}
+      </p>
+
+      <div className="flex flex-wrap gap-1 mb-2">
+        {item.keywords.map((kw) => (
+          <span
+            key={kw}
+            className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+              isSelected ? "bg-white/30 text-white" : "bg-gray-100 text-gray-600"
+            }`}
+          >
+            {kw}
+          </span>
+        ))}
+      </div>
+
+      <p className={`text-xs ${isSelected ? "text-white/70" : "text-gray-400"}`}>
+        🕐 분석일: {item.analyzedAt}
+      </p>
+
+      {isSelected && (
+        <div className="mt-2 flex items-center gap-1 text-white text-xs font-bold">
+          <span className="w-4 h-4 bg-white/30 rounded-full flex items-center justify-center">✓</span>
+          선택됨
+        </div>
+      )}
+    </button>
+  );
+}
+
+// ─────────────────────────────────────────────
+// 카테고리별 분석 카드
+// ─────────────────────────────────────────────
+function AnalysisCategoryCard({
+  fileKey,
+  meta,
+  items,
+  selectedId,
+  onSelect,
+  isLoading,
+  index,
+  onOpenAnalyze,
+}) {
+  const hasItems = items && items.length > 0;
+
+  return (
+    <div className="animate-fade-in-up" style={{ animationDelay: `${index * 0.15}s`, opacity: 0 }}>
+      <div
+        className={[
+          "group relative bg-white/95 backdrop-blur-sm rounded-3xl p-6 shadow-xl border-2 transition-all duration-500",
+          "hover:-translate-y-1 hover:shadow-2xl",
+          selectedId
+            ? "border-transparent ring-2 ring-offset-2 ring-blue-300"
+            : hasItems
+            ? "border-gray-200 hover:border-blue-200"
+            : "border-gray-100",
+        ].join(" ")}
+      >
+        {selectedId && (
+          <div className="absolute top-4 right-4 w-8 h-8 bg-gradient-to-br from-green-500 to-teal-500 rounded-full flex items-center justify-center text-white font-bold shadow-lg text-sm">
+            ✓
+          </div>
+        )}
+
+        <div className="flex items-center gap-4 mb-5">
+          <div
+            className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 ${
+              selectedId
+                ? `bg-gradient-to-br ${meta.gradient} shadow-lg`
+                : hasItems
+                ? `bg-gradient-to-br ${meta.bgGradient}`
+                : "bg-gray-100"
+            }`}
+          >
+            <span className={`text-3xl transition-all duration-300 ${!hasItems && !isLoading ? "grayscale opacity-50" : ""}`}>
+              {meta.icon}
+            </span>
+          </div>
+
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className={`text-xl font-bold ${hasItems ? "text-gray-900" : "text-gray-400"}`}>
+                {meta.label}
+              </h3>
+
+              {!isLoading && (
+                <span
+                  className={`text-xs font-bold px-2 py-0.5 rounded-full border ${
+                    hasItems
+                      ? "bg-blue-100 text-blue-600 border-blue-200"
+                      : "bg-gray-100 text-gray-400 border-gray-200"
+                  }`}
+                >
+                  {hasItems ? `${items.length}개` : "없음"}
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-gray-500">{meta.desc}</p>
+          </div>
+        </div>
+
+        <div className="border-t border-gray-100 mb-4" />
+
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1, 2].map((i) => (
+              <div key={i} className="h-24 rounded-2xl bg-gray-100 animate-pulse" />
+            ))}
+          </div>
+        ) : !hasItems ? (
+          <CardEmptyState meta={meta} onClickAnalyze={() => onOpenAnalyze(fileKey)} />
+        ) : (
+          <div className="space-y-3 max-h-72 overflow-y-auto pr-1 custom-scroll">
+            {items.map((item) => (
+              <AnalysisItemCard
+                key={item.id}
+                item={item}
+                isSelected={selectedId === item.id}
+                onSelect={() => onSelect(selectedId === item.id ? null : item.id)}
+                gradient={meta.gradient}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// 메인 페이지
+// ─────────────────────────────────────────────
 export default function InterviewSelect() {
   const navigate = useNavigate();
 
-  const [selectedFiles, setSelectedFiles] = useState({
+  const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false);
+  const [isCoverLetterModalOpen, setIsCoverLetterModalOpen] = useState(false);
+  const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
+
+  const openAnalyzeModal = (fileKey) => {
+    if (fileKey === "resume") setIsResumeModalOpen(true);
+    if (fileKey === "coverLetter") setIsCoverLetterModalOpen(true);
+    if (fileKey === "portfolio") setIsPortfolioModalOpen(true);
+  };
+
+  const [analyses, setAnalyses] = useState({ resume: [], coverLetter: [], portfolio: [] });
+  const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+
+  const [selectedIds, setSelectedIds] = useState({
     resume: null,
     coverLetter: null,
     portfolio: null,
   });
-
-  const [dragOverKey, setDragOverKey] = useState(null);
 
   const [settings, setSettings] = useState({
     questionCount: "10",
@@ -60,64 +428,64 @@ export default function InterviewSelect() {
     jobPosition: "developer",
   });
 
-  const hasFiles = useMemo(
-    () => Object.values(selectedFiles).some((f) => f !== null),
-    [selectedFiles]
+  useEffect(() => {
+    setIsLoading(true);
+    fetchUserAnalyses()
+      .then((data) => {
+        setAnalyses(data);
+        setFetchError(null);
+      })
+      .catch(() => setFetchError("분석 결과를 불러오는 데 실패했습니다."))
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const isAllEmpty = useMemo(
+    () => !isLoading && Object.values(analyses).every((list) => list.length === 0),
+    [analyses, isLoading]
   );
 
-  const selectedList = useMemo(() => {
-    return Object.entries(selectedFiles)
-      .filter(([, file]) => file)
-      .map(([key, file]) => ({ key, label: FILE_META[key].label, name: file.name }));
-  }, [selectedFiles]);
+  const hasSelection = useMemo(
+    () => Object.values(selectedIds).some((id) => id !== null),
+    [selectedIds]
+  );
 
-  const handlePick = (key, file) => {
-    if (!file) return;
-    setSelectedFiles((prev) => ({ ...prev, [key]: file }));
-  };
+  const selectedSummary = useMemo(() => {
+    return Object.entries(selectedIds)
+      .filter(([, id]) => id !== null)
+      .map(([key, id]) => {
+        const item = analyses[key]?.find((a) => a.id === id);
+        return item ? { key, label: FILE_META[key].label, ...item } : null;
+      })
+      .filter(Boolean);
+  }, [selectedIds, analyses]);
 
-  const handleDrop = (e, key) => {
-    e.preventDefault();
-    setDragOverKey(null);
-    const file = e.dataTransfer.files?.[0];
-    handlePick(key, file);
-  };
+  const handleSelect = (key, id) => setSelectedIds((prev) => ({ ...prev, [key]: id }));
 
   const startInterview = () => {
-    if (!hasFiles) return;
-
-    const interviewData = {
-      files: {
-        resume: selectedFiles.resume ? selectedFiles.resume.name : null,
-        coverLetter: selectedFiles.coverLetter ? selectedFiles.coverLetter.name : null,
-        portfolio: selectedFiles.portfolio ? selectedFiles.portfolio.name : null,
-      },
-      settings: { ...settings },
-    };
-
-    localStorage.setItem("interviewData", JSON.stringify(interviewData));
+    if (!hasSelection) return;
+    localStorage.setItem(
+      "interviewData",
+      JSON.stringify({ selectedAnalyses: selectedIds, settings })
+    );
     navigate("/interview/session");
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/50 relative">
-      {/* 배경 효과 */}
       <FlowingGradientOrbs />
 
       {/* Header */}
       <nav className="fixed w-full z-50 bg-white/95 backdrop-blur-md shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                CareerTalk
-              </h1>
-            </div>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              CareerTalk
+            </h1>
             <button
               onClick={() => navigate("/")}
               className="text-gray-700 hover:text-blue-600 transition font-medium flex items-center gap-2"
             >
-              <span>←</span> 메인으로 돌아가기
+              ← 메인으로 돌아가기
             </button>
           </div>
         </div>
@@ -125,7 +493,7 @@ export default function InterviewSelect() {
 
       {/* Main Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-32 pb-20">
-        {/* Title Section */}
+        {/* Title */}
         <div className="text-center mb-16">
           <div className="inline-block mb-6 px-5 py-2.5 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full border-2 border-blue-300 shadow-md animate-slide-in-down">
             <span className="text-blue-700 text-sm font-bold flex items-center gap-2">
@@ -133,55 +501,75 @@ export default function InterviewSelect() {
               AI 모의 면접 준비
             </span>
           </div>
-          
+
           <h2 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight animate-slide-in-up">
-            면접 자료를{" "}
+            분석된 자료를{" "}
             <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              업로드
+              선택
             </span>
             해주세요
           </h2>
-          
+
           <p className="text-xl text-gray-600 animate-slide-in-up animation-delay-300">
-            최소 1개 이상의 자료를 선택하면 AI가 맞춤형 질문을 생성합니다
+            이전에 분석한 자료 중 최소 1개를 선택하면 AI가 맞춤형 질문을 생성합니다
           </p>
         </div>
 
-        {/* File Upload Cards */}
+        {/* Fetch Error */}
+        {fetchError && (
+          <div className="mb-8 flex items-center gap-3 bg-red-50 border-2 border-red-200 text-red-700 px-6 py-4 rounded-2xl font-semibold">
+            <span className="text-2xl">⚠️</span>
+            {fetchError}
+          </div>
+        )}
+
+        {/* ✅ 전체 빈 상태 배너 */}
+        {isAllEmpty && <GlobalEmptyBanner onNavigate={() => openAnalyzeModal("resume")} />}
+
+        {/* Category Cards */}
         <div className="grid md:grid-cols-3 gap-6 mb-12">
           {Object.keys(FILE_META).map((key, idx) => (
-            <FileCard
+            <AnalysisCategoryCard
               key={key}
               fileKey={key}
               meta={FILE_META[key]}
-              file={selectedFiles[key]}
-              isDragOver={dragOverKey === key}
-              onDragOver={() => setDragOverKey(key)}
-              onDragLeave={() => setDragOverKey(null)}
-              onDrop={(e) => handleDrop(e, key)}
-              onPick={(file) => handlePick(key, file)}
+              items={analyses[key]}
+              selectedId={selectedIds[key]}
+              onSelect={(id) => handleSelect(key, id)}
+              isLoading={isLoading}
               index={idx}
+              onOpenAnalyze={openAnalyzeModal}
             />
           ))}
         </div>
 
-        {/* Selected Files Summary */}
-        {selectedList.length > 0 && (
+        {/* Selected Summary */}
+        {selectedSummary.length > 0 && (
           <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-8 mb-12 shadow-lg animate-slide-in-up">
             <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-3 text-lg">
               <span className="inline-flex items-center justify-center w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full text-white text-sm">
                 ✓
               </span>
-              선택된 자료
+              선택된 분석 자료
             </h4>
             <div className="grid md:grid-cols-3 gap-4">
-              {selectedList.map((it) => (
-                <div key={it.key} className="bg-white rounded-xl p-4 shadow-md">
+              {selectedSummary.map((item) => (
+                <div key={item.key} className="bg-white rounded-xl p-4 shadow-md">
                   <div className="flex items-start gap-3">
-                    <span className="text-2xl">{FILE_META[it.key].icon}</span>
+                    <span className="text-2xl">{FILE_META[item.key].icon}</span>
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-gray-900 text-sm mb-1">{it.label}</div>
-                      <div className="text-xs text-gray-600 truncate" title={it.name}>{it.name}</div>
+                      <div className="font-semibold text-gray-900 text-sm mb-0.5">
+                        {item.label}
+                      </div>
+                      <div
+                        className="text-xs text-gray-600 truncate font-medium"
+                        title={item.title}
+                      >
+                        {item.title}
+                      </div>
+                      <div className="mt-1">
+                        <ScoreBadge score={item.score} />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -190,7 +578,7 @@ export default function InterviewSelect() {
           </div>
         )}
 
-        {/* Settings Section */}
+        {/* Settings */}
         <div className="bg-white/95 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border-2 border-blue-100 mb-12">
           <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
             <span className="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl text-white">
@@ -200,15 +588,15 @@ export default function InterviewSelect() {
           </h3>
 
           <div className="grid md:grid-cols-3 gap-6">
-            {/* 질문 개수 */}
-            <div className="group">
+            <div>
               <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                <span className="text-blue-600">📊</span>
-                질문 개수
+                <span className="text-blue-600">📊</span> 질문 개수
               </label>
               <select
                 value={settings.questionCount}
-                onChange={(e) => setSettings((p) => ({ ...p, questionCount: e.target.value }))}
+                onChange={(e) =>
+                  setSettings((p) => ({ ...p, questionCount: e.target.value }))
+                }
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white hover:border-blue-300 font-medium"
               >
                 <option value="5">5개 (약 10분)</option>
@@ -217,15 +605,15 @@ export default function InterviewSelect() {
               </select>
             </div>
 
-            {/* 면접 난이도 */}
-            <div className="group">
+            <div>
               <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                <span className="text-purple-600">🎯</span>
-                면접 난이도
+                <span className="text-purple-600">🎯</span> 면접 난이도
               </label>
               <select
                 value={settings.difficulty}
-                onChange={(e) => setSettings((p) => ({ ...p, difficulty: e.target.value }))}
+                onChange={(e) =>
+                  setSettings((p) => ({ ...p, difficulty: e.target.value }))
+                }
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition bg-white hover:border-purple-300 font-medium"
               >
                 <option value="easy">초급 (기본 질문)</option>
@@ -234,15 +622,15 @@ export default function InterviewSelect() {
               </select>
             </div>
 
-            {/* 지원 직무 */}
-            <div className="group">
+            <div>
               <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                <span className="text-green-600">💼</span>
-                지원 직무
+                <span className="text-green-600">💼</span> 지원 직무
               </label>
               <select
                 value={settings.jobPosition}
-                onChange={(e) => setSettings((p) => ({ ...p, jobPosition: e.target.value }))}
+                onChange={(e) =>
+                  setSettings((p) => ({ ...p, jobPosition: e.target.value }))
+                }
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition bg-white hover:border-green-300 font-medium"
               >
                 <option value="developer">소프트웨어 개발자</option>
@@ -257,11 +645,27 @@ export default function InterviewSelect() {
         </div>
 
         {/* Start Button */}
-        <div className="text-center">
+        <div className="flex flex-col items-center justify-center gap-4">
+          {!hasSelection ? (
+            <div className="inline-flex items-center gap-2 bg-red-50 border-2 border-red-200 text-red-700 px-6 py-3 rounded-full text-sm font-semibold animate-pulse">
+              <span>⚠️</span>
+              최소 1개 이상의 분석 자료를 선택해주세요
+            </div>
+          ) : (
+            <p className="text-gray-600 text-sm flex items-center justify-center gap-2">
+              <span className="text-green-600">✓</span>
+              준비 완료! 면접을 시작할 수 있습니다
+            </p>
+          )}
+
           <button
             onClick={startInterview}
-            disabled={!hasFiles}
-            className="group relative bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-size-200 bg-pos-0 hover:bg-pos-100 text-white px-16 py-5 rounded-full font-bold text-lg shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:hover:shadow-2xl overflow-hidden"
+            disabled={!hasSelection}
+            className="group relative bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600
+                       bg-size-200 bg-pos-0 hover:bg-pos-100 text-white px-16 py-5 rounded-full
+                       font-bold text-lg shadow-2xl hover:shadow-3xl transition-all duration-500
+                       transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed
+                       disabled:transform-none overflow-hidden"
           >
             <span className="relative z-10 flex items-center justify-center gap-3">
               <span className="text-2xl">🎤</span>
@@ -270,27 +674,29 @@ export default function InterviewSelect() {
                 →
               </span>
             </span>
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           </button>
-
-          {!hasFiles && (
-            <div className="mt-6 inline-flex items-center gap-2 bg-red-50 border-2 border-red-200 text-red-700 px-6 py-3 rounded-full text-sm font-semibold animate-pulse">
-              <span>⚠️</span>
-              최소 1개 이상의 자료를 업로드해주세요
-            </div>
-          )}
-
-          {hasFiles && (
-            <p className="mt-6 text-gray-600 text-sm flex items-center justify-center gap-2">
-              <span className="text-green-600">✓</span>
-              준비 완료! 면접을 시작할 수 있습니다
-            </p>
-          )}
         </div>
       </div>
 
+      {/* ✅ 모달 렌더링 (Home처럼) */}
+      <Resume
+        isOpen={isResumeModalOpen}
+        onClose={() => setIsResumeModalOpen(false)}
+        onAnalyzeSuccess={() => setIsResumeModalOpen(false)}
+      />
+
+      <ClAnalysis
+        isOpen={isCoverLetterModalOpen}
+        onClose={() => setIsCoverLetterModalOpen(false)}
+      />
+
+      <PortfolioUploadModal
+        isOpen={isPortfolioModalOpen}
+        onClose={() => setIsPortfolioModalOpen(false)}
+      />
+
       <style>{`
-        /* 홈 화면과 동일한 애니메이션 */
         @keyframes orb-1 {
           0%, 100% { transform: translate(0, 0) scale(1); }
           33% { transform: translate(100px, 50px) scale(1.1); }
@@ -315,6 +721,13 @@ export default function InterviewSelect() {
         }
         .animate-bounce-subtle { animation: bounce-subtle 2s ease-in-out infinite; }
 
+        @keyframes empty-float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          30% { transform: translateY(-8px) rotate(-2deg); }
+          70% { transform: translateY(-4px) rotate(2deg); }
+        }
+        .animate-empty-float { animation: empty-float 3.5s ease-in-out infinite; }
+
         @keyframes slideInDown {
           from { opacity: 0; transform: translateY(-30px); }
           to { opacity: 1; transform: translateY(0); }
@@ -337,121 +750,12 @@ export default function InterviewSelect() {
           to { opacity: 1; transform: translateY(0); }
         }
         .animate-fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
+
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
       `}</style>
-    </div>
-  );
-}
-
-function FileCard({
-  fileKey,
-  meta,
-  file,
-  isDragOver,
-  onDragOver,
-  onDragLeave,
-  onDrop,
-  onPick,
-  index,
-}) {
-  const selected = Boolean(file);
-
-  return (
-    <div
-      className="animate-fade-in-up"
-      style={{ animationDelay: `${index * 0.15}s`, opacity: 0 }}
-    >
-      <div
-        className={[
-          "group relative bg-white/95 backdrop-blur-sm rounded-3xl p-8 shadow-xl border-2 transition-all duration-500",
-          "hover:-translate-y-2 hover:shadow-2xl",
-          selected
-            ? `border-transparent bg-gradient-to-br ${meta.bgGradient}`
-            : "border-gray-200 hover:border-blue-300",
-        ].join(" ")}
-      >
-        {/* 선택 체크 표시 */}
-        {selected && (
-          <div className="absolute top-4 right-4 w-8 h-8 bg-gradient-to-br from-green-500 to-teal-500 rounded-full flex items-center justify-center text-white font-bold shadow-lg animate-scale-in">
-            ✓
-          </div>
-        )}
-
-        <div className="text-center">
-          {/* 아이콘 */}
-          <div
-            className={`w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-6 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 ${
-              selected
-                ? `bg-gradient-to-br ${meta.gradient} shadow-xl`
-                : `bg-gradient-to-br ${meta.bgGradient}`
-            }`}
-          >
-            <span className={`text-5xl ${selected ? 'transform scale-110' : ''} transition-transform duration-300`}>
-              {meta.icon}
-            </span>
-          </div>
-
-          {/* 제목 */}
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">{meta.label}</h3>
-          <p className="text-gray-600 mb-6">{meta.desc}</p>
-
-          {/* 드롭존 */}
-          <div
-            className={[
-              "rounded-2xl p-8 text-center border-2 border-dashed transition-all duration-300",
-              isDragOver
-                ? `bg-blue-50 border-blue-400 scale-105`
-                : selected
-                ? "border-gray-300 bg-white/80"
-                : "border-gray-300 hover:border-blue-400 hover:bg-blue-50/50",
-            ].join(" ")}
-            onDragOver={(e) => {
-              e.preventDefault();
-              onDragOver();
-            }}
-            onDragLeave={onDragLeave}
-            onDrop={onDrop}
-          >
-            <input
-              type="file"
-              className="hidden"
-              accept={meta.accepts.join(",")}
-              id={`file-input-${fileKey}`}
-              onChange={(e) => onPick(e.target.files?.[0])}
-            />
-
-            {!file ? (
-              <>
-                <div className="text-4xl mb-4 opacity-40">📁</div>
-                <p className="text-sm text-gray-600 mb-2">
-                  <button
-                    type="button"
-                    className={`bg-gradient-to-r ${meta.gradient} bg-clip-text text-transparent font-bold hover:underline`}
-                    onClick={() => document.getElementById(`file-input-${fileKey}`)?.click()}
-                  >
-                    파일 선택
-                  </button>{" "}
-                  또는 드래그 & 드롭
-                </p>
-                <p className="text-xs text-gray-400 mt-3 font-medium">
-                  {meta.accepts.join(", ").toUpperCase().replace(/\./g, "")}
-                </p>
-              </>
-            ) : (
-              <div className="space-y-3">
-                <div className="text-4xl mb-2">✅</div>
-                <div className="font-semibold text-gray-900 text-sm">{file.name}</div>
-                <button
-                  type="button"
-                  onClick={() => document.getElementById(`file-input-${fileKey}`)?.click()}
-                  className="text-xs text-blue-600 hover:text-blue-700 font-semibold hover:underline"
-                >
-                  다른 파일 선택
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
