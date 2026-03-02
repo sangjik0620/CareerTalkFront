@@ -30,6 +30,8 @@ const Evaluation = ({ evaluationData }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
+  const [analysisStatus, setAnalysisStatus] = useState("PENDING"); // PENDING/PROCESSING/DONE/FAILED
+  const [polling, setPolling] = useState(false);
 
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -55,6 +57,58 @@ const Evaluation = ({ evaluationData }) => {
     return fromState ?? (fromQuery ? Number(fromQuery) : null);
   }, [location?.state, searchParams]);
 
+  useEffect(() => {
+    if (!sessionId) return;
+
+    let alive = true;
+    let timer = null;
+
+    const startAndPoll = async () => {
+      try {
+        setErr("");
+        setPolling(true);
+
+        // 1) 분석 시작(이미 DONE인 경우도 있으니 실패해도 치명적 아님)
+        await interviewApi.startAnalysis(sessionId);
+
+        // 2) status polling
+        const poll = async () => {
+          const res = await interviewApi.getAnalysisStatus(sessionId);
+          const st = res?.data?.status ?? "PENDING";
+
+          if (!alive) return;
+
+          setAnalysisStatus(st);
+
+          if (st === "DONE") {
+            setPolling(false);
+            return;
+          }
+          if (st === "FAILED") {
+            setPolling(false);
+            setErr("분석에 실패했습니다.");
+            return;
+          }
+
+          timer = window.setTimeout(poll, 1200); // 1.2초 후 재시도
+        };
+
+        await poll();
+      } catch (e) {
+        if (!alive) return;
+        setPolling(false);
+        setErr(e?.response?.data?.message ?? e?.message ?? "분석 요청 실패");
+      }
+    };
+
+    startAndPoll();
+
+    return () => {
+      alive = false;
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [sessionId]);
+
   // 2) API 호출
   useEffect(() => {
     console.log("evaluationData exists?", !!evaluationData);
@@ -73,6 +127,12 @@ const Evaluation = ({ evaluationData }) => {
       return;
     }
 
+    // ✅ 분석이 끝나기 전에는 result 호출하지 않음
+    if (analysisStatus !== "DONE") {
+      setLoading(true); // 분석 중 화면 로딩 표시
+      return;
+    }
+
     setLoading(true);
     setErr("");
 
@@ -81,9 +141,6 @@ const Evaluation = ({ evaluationData }) => {
       .then((res) => {
         if (!alive) return;
 
-        // ✅ 백엔드 응답: { voiceResult, evaluation }
-        // ✅ 기존 UI(mock)는 { interviewInfo, summary, documentAnalysis, interviewAnalysis, comparison ... } 형태
-        // → evaluation이 바로 그 구조라고 가정하고, UI에선 evaluation을 data로 쓰면 됨
         setData(res?.evaluation ?? null);
       })
       .catch((e) => {
@@ -98,10 +155,18 @@ const Evaluation = ({ evaluationData }) => {
     return () => {
       alive = false;
     };
-  }, [sessionId, evaluationData]);
+  }, [sessionId, evaluationData, analysisStatus]);
 
   // 3) 가드
-  if (loading) return <div className="evaluation-container">로딩중...</div>;
+  if (loading) {
+    return (
+      <div className="evaluation-container">
+        {polling || analysisStatus !== "DONE"
+          ? `분석 중... (상태: ${analysisStatus})`
+          : "결과 불러오는 중..."}
+      </div>
+    );
+  }
   if (err) return <div className="evaluation-container">에러: {err}</div>;
   if (!data) return <div className="evaluation-container">데이터 없음</div>;
 
