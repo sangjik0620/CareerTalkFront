@@ -12,7 +12,6 @@ const PortfolioResultPage = () => {
     location.state?.analysisData || null,
   );
   const [isLoading, setIsLoading] = useState(!currentData);
-  const [isReanalyzing, setIsReanalyzing] = useState(false);
 
   const portfolioId = currentData?.portfolioId;
 
@@ -43,33 +42,6 @@ const PortfolioResultPage = () => {
       fetchResultData();
     }
   }, [analysisId]);
-
-  const handleReanalyze = async () => {
-    if (!portfolioId) {
-      alert("포트폴리오 식별 정보가 없어 재분석할 수 없습니다.");
-      return;
-    }
-    if (!window.confirm("재분석할까요?")) return;
-
-    setIsReanalyzing(true);
-    try {
-      const response = await fetch(
-        `http://localhost:8080/api/portfolios/${portfolioId}/reanalyze`,
-        { method: "POST" },
-      );
-      if (!response.ok) throw new Error("재분석 실패");
-      const newData = await response.json();
-      alert("재분석이 완료되었습니다!");
-      navigate(`/portfolio/result/${newData.analysisId}`, {
-        state: { analysisData: newData },
-      });
-    } catch (error) {
-      console.error(error);
-      alert("재분석 중 문제가 발생했습니다.");
-    } finally {
-      setIsReanalyzing(false);
-    }
-  };
 
   if (isLoading) {
     return (
@@ -308,24 +280,9 @@ const PortfolioResultPage = () => {
 
             <button
               style={btnPrimary}
-              onClick={handleReanalyze}
-              disabled={isReanalyzing}
+              onClick={() => navigate("/interview/select")}
             >
-              {isReanalyzing ? (
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 8,
-                  }}
-                >
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>AI 재분석 진행 중...</span>
-                </div>
-              ) : (
-                "결과 다시 분석하기"
-              )}
+              면접진행하기
             </button>
           </div>
         </div>
