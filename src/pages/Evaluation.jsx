@@ -9,7 +9,7 @@ const getScoreColor = (score = 0) => {
   if (s >= 85) return "#16a34a"; // green
   if (s >= 70) return "#2563eb"; // blue
   if (s >= 55) return "#f59e0b"; // amber
-  return "#ef4444";             // red
+  return "#ef4444"; // red
 };
 
 const getScoreLabel = (score = 0) => {
@@ -21,7 +21,8 @@ const getScoreLabel = (score = 0) => {
 };
 
 const clamp100 = (n) => Math.max(0, Math.min(100, Number(n) || 0));
-const isPlainObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+const isPlainObject = (v) =>
+  v !== null && typeof v === "object" && !Array.isArray(v);
 const asArray = (v) => (Array.isArray(v) ? v : []);
 const hasItems = (arr) => Array.isArray(arr) && arr.length > 0;
 
@@ -32,7 +33,10 @@ const Evaluation = ({ evaluationData }) => {
   const [err, setErr] = useState("");
   const [analysisStatus, setAnalysisStatus] = useState("PENDING"); // PENDING/PROCESSING/DONE/FAILED
   const [polling, setPolling] = useState(false);
-
+  const [docLoading, setDocLoading] = useState(false);
+  const [docErr, setDocErr] = useState("");
+  const [docAnalysisMap, setDocAnalysisMap] = useState({});
+  // { RESUME: analysisEntity, ESSAY: analysisEntity, PORTFOLIO: analysisEntity }
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const tabs = [
@@ -123,7 +127,9 @@ const Evaluation = ({ evaluationData }) => {
 
     if (!sessionId) {
       setLoading(false);
-      setErr("sessionId가 없습니다. 업로드 후 이동하거나, ?sessionId= 로 접근하세요.");
+      setErr(
+        "sessionId가 없습니다. 업로드 후 이동하거나, ?sessionId= 로 접근하세요.",
+      );
       return;
     }
 
@@ -156,6 +162,53 @@ const Evaluation = ({ evaluationData }) => {
       alive = false;
     };
   }, [sessionId, evaluationData, analysisStatus]);
+
+    // 2-1) 문서탭: 세션이 선택한 analysisId들로 문서 분석 데이터 로드
+  useEffect(() => {
+    if (activeTab !== "document") return;
+    if (!sessionId) return;
+
+    let alive = true;
+    setDocLoading(true);
+    setDocErr("");
+
+    (async () => {
+      try {
+        const targets = await interviewApi.getSessionTargets(sessionId);
+        if (!alive) return;
+
+        const analysisIds = (targets || [])
+          .map((t) => t.analysisId)
+          .filter(Boolean);
+
+        if (!analysisIds.length) {
+          setDocAnalysisMap({});
+          return;
+        }
+
+        const analyses = await interviewApi.getAnalysesByIds(analysisIds);
+        if (!alive) return;
+
+        const map = {};
+        (analyses || []).forEach((a) => {
+          map[a.targetType] = a; // RESUME/ESSAY/PORTFOLIO
+        });
+
+        setDocAnalysisMap(map);
+      } catch (e) {
+        console.error(e);
+        if (!alive) return;
+        setDocErr("문서 분석 데이터를 불러오지 못했습니다.");
+        setDocAnalysisMap({});
+      } finally {
+        if (alive) setDocLoading(false);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [activeTab, sessionId]);
 
   // 3) 가드
   if (loading) {
@@ -199,12 +252,42 @@ const Evaluation = ({ evaluationData }) => {
     };
 
     const kpis = [
-      { label: "백분위", value: `상위 ${summary?.percentileRank ?? 0}%`, sub: "전체 대비", tone: "brand" },
-      { label: "평균 답변", value: `${summary?.avgResponseTimeSec ?? 0}s`, sub: "응답 속도", tone: "neutral" },
-      { label: "추임새", value: `${summary?.fillerWordRate ?? 0}%`, sub: "비중", tone: "neutral" },
-      { label: "긍정도", value: `${summary?.sentimentScore ?? 0}%`, sub: "감정", tone: "neutral" },
-      { label: "직무적합", value: `${summary?.jobFitIndex ?? 0}`, sub: "Index", tone: "brand" },
-      { label: "자신감", value: `${summary?.confidenceIndex ?? 0}`, sub: "Index", tone: "brand" },
+      {
+        label: "백분위",
+        value: `상위 ${summary?.percentileRank ?? 0}%`,
+        sub: "전체 대비",
+        tone: "brand",
+      },
+      {
+        label: "평균 답변",
+        value: `${summary?.avgResponseTimeSec ?? 0}s`,
+        sub: "응답 속도",
+        tone: "neutral",
+      },
+      {
+        label: "추임새",
+        value: `${summary?.fillerWordRate ?? 0}%`,
+        sub: "비중",
+        tone: "neutral",
+      },
+      {
+        label: "긍정도",
+        value: `${summary?.sentimentScore ?? 0}%`,
+        sub: "감정",
+        tone: "neutral",
+      },
+      {
+        label: "직무적합",
+        value: `${summary?.jobFitIndex ?? 0}`,
+        sub: "Index",
+        tone: "brand",
+      },
+      {
+        label: "자신감",
+        value: `${summary?.confidenceIndex ?? 0}`,
+        sub: "Index",
+        tone: "brand",
+      },
     ];
 
     const indexes = [
@@ -235,7 +318,8 @@ const Evaluation = ({ evaluationData }) => {
               {summary?.verdict ?? "판정 없음"}
             </span>
             <span className="badge badge-ghost">
-              답변 {summary?.answeredQuestions ?? 0}/{summary?.totalQuestions ?? 0}
+              답변 {summary?.answeredQuestions ?? 0}/
+              {summary?.totalQuestions ?? 0}
             </span>
           </div>
         </div>
@@ -266,13 +350,17 @@ const Evaluation = ({ evaluationData }) => {
               <div className="scoreDelta">
                 <div className="deltaItem">
                   <span className="deltaLabel">이전 대비</span>
-                  <span className={`deltaValue ${diffPrev >= 0 ? "pos" : "neg"}`}>
+                  <span
+                    className={`deltaValue ${diffPrev >= 0 ? "pos" : "neg"}`}
+                  >
                     {diffPrev >= 0 ? `+${diffPrev}` : diffPrev}점
                   </span>
                 </div>
                 <div className="deltaItem">
                   <span className="deltaLabel">평균 대비</span>
-                  <span className={`deltaValue ${diffAvg >= 0 ? "pos" : "neg"}`}>
+                  <span
+                    className={`deltaValue ${diffAvg >= 0 ? "pos" : "neg"}`}
+                  >
                     {diffAvg >= 0 ? `+${diffAvg}` : diffAvg}점
                   </span>
                 </div>
@@ -303,7 +391,10 @@ const Evaluation = ({ evaluationData }) => {
                 <div key={it.label} className="indexRow">
                   <span className="indexLabel">{it.label}</span>
                   <div className="indexBar">
-                    <div className="indexFill" style={{ width: `${it.value}%` }} />
+                    <div
+                      className="indexFill"
+                      style={{ width: `${it.value}%` }}
+                    />
                   </div>
                   <span className="indexValue">{it.value}</span>
                 </div>
@@ -315,7 +406,9 @@ const Evaluation = ({ evaluationData }) => {
               <div className="keywords">
                 {hasItems(topKeywords) ? (
                   topKeywords.map((kw, i) => (
-                    <span key={i} className="keyword-tag">{kw}</span>
+                    <span key={i} className="keyword-tag">
+                      {kw}
+                    </span>
                   ))
                 ) : (
                   <span className="muted">키워드 데이터 없음</span>
@@ -364,29 +457,68 @@ const Evaluation = ({ evaluationData }) => {
     );
   };
 
-  const renderDocumentTab = () => {
-    const da = data?.documentAnalysis;
-    if (!da) {
+    const renderDocumentTab = () => {
+    if (docLoading) {
       return (
         <div className="tab-content">
-          <EmptyBlock title="문서 분석 데이터가 없습니다" desc="누락: documentAnalysis" />
+          <div className="muted">문서 분석 데이터 불러오는 중...</div>
+        </div>
+      );
+    }
+    if (docErr) {
+      return (
+        <div className="tab-content">
+          <EmptyBlock title="문서 분석 조회 실패" desc={docErr} />
         </div>
       );
     }
 
-    const resume = da?.resume;
-    const cover = da?.coverLetter;
-    const pf = da?.portfolio;
+    // ✅ DB analysis 기준 (analysis.targetType)
+    const resumeA = docAnalysisMap?.RESUME || null;
+    const essayA = docAnalysisMap?.ESSAY || null;
+    const pfA = docAnalysisMap?.PORTFOLIO || null;
 
-    const renderDocCard = (title, score, sub) => (
-      <div className="doc-score-card">
-        <div className="doc-type">{title}</div>
-        <div className="doc-score" style={{ color: getScoreColor(score ?? 0) }}>
-          {score ?? 0}점
+    // 아무 것도 없으면
+    if (!resumeA && !essayA && !pfA) {
+      return (
+        <div className="tab-content">
+          <EmptyBlock
+            title="문서 분석 데이터가 없습니다"
+            desc="세션에 선택된 문서 분석 결과가 없거나 아직 분석이 없습니다."
+          />
         </div>
-        <div className="doc-match">{sub}</div>
-      </div>
-    );
+      );
+    }
+
+    // JSON 문자열 파싱(안전)
+    const safeJson = (s) => {
+      if (!s || typeof s !== "string") return null;
+      try { return JSON.parse(s); } catch { return null; }
+    };
+
+    const pickKeywords = (a) => {
+      const score = safeJson(a?.scoreJson);
+      // scoreJson 구조가 확정이 아니라서: 있을법한 키들 순서대로 시도
+      return (
+        score?.keywords ||
+        score?.topKeywords ||
+        score?.keyWords ||
+        []
+      );
+    };
+
+    const renderDocCard = (title, analysisEntity, subText) => {
+      const score = analysisEntity?.overallScore ?? 0;
+      return (
+        <div className="doc-score-card">
+          <div className="doc-type">{title}</div>
+          <div className="doc-score" style={{ color: getScoreColor(score) }}>
+            {score}점
+          </div>
+          <div className="doc-match">{subText}</div>
+        </div>
+      );
+    };
 
     const renderNoDataCard = (title) => (
       <div className="doc-score-card">
@@ -400,147 +532,131 @@ const Evaluation = ({ evaluationData }) => {
         <h2>문서 분석 결과</h2>
 
         <div className="document-overview">
-          {resume
-            ? renderDocCard("📝 이력서", resume?.score, `매칭률: ${resume?.matchRate ?? 0}%`)
+          {resumeA
+            ? renderDocCard("📝 이력서", resumeA, `선택 분석ID: ${resumeA.analysisId}`)
             : renderNoDataCard("📝 이력서")}
 
-          {cover
-            ? renderDocCard("✍️ 자기소개서", cover?.score, `일관성: ${cover?.consistency ?? 0}%`)
+          {essayA
+            ? renderDocCard("✍️ 자기소개서", essayA, `선택 분석ID: ${essayA.analysisId}`)
             : renderNoDataCard("✍️ 자기소개서")}
 
-          {pf
-            ? renderDocCard("💼 포트폴리오", pf?.score, `프로젝트: ${pf?.projectCount ?? 0}개`)
+          {pfA
+            ? renderDocCard("💼 포트폴리오", pfA, `선택 분석ID: ${pfA.analysisId}`)
             : renderNoDataCard("💼 포트폴리오")}
         </div>
 
         <div className="document-details">
-          {resume ? (
+          {/* 이력서 */}
+          {resumeA ? (
             <div className="doc-detail-card">
               <h3>📝 이력서 상세 분석</h3>
 
+              <div className="analysis-section">
+                <h4>한줄평</h4>
+                <div>{resumeA?.oneLineReview || "-"}</div>
+              </div>
+
+              <div className="analysis-section">
+                <h4>요약</h4>
+                <div style={{ whiteSpace: "pre-wrap" }}>
+                  {resumeA?.summaryDetail || "-"}
+                </div>
+              </div>
+
               <div className="keywords-section">
                 <h4>핵심 키워드</h4>
                 <div className="keywords">
-                  {hasItems(resume?.keywords) ? (
-                    asArray(resume?.keywords).map((k, i) => (
-                      <span key={i} className="keyword-tag">{k}</span>
+                  {hasItems(pickKeywords(resumeA)) ? (
+                    pickKeywords(resumeA).map((k, i) => (
+                      <span key={i} className="keyword-tag">
+                        {k}
+                      </span>
                     ))
                   ) : (
                     <span className="muted">키워드 데이터 없음</span>
                   )}
                 </div>
               </div>
-
-              <div className="analysis-section">
-                <h4>✅ 강점</h4>
-                {hasItems(resume?.strengths) ? (
-                  <ul>{asArray(resume?.strengths).map((x, i) => <li key={i}>{x}</li>)}</ul>
-                ) : (
-                  <div className="muted">강점 데이터 없음</div>
-                )}
-              </div>
-
-              <div className="analysis-section">
-                <h4>💡 개선사항</h4>
-                {hasItems(resume?.improvements) ? (
-                  <ul>{asArray(resume?.improvements).map((x, i) => <li key={i}>{x}</li>)}</ul>
-                ) : (
-                  <div className="muted">개선사항 데이터 없음</div>
-                )}
-              </div>
             </div>
           ) : (
             <div className="doc-detail-card">
-              <EmptyBlock title="이력서 분석이 없습니다" desc="누락: documentAnalysis.resume" />
+              <EmptyBlock title="이력서 분석이 없습니다" />
             </div>
           )}
 
-          {cover ? (
+          {/* 자기소개서 */}
+          {essayA ? (
             <div className="doc-detail-card">
               <h3>✍️ 자기소개서 상세 분석</h3>
 
-              <div className="metrics-grid">
-                <div className="metric">
-                  <div className="metric-label">일관성</div>
-                  <div className="metric-bar">
-                    <div className="metric-fill" style={{ width: `${clamp100(cover?.consistency)}%` }} />
-                  </div>
-                  <div className="metric-value">{cover?.consistency ?? 0}%</div>
-                </div>
+              <div className="analysis-section">
+                <h4>한줄평</h4>
+                <div>{essayA?.oneLineReview || "-"}</div>
+              </div>
 
-                <div className="metric">
-                  <div className="metric-label">직무 관련성</div>
-                  <div className="metric-bar">
-                    <div className="metric-fill" style={{ width: `${clamp100(cover?.relevance)}%` }} />
-                  </div>
-                  <div className="metric-value">{cover?.relevance ?? 0}%</div>
+              <div className="analysis-section">
+                <h4>요약</h4>
+                <div style={{ whiteSpace: "pre-wrap" }}>
+                  {essayA?.summaryDetail || "-"}
                 </div>
               </div>
 
               <div className="keywords-section">
                 <h4>핵심 키워드</h4>
                 <div className="keywords">
-                  {hasItems(cover?.keywords) ? (
-                    asArray(cover?.keywords).map((k, i) => (
-                      <span key={i} className="keyword-tag secondary">{k}</span>
+                  {hasItems(pickKeywords(essayA)) ? (
+                    pickKeywords(essayA).map((k, i) => (
+                      <span key={i} className="keyword-tag secondary">
+                        {k}
+                      </span>
                     ))
                   ) : (
                     <span className="muted">키워드 데이터 없음</span>
                   )}
                 </div>
               </div>
-
-              <div className="analysis-section">
-                <h4>💡 개선사항</h4>
-                {hasItems(cover?.improvements) ? (
-                  <ul>{asArray(cover?.improvements).map((x, i) => <li key={i}>{x}</li>)}</ul>
-                ) : (
-                  <div className="muted">개선사항 데이터 없음</div>
-                )}
-              </div>
             </div>
           ) : (
             <div className="doc-detail-card">
-              <EmptyBlock title="자기소개서 분석이 없습니다" desc="누락: documentAnalysis.coverLetter" />
+              <EmptyBlock title="자기소개서 분석이 없습니다" />
             </div>
           )}
 
-          {pf ? (
+          {/* 포트폴리오 */}
+          {pfA ? (
             <div className="doc-detail-card">
               <h3>💼 포트폴리오 상세 분석</h3>
 
-              <div className="portfolio-stats">
-                <div className="portfolio-stat">
-                  <span className="stat-number">{pf?.projectCount ?? 0}</span>
-                  <span className="stat-text">프로젝트</span>
-                </div>
-                <div className="portfolio-stat">
-                  <span className="stat-number">{pf?.technicalDepth ?? 0}</span>
-                  <span className="stat-text">기술 깊이</span>
-                </div>
+              <div className="analysis-section">
+                <h4>한줄평</h4>
+                <div>{pfA?.oneLineReview || "-"}</div>
               </div>
 
               <div className="analysis-section">
-                <h4>⭐ 하이라이트</h4>
-                {hasItems(pf?.highlights) ? (
-                  <ul>{asArray(pf?.highlights).map((x, i) => <li key={i}>{x}</li>)}</ul>
-                ) : (
-                  <div className="muted">하이라이트 데이터 없음</div>
-                )}
+                <h4>요약</h4>
+                <div style={{ whiteSpace: "pre-wrap" }}>
+                  {pfA?.summaryDetail || "-"}
+                </div>
               </div>
 
-              <div className="analysis-section">
-                <h4>💡 개선사항</h4>
-                {hasItems(pf?.improvements) ? (
-                  <ul>{asArray(pf?.improvements).map((x, i) => <li key={i}>{x}</li>)}</ul>
-                ) : (
-                  <div className="muted">개선사항 데이터 없음</div>
-                )}
+              <div className="keywords-section">
+                <h4>핵심 키워드</h4>
+                <div className="keywords">
+                  {hasItems(pickKeywords(pfA)) ? (
+                    pickKeywords(pfA).map((k, i) => (
+                      <span key={i} className="keyword-tag">
+                        {k}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="muted">키워드 데이터 없음</span>
+                  )}
+                </div>
               </div>
             </div>
           ) : (
             <div className="doc-detail-card">
-              <EmptyBlock title="포트폴리오 분석이 없습니다" desc="누락: documentAnalysis.portfolio" />
+              <EmptyBlock title="포트폴리오 분석이 없습니다" />
             </div>
           )}
         </div>
@@ -553,7 +669,10 @@ const Evaluation = ({ evaluationData }) => {
     if (!ia) {
       return (
         <div className="tab-content">
-          <EmptyBlock title="면접 분석 데이터가 없습니다" desc="누락: interviewAnalysis" />
+          <EmptyBlock
+            title="면접 분석 데이터가 없습니다"
+            desc="누락: interviewAnalysis"
+          />
         </div>
       );
     }
@@ -597,7 +716,10 @@ const Evaluation = ({ evaluationData }) => {
                       <div className="metric-bar">
                         <div
                           className="metric-fill voice"
-                          style={{ width: `${v}%`, backgroundColor: getScoreColor(v) }}
+                          style={{
+                            width: `${v}%`,
+                            backgroundColor: getScoreColor(v),
+                          }}
                         />
                       </div>
                     )}
@@ -608,7 +730,10 @@ const Evaluation = ({ evaluationData }) => {
           </div>
         ) : (
           <div className="voice-analysis">
-            <EmptyBlock title="음성 분석 데이터가 없습니다" desc="누락: interviewAnalysis.voiceMetrics" />
+            <EmptyBlock
+              title="음성 분석 데이터가 없습니다"
+              desc="누락: interviewAnalysis.voiceMetrics"
+            />
           </div>
         )}
 
@@ -620,13 +745,17 @@ const Evaluation = ({ evaluationData }) => {
             <div className="stt-stats">
               <div className="stt-stat-card">
                 <div className="stt-icon">💬</div>
-                <div className="stt-value">{Number(stt?.totalWords ?? 0).toLocaleString()}</div>
+                <div className="stt-value">
+                  {Number(stt?.totalWords ?? 0).toLocaleString()}
+                </div>
                 <div className="stt-label">총 단어 수</div>
               </div>
 
               <div className="stt-stat-card">
                 <div className="stt-icon">⏱️</div>
-                <div className="stt-value">{stt?.averageResponseTime ?? 0}초</div>
+                <div className="stt-value">
+                  {stt?.averageResponseTime ?? 0}초
+                </div>
                 <div className="stt-label">평균 답변 시간</div>
               </div>
 
@@ -646,18 +775,28 @@ const Evaluation = ({ evaluationData }) => {
                   {Object.entries(keywordUsage).map(([type, count]) => {
                     const total = Object.values(keywordUsage).reduce(
                       (a, b) => a + (Number(b) || 0),
-                      0
+                      0,
                     );
                     const c = Number(count) || 0;
-                    const percentage = total > 0 ? ((c / total) * 100).toFixed(1) : "0.0";
+                    const percentage =
+                      total > 0 ? ((c / total) * 100).toFixed(1) : "0.0";
 
-                    const labels = { technical: "기술", soft: "소프트스킬", company: "회사" };
+                    const labels = {
+                      technical: "기술",
+                      soft: "소프트스킬",
+                      company: "회사",
+                    };
 
                     return (
                       <div key={type} className="keyword-bar-item">
-                        <div className="keyword-bar-label">{labels[type] ?? type}</div>
+                        <div className="keyword-bar-label">
+                          {labels[type] ?? type}
+                        </div>
                         <div className="keyword-bar-container">
-                          <div className="keyword-bar-fill" style={{ width: `${percentage}%` }} />
+                          <div
+                            className="keyword-bar-fill"
+                            style={{ width: `${percentage}%` }}
+                          />
                           <span className="keyword-bar-value">
                             {c}회 ({percentage}%)
                           </span>
@@ -669,13 +808,19 @@ const Evaluation = ({ evaluationData }) => {
               </div>
             ) : (
               <div className="keyword-usage">
-                <EmptyBlock title="키워드 사용 데이터가 없습니다" desc="누락: interviewAnalysis.sttAnalysis.keywordUsage" />
+                <EmptyBlock
+                  title="키워드 사용 데이터가 없습니다"
+                  desc="누락: interviewAnalysis.sttAnalysis.keywordUsage"
+                />
               </div>
             )}
           </div>
         ) : (
           <div className="stt-analysis">
-            <EmptyBlock title="STT 분석 데이터가 없습니다" desc="누락: interviewAnalysis.sttAnalysis" />
+            <EmptyBlock
+              title="STT 분석 데이터가 없습니다"
+              desc="누락: interviewAnalysis.sttAnalysis"
+            />
           </div>
         )}
 
@@ -697,7 +842,10 @@ const Evaluation = ({ evaluationData }) => {
                     <div className="response-header">
                       <span className="question-number">Q{idx + 1}</span>
                       <span className="question-text">{question}</span>
-                      <span className="response-score" style={{ color: getScoreColor(score) }}>
+                      <span
+                        className="response-score"
+                        style={{ color: getScoreColor(score) }}
+                      >
                         {score}점
                       </span>
                     </div>
@@ -726,7 +874,10 @@ const Evaluation = ({ evaluationData }) => {
           </div>
         ) : (
           <div className="question-responses">
-            <EmptyBlock title="질문별 답변 데이터가 없습니다" desc="누락: interviewAnalysis.questionResponses" />
+            <EmptyBlock
+              title="질문별 답변 데이터가 없습니다"
+              desc="누락: interviewAnalysis.questionResponses"
+            />
           </div>
         )}
       </div>
@@ -738,7 +889,10 @@ const Evaluation = ({ evaluationData }) => {
     if (!comp) {
       return (
         <div className="tab-content">
-          <EmptyBlock title="비교 분석 데이터가 없습니다" desc="누락: comparison" />
+          <EmptyBlock
+            title="비교 분석 데이터가 없습니다"
+            desc="누락: comparison"
+          />
         </div>
       );
     }
@@ -758,31 +912,84 @@ const Evaluation = ({ evaluationData }) => {
 
           <div className="distribution-chart compact">
             <svg viewBox="0 0 600 220" className="dist-svg">
-              <line x1="50" y1="180" x2="550" y2="180" stroke="#cbd5e1" strokeWidth="1.5" />
-              <path d="M50 180 Q150 60 300 90 Q450 120 550 180" fill="none" stroke="#2563eb" strokeWidth="2" />
-              <line x1="300" y1="180" x2="300" y2="85" stroke="#94a3b8" strokeDasharray="4 4" strokeWidth="1.5" />
+              <line
+                x1="50"
+                y1="180"
+                x2="550"
+                y2="180"
+                stroke="#cbd5e1"
+                strokeWidth="1.5"
+              />
+              <path
+                d="M50 180 Q150 60 300 90 Q450 120 550 180"
+                fill="none"
+                stroke="#2563eb"
+                strokeWidth="2"
+              />
+              <line
+                x1="300"
+                y1="180"
+                x2="300"
+                y2="85"
+                stroke="#94a3b8"
+                strokeDasharray="4 4"
+                strokeWidth="1.5"
+              />
 
               {(() => {
                 const x = 50 + (userScore / 100) * 500;
                 return (
                   <>
-                    <line x1={x} y1="180" x2={x} y2="110" stroke="#2563eb" strokeWidth="1.5" />
+                    <line
+                      x1={x}
+                      y1="180"
+                      x2={x}
+                      y2="110"
+                      stroke="#2563eb"
+                      strokeWidth="1.5"
+                    />
                     <circle cx={x} cy="110" r="5" fill="#2563eb" />
-                    <text x={x} y="95" textAnchor="middle" fontSize="12" fill="#2563eb" fontWeight="700">
+                    <text
+                      x={x}
+                      y="95"
+                      textAnchor="middle"
+                      fontSize="12"
+                      fill="#2563eb"
+                      fontWeight="700"
+                    >
                       {userScore}점
                     </text>
                   </>
                 );
               })()}
 
-              <text x="50" y="200" fontSize="11" fill="#64748b">0</text>
-              <text x="300" y="200" fontSize="11" fill="#64748b" textAnchor="middle">평균</text>
-              <text x="550" y="200" fontSize="11" fill="#64748b" textAnchor="end">100</text>
+              <text x="50" y="200" fontSize="11" fill="#64748b">
+                0
+              </text>
+              <text
+                x="300"
+                y="200"
+                fontSize="11"
+                fill="#64748b"
+                textAnchor="middle"
+              >
+                평균
+              </text>
+              <text
+                x="550"
+                y="200"
+                fontSize="11"
+                fill="#64748b"
+                textAnchor="end"
+              >
+                100
+              </text>
             </svg>
           </div>
 
           <div className="distribution-meta">
-            전체 지원자 중 <strong>상위 {comp?.percentileRank ?? 0}%</strong>에 위치합니다.
+            전체 지원자 중 <strong>상위 {comp?.percentileRank ?? 0}%</strong>에
+            위치합니다.
           </div>
         </div>
 
@@ -826,10 +1033,23 @@ const Evaluation = ({ evaluationData }) => {
                     return (
                       <g key={idx}>
                         <circle cx={x} cy={y} r="4" fill="#2563eb" />
-                        <text x={x} y={y - 12} textAnchor="middle" fontSize="12" fill="#2563eb" fontWeight="700">
+                        <text
+                          x={x}
+                          y={y - 12}
+                          textAnchor="middle"
+                          fontSize="12"
+                          fill="#2563eb"
+                          fontWeight="700"
+                        >
                           {score}
                         </text>
-                        <text x={x} y={200} textAnchor="middle" fontSize="11" fill="#64748b">
+                        <text
+                          x={x}
+                          y={200}
+                          textAnchor="middle"
+                          fontSize="11"
+                          fill="#64748b"
+                        >
                           {date}
                         </text>
                       </g>
@@ -837,7 +1057,14 @@ const Evaluation = ({ evaluationData }) => {
                   })}
 
                   {[0, 25, 50, 75, 100].map((val) => (
-                    <text key={val} x="35" y={185 - val * 1.6} textAnchor="end" fontSize="11" fill="#6b7280">
+                    <text
+                      key={val}
+                      x="35"
+                      y={185 - val * 1.6}
+                      textAnchor="end"
+                      fontSize="11"
+                      fill="#6b7280"
+                    >
                       {val}
                     </text>
                   ))}
@@ -847,7 +1074,10 @@ const Evaluation = ({ evaluationData }) => {
           </div>
         ) : (
           <div className="score-history">
-            <EmptyBlock title="성적 추이 데이터가 없습니다" desc="누락: comparison.scoreHistory" />
+            <EmptyBlock
+              title="성적 추이 데이터가 없습니다"
+              desc="누락: comparison.scoreHistory"
+            />
           </div>
         )}
 
@@ -879,7 +1109,10 @@ const Evaluation = ({ evaluationData }) => {
                       {bars.map((b) => (
                         <div key={b.key} className={`vBarWrap ${b.key}`}>
                           <div className="vBarTrack">
-                            <div className="vBar" style={{ height: `${b.value}%` }} />
+                            <div
+                              className="vBar"
+                              style={{ height: `${b.value}%` }}
+                            />
                           </div>
                           <div className="vBarVal">{b.value}</div>
                         </div>
@@ -893,14 +1126,26 @@ const Evaluation = ({ evaluationData }) => {
             </div>
 
             <div className="vLegend">
-              <div className="legend-item"><span className="legend-color user"></span><span>본인</span></div>
-              <div className="legend-item"><span className="legend-color average"></span><span>평균</span></div>
-              <div className="legend-item"><span className="legend-color previous"></span><span>이전</span></div>
+              <div className="legend-item">
+                <span className="legend-color user"></span>
+                <span>본인</span>
+              </div>
+              <div className="legend-item">
+                <span className="legend-color average"></span>
+                <span>평균</span>
+              </div>
+              <div className="legend-item">
+                <span className="legend-color previous"></span>
+                <span>이전</span>
+              </div>
             </div>
           </div>
         ) : (
           <div className="category-comparison">
-            <EmptyBlock title="카테고리 비교 데이터가 없습니다" desc="누락: comparison.categoryComparison" />
+            <EmptyBlock
+              title="카테고리 비교 데이터가 없습니다"
+              desc="누락: comparison.categoryComparison"
+            />
           </div>
         )}
       </div>
@@ -921,7 +1166,8 @@ const Evaluation = ({ evaluationData }) => {
     const soft = comp?.soft;
     const improvements = comp?.improvements;
 
-    const priorityLabel = (p) => (p === "high" ? "높음" : p === "low" ? "낮음" : "보통");
+    const priorityLabel = (p) =>
+      p === "high" ? "높음" : p === "low" ? "낮음" : "보통";
 
     return (
       <div className="tab-content">
@@ -940,8 +1186,14 @@ const Evaluation = ({ evaluationData }) => {
                 </div>
 
                 <div className="score-bar">
-                  <div className="score-progress current" style={{ width: `${clamp100(tech?.current)}%` }} />
-                  <div className="score-progress target" style={{ width: `${clamp100(tech?.target)}%` }} />
+                  <div
+                    className="score-progress current"
+                    style={{ width: `${clamp100(tech?.current)}%` }}
+                  />
+                  <div
+                    className="score-progress target"
+                    style={{ width: `${clamp100(tech?.target)}%` }}
+                  />
                 </div>
               </div>
 
@@ -958,9 +1210,14 @@ const Evaluation = ({ evaluationData }) => {
 
                     return (
                       <div key={key} className="detail-item">
-                        <span className="detail-label">{labels[key] ?? key}</span>
+                        <span className="detail-label">
+                          {labels[key] ?? key}
+                        </span>
                         <div className="detail-bar">
-                          <div className="detail-fill" style={{ width: `${v}%` }} />
+                          <div
+                            className="detail-fill"
+                            style={{ width: `${v}%` }}
+                          />
                         </div>
                         <span className="detail-value">{v}</span>
                       </div>
@@ -973,7 +1230,10 @@ const Evaluation = ({ evaluationData }) => {
             </div>
           ) : (
             <div className="competency-card">
-              <EmptyBlock title="기술 역량 데이터가 없습니다" desc="누락: competency.technical" />
+              <EmptyBlock
+                title="기술 역량 데이터가 없습니다"
+                desc="누락: competency.technical"
+              />
             </div>
           )}
 
@@ -989,8 +1249,14 @@ const Evaluation = ({ evaluationData }) => {
                 </div>
 
                 <div className="score-bar">
-                  <div className="score-progress current" style={{ width: `${clamp100(soft?.current)}%` }} />
-                  <div className="score-progress target" style={{ width: `${clamp100(soft?.target)}%` }} />
+                  <div
+                    className="score-progress current"
+                    style={{ width: `${clamp100(soft?.current)}%` }}
+                  />
+                  <div
+                    className="score-progress target"
+                    style={{ width: `${clamp100(soft?.target)}%` }}
+                  />
                 </div>
               </div>
 
@@ -1007,9 +1273,14 @@ const Evaluation = ({ evaluationData }) => {
 
                     return (
                       <div key={key} className="detail-item">
-                        <span className="detail-label">{labels[key] ?? key}</span>
+                        <span className="detail-label">
+                          {labels[key] ?? key}
+                        </span>
                         <div className="detail-bar">
-                          <div className="detail-fill" style={{ width: `${v}%` }} />
+                          <div
+                            className="detail-fill"
+                            style={{ width: `${v}%` }}
+                          />
                         </div>
                         <span className="detail-value">{v}</span>
                       </div>
@@ -1022,7 +1293,10 @@ const Evaluation = ({ evaluationData }) => {
             </div>
           ) : (
             <div className="competency-card">
-              <EmptyBlock title="소프트 스킬 데이터가 없습니다" desc="누락: competency.soft" />
+              <EmptyBlock
+                title="소프트 스킬 데이터가 없습니다"
+                desc="누락: competency.soft"
+              />
             </div>
           )}
         </div>
@@ -1044,7 +1318,9 @@ const Evaluation = ({ evaluationData }) => {
                     <div className="improvement-header">
                       <div className="improvement-title">
                         <span className="improvement-area">{area}</span>
-                        <span className={`priority-badge ${priority}`}>{priorityLabel(priority)}</span>
+                        <span className={`priority-badge ${priority}`}>
+                          {priorityLabel(priority)}
+                        </span>
                       </div>
 
                       <div className="improvement-progress">
@@ -1055,8 +1331,14 @@ const Evaluation = ({ evaluationData }) => {
                     </div>
 
                     <div className="improvement-bar">
-                      <div className="improvement-current" style={{ width: `${currentLevel}%` }} />
-                      <div className="improvement-target" style={{ left: `${targetLevel}%` }}>
+                      <div
+                        className="improvement-current"
+                        style={{ width: `${currentLevel}%` }}
+                      />
+                      <div
+                        className="improvement-target"
+                        style={{ left: `${targetLevel}%` }}
+                      >
                         <span className="target-marker">🎯</span>
                       </div>
                     </div>
@@ -1085,7 +1367,10 @@ const Evaluation = ({ evaluationData }) => {
           </div>
         ) : (
           <div className="improvements-section">
-            <EmptyBlock title="개선 계획 데이터가 없습니다" desc="누락: competency.improvements" />
+            <EmptyBlock
+              title="개선 계획 데이터가 없습니다"
+              desc="누락: competency.improvements"
+            />
           </div>
         )}
       </div>

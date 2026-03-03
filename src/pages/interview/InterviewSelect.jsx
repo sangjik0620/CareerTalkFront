@@ -87,34 +87,34 @@ const EMPTY_COLOR_MAP = {
 const fetchUserAnalyses = async () => {
   // TODO: 실제 API로 교체
   return {
-    resume: [
-      // {
-      //   id: "r1",
-      //   title: "2024 상반기 이력서",
-      //   fileName: "resume_2024_1H.pdf",
-      //   analyzedAt: "2024-03-15",
-      //   score: 88,
-      //   keywords: ["React", "TypeScript", "3년 경력"],
-      // },
-      // {
-      //   id: "r2",
-      //   title: "스타트업 지원용 이력서",
-      //   fileName: "resume_startup.pdf",
-      //   analyzedAt: "2024-05-02",
-      //   score: 92,
-      //   keywords: ["Node.js", "AWS", "풀스택"],
-      // },
-      // {
-      //   id: "r2",
-      //   title: "스타트업 지원용 이력서",
-      //   fileName: "resume_startup.pdf",
-      //   analyzedAt: "2024-05-02",
-      //   score: 92,
-      //   keywords: ["Node.js", "AWS", "풀스택"],
-      // },
-    ],
-    coverLetter: [],
-    portfolio: [],
+  //   resume: [
+  //     {
+  //       id: "r1",
+  //       title: "2024 상반기 이력서",
+  //       fileName: "resume_2024_1H.pdf",
+  //       analyzedAt: "2024-03-15",
+  //       score: 88,
+  //       keywords: ["React", "TypeScript", "3년 경력"],
+  //     },
+  //     {
+  //       id: "r2",
+  //       title: "스타트업 지원용 이력서",
+  //       fileName: "resume_startup.pdf",
+  //       analyzedAt: "2024-05-02",
+  //       score: 92,
+  //       keywords: ["Node.js", "AWS", "풀스택"],
+  //     },
+  //     {
+  //       id: "r2",
+  //       title: "스타트업 지원용 이력서",
+  //       fileName: "resume_startup.pdf",
+  //       analyzedAt: "2024-05-02",
+  //       score: 92,
+  //       keywords: ["Node.js", "AWS", "풀스택"],
+  //     },
+  //   ],
+  //   coverLetter: [],
+  //   portfolio: [],
   };
 };
 
