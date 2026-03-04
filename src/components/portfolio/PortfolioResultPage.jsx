@@ -279,10 +279,18 @@ const PortfolioResultPage = () => {
             <div style={panelDividerStyle} />
 
             <button
-              style={btnPrimary}
+              style={btnGhostFull}
               onClick={() => navigate("/interview/select")}
+              onMouseEnter={(e) => {
+                e.target.style.background = "#1f55ff";
+                e.target.style.color = "#ffffff";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = "transparent";
+                e.target.style.color = "#1f55ff";
+              }}
             >
-              면접진행하기
+              면접 진행하기 ➔
             </button>
           </div>
         </div>
@@ -529,6 +537,22 @@ const btnGhost = {
   color: "#0b1b3a",
   border: "1px solid rgba(15, 60, 160, 0.15)",
   width: "auto",
+};
+
+const btnGhostFull = {
+  padding: "12px 16px",
+  borderRadius: 999,
+  fontSize: 14,
+  fontWeight: 800,
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  background: "transparent",
+  color: "#1f55ff",
+  border: "1.5px solid #1f55ff",
+  width: "100%",
+  transition: "all 0.2s ease",
 };
 
 export default PortfolioResultPage;
