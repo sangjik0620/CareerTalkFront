@@ -29,6 +29,8 @@ const Evaluation = ({ evaluationData }) => {
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
+  const [turns, setTurns] = useState([]);
+
   const tabs = [
     { id: "summary", label: "요약", icon: "📌" },
     { id: "document", label: "문서", icon: "📄" },
@@ -174,6 +176,7 @@ const Evaluation = ({ evaluationData }) => {
       .then((res) => {
         if (!alive) return;
         setData(res?.evaluation ?? null);
+        setTurns(res?.turns ?? []);
         setPhase("SHOW_RESULT");
       })
       .catch((e) => {
@@ -295,7 +298,7 @@ const Evaluation = ({ evaluationData }) => {
             docAnalysisMap={docAnalysisMap}
           />
         )}
-        {activeTab === "interview" && <InterviewTab data={data} />}
+        {activeTab === "interview" && <InterviewTab data={data} turns={turns} />}
         {activeTab === "comparison" && <ComparisonTab data={data} />}
         {activeTab === "competency" && <CompetencyTab data={data} />}
       </div>
