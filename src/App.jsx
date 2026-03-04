@@ -42,7 +42,7 @@ function App() {
 
         {/* 이력서 관련 라우트 */}
         <Route path="/resume" element={<Resume />} />
-        <Route path="/resume/result" element={<RsResume />} />
+        <Route path="/resume/result/:analysisId" element={<RsResume />} />
 
         {/* 로그인 관련 라우트 */}
         <Route path="/login" element={<Login />} />
