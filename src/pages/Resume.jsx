@@ -369,7 +369,7 @@ export default function Resume({ isOpen, onClose, onAnalyzeSuccess }) {
                     이력서 분석
                   </h2>
                   <p className="text-sm text-gray-500 mt-0.5">
-                    이력서 양식을 다운로드 후 양식에 맞춰 Docx 파일로 업로드
+                    반드시 이력서 양식을 다운로드 후 양식에 맞춰 Docx 파일로 업로드
                     해주세요.
                   </p>
                 </div>
