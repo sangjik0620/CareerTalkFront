@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import "../css/Evaluation.css";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { interviewApi } from "../lib/api/interviewApi";
@@ -8,19 +8,23 @@ import DocumentTab from "./evaluation/tabs/DocumentTab";
 import InterviewTab from "./evaluation/tabs/InterviewTab";
 import ComparisonTab from "./evaluation/tabs/ComparisonTab";
 import CompetencyTab from "./evaluation/tabs/CompetencyTab";
+import EvaluationLoading from "./evaluation/components/EvaluationLoading";
 
 const Evaluation = ({ evaluationData }) => {
   const [activeTab, setActiveTab] = useState("summary");
+
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
   const [analysisStatus, setAnalysisStatus] = useState("PENDING"); // PENDING/PROCESSING/DONE/FAILED
-  const [polling, setPolling] = useState(false);
+  const [phase, setPhase] = useState("ANALYZING"); // ANALYZING | DONE_SPLASH | FETCH_RESULT | SHOW_RESULT
 
   const [docLoading, setDocLoading] = useState(false);
   const [docErr, setDocErr] = useState("");
   const [docAnalysisMap, setDocAnalysisMap] = useState({});
+
+  const doneTimerRef = useRef(null);
 
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -40,46 +44,86 @@ const Evaluation = ({ evaluationData }) => {
     return fromState ?? (fromQuery ? Number(fromQuery) : null);
   }, [location?.state, searchParams]);
 
-  // 2) 분석 시작 + 폴링
+  // 2) sessionId 바뀌면 문서 캐시 초기화
+  useEffect(() => {
+    setDocAnalysisMap({});
+    setDocErr("");
+    setDocLoading(false);
+  }, [sessionId]);
+
+  // 문서 분석 로드(공통 함수) - 프리패치/탭진입 로드에서 같이 사용
+  const fetchDocAnalysesMap = async (sid) => {
+    const targets = await interviewApi.getSessionTargets(sid);
+    const analysisIds = (targets || [])
+      .map((t) => t.analysisId)
+      .filter(Boolean);
+
+    if (!analysisIds.length) return {};
+
+    const analyses = await interviewApi.getAnalysesByIds(analysisIds);
+    const map = {};
+    (analyses || []).forEach((a) => {
+      map[a.targetType] = a;
+    });
+    return map;
+  };
+
+  // 3) 분석 시작 + 폴링
   useEffect(() => {
     if (!sessionId) return;
 
     let alive = true;
-    let timer = null;
+    let pollTimer = null;
 
     const startAndPoll = async () => {
       try {
         setErr("");
-        setPolling(true);
+        setLoading(true);
+        setPhase("ANALYZING");
+        setAnalysisStatus("PENDING");
 
+        // 분석 시작 (백엔드 비동기라면 즉시 반환)
         await interviewApi.startAnalysis(sessionId);
 
         const poll = async () => {
           const res = await interviewApi.getAnalysisStatus(sessionId);
           const st = res?.data?.status ?? "PENDING";
-
           if (!alive) return;
 
           setAnalysisStatus(st);
 
           if (st === "DONE") {
-            setPolling(false);
-            return;
-          }
-          if (st === "FAILED") {
-            setPolling(false);
-            setErr("분석에 실패했습니다.");
+            setPhase("DONE_SPLASH");
+            setLoading(true);
+
+            // ✅ 완료 화면 1초 보여준 뒤 결과 fetch 단계로 전환
+            if (doneTimerRef.current) window.clearTimeout(doneTimerRef.current);
+            doneTimerRef.current = window.setTimeout(() => {
+              if (!alive) return;
+              setPhase("FETCH_RESULT");
+            }, 1000);
+
             return;
           }
 
-          timer = window.setTimeout(poll, 1200);
+          if (st === "FAILED") {
+            setErr("분석에 실패했습니다.");
+            setLoading(false);
+            return;
+          }
+
+          // 계속 분석중
+          setPhase("ANALYZING");
+          setLoading(true);
+
+          pollTimer = window.setTimeout(poll, 1200);
         };
 
         await poll();
       } catch (e) {
         if (!alive) return;
-        setPolling(false);
         setErr(e?.response?.data?.message ?? e?.message ?? "분석 요청 실패");
+        setLoading(false);
       }
     };
 
@@ -87,29 +131,39 @@ const Evaluation = ({ evaluationData }) => {
 
     return () => {
       alive = false;
-      if (timer) window.clearTimeout(timer);
+      if (pollTimer) window.clearTimeout(pollTimer);
+      if (doneTimerRef.current) window.clearTimeout(doneTimerRef.current);
     };
   }, [sessionId]);
 
-  // 3) 결과 조회
+  // 4) 결과 조회 (DONE_SPLASH 이후 FETCH_RESULT 단계에서만 실행)
   useEffect(() => {
     let alive = true;
 
+    // props로 결과가 들어오면 우선 사용
     if (evaluationData) {
       setData(evaluationData);
       setLoading(false);
-      return;
+      setPhase("SHOW_RESULT");
+      return () => {
+        alive = false;
+      };
     }
 
     if (!sessionId) {
       setLoading(false);
-      setErr("sessionId가 없습니다. 업로드 후 이동하거나, ?sessionId= 로 접근하세요.");
-      return;
+      setErr(
+        "sessionId가 없습니다. 업로드 후 이동하거나, ?sessionId= 로 접근하세요.",
+      );
+      return () => {
+        alive = false;
+      };
     }
 
-    if (analysisStatus !== "DONE") {
-      setLoading(true);
-      return;
+    if (phase !== "FETCH_RESULT") {
+      return () => {
+        alive = false;
+      };
     }
 
     setLoading(true);
@@ -120,6 +174,7 @@ const Evaluation = ({ evaluationData }) => {
       .then((res) => {
         if (!alive) return;
         setData(res?.evaluation ?? null);
+        setPhase("SHOW_RESULT");
       })
       .catch((e) => {
         if (!alive) return;
@@ -133,12 +188,46 @@ const Evaluation = ({ evaluationData }) => {
     return () => {
       alive = false;
     };
-  }, [sessionId, evaluationData, analysisStatus]);
+  }, [sessionId, evaluationData, phase]);
 
-  // 4) 문서탭 데이터 로드
+  // 5) 문서 분석 프리패치 (결과(data) 준비되면 백그라운드로 한 번 당겨오기)
+  useEffect(() => {
+    if (!sessionId || !data) return;
+
+    // 이미 있으면 프리패치 스킵
+    if (Object.keys(docAnalysisMap || {}).length > 0) return;
+
+    let alive = true;
+
+    (async () => {
+      try {
+        // console.log("[prefetch] start", sessionId);
+
+        const map = await fetchDocAnalysesMap(sessionId);
+        if (!alive) return;
+        // console.log("[prefetch] done", Object.keys(map).length);
+        setDocAnalysisMap(map);
+      } catch (e) {
+        // 프리패치 실패는 치명적이지 않음 (탭 진입 시 다시 시도 가능)
+        console.error("document prefetch failed:", e);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionId, data]);
+
+  // 6) 문서탭 진입 시 로드 (프리패치 실패/지연 대비 fallback)
   useEffect(() => {
     if (activeTab !== "document") return;
-    if (!sessionId) return;
+    if (!sessionId || !data) return;
+
+    console.log("[document tab] fetch start");
+
+    // 프리패치가 채워놨으면 로딩/재요청 스킵
+    if (Object.keys(docAnalysisMap || {}).length > 0) return;
 
     let alive = true;
     setDocLoading(true);
@@ -146,27 +235,10 @@ const Evaluation = ({ evaluationData }) => {
 
     (async () => {
       try {
-        const targets = await interviewApi.getSessionTargets(sessionId);
+        const map = await fetchDocAnalysesMap(sessionId);
         if (!alive) return;
-
-        const analysisIds = (targets || []).map((t) => t.analysisId).filter(Boolean);
-
-        if (!analysisIds.length) {
-          setDocAnalysisMap({});
-          return;
-        }
-
-        const analyses = await interviewApi.getAnalysesByIds(analysisIds);
-        if (!alive) return;
-
-        const map = {};
-        (analyses || []).forEach((a) => {
-          map[a.targetType] = a;
-        });
-
         setDocAnalysisMap(map);
       } catch (e) {
-        console.error(e);
         if (!alive) return;
         setDocErr("문서 분석 데이터를 불러오지 못했습니다.");
         setDocAnalysisMap({});
@@ -178,18 +250,19 @@ const Evaluation = ({ evaluationData }) => {
     return () => {
       alive = false;
     };
-  }, [activeTab, sessionId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, sessionId, data]);
 
-  // 5) 가드
+  // 7) 가드(UI)
   if (loading) {
-    return (
-      <div className="evaluation-container">
-        {polling || analysisStatus !== "DONE"
-          ? `분석 중... (상태: ${analysisStatus})`
-          : "결과 불러오는 중..."}
-      </div>
-    );
+    // DONE_SPLASH는 무조건 DONE UI
+    if (phase === "DONE_SPLASH")
+      return <EvaluationLoading analysisStatus="DONE" />;
+
+    // 그 외는 현재 분석상태 기반(결과 fetch 동안도 기존 상태로 그냥 표시)
+    return <EvaluationLoading analysisStatus={analysisStatus} />;
   }
+
   if (err) return <div className="evaluation-container">에러: {err}</div>;
   if (!data) return <div className="evaluation-container">데이터 없음</div>;
 
