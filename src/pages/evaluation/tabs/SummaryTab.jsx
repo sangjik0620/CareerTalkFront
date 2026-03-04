@@ -67,7 +67,6 @@ export default function SummaryTab({ data }) {
             <span>📅 {info?.date ?? "—"}</span>
             <span>⏱️ {info?.duration ?? "—"}</span>
             <span>💼 {info?.position ?? "—"}</span>
-            <span>🏢 {info?.company ?? "—"}</span>
           </div>
         </div>
         <div className="summaryTopRight">
