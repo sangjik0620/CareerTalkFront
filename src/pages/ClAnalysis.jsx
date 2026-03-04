@@ -1,4 +1,3 @@
-// /src/pages/ClAnalysis.jsx
 import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -26,37 +25,28 @@ const JOB_CATEGORIES = [
   "공공∙복지",
 ];
 
-const API_BASE = "http://localhost:8080";
+const API_BASE = import.meta?.env?.VITE_API_BASE || "http://localhost:8080";
 
-const ClAnalysis = ({ isOpen, onClose }) => {
+export default function ClAnalysis({ isOpen, onClose }) {
   const navigate = useNavigate();
 
-  // HOME(PDF) | FORM(텍스트 입력)
   const [mode, setMode] = useState("HOME");
 
-  // 공통 입력
   const [jobRole, setJobRole] = useState("");
   const [jobDetail, setJobDetail] = useState("");
 
-  // HOME: 파일 업로드
   const inputRef = useRef(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  // FORM: 입력폼
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
 
-  // 단계: input -> confirm -> analyzing
   const [viewStep, setViewStep] = useState("input");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  // 모달 닫힐 때 초기화
   useEffect(() => {
-    if (!isOpen) {
-      resetAll();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!isOpen) resetAll();
   }, [isOpen]);
 
   const resetAll = () => {
@@ -71,11 +61,7 @@ const ClAnalysis = ({ isOpen, onClose }) => {
     setIsAnalyzing(false);
   };
 
-  const handleClose = () => {
-    onClose?.();
-    // 닫자마자 초기화하고 싶으면 아래 유지, 아니면 제거
-    // resetAll();
-  };
+  const handleClose = () => onClose?.();
 
   if (!isOpen) return null;
 
@@ -83,9 +69,7 @@ const ClAnalysis = ({ isOpen, onClose }) => {
   const validateAndSetFile = (file) => {
     if (!file) return false;
 
-    // ✅ MIME + 확장자 모두 체크 (브라우저마다 type이 비는 경우 대비)
     const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
-
     if (!isPdf) {
       alert("PDF 파일만 업로드해 주세요.");
       return false;
@@ -108,14 +92,12 @@ const ClAnalysis = ({ isOpen, onClose }) => {
     !!content.trim() &&
     content.trim().length >= 30;
 
-  // ✅ [추가] 분석하기 버튼 클릭: confirm 화면으로 이동만
   const handleAnalyzeClick = () => {
     const ok = mode === "HOME" ? canAnalyzeHome : canAnalyzeForm;
     if (!ok) return;
     setViewStep("confirm");
   };
 
-  // ✅ confirm에서 “분석 시작” 눌렀을 때: mode에 따라 API 분기
   const handleConfirmAnalyze = async () => {
     setViewStep("analyzing");
     setIsAnalyzing(true);
@@ -124,22 +106,17 @@ const ClAnalysis = ({ isOpen, onClose }) => {
       let result;
 
       if (mode === "FORM") {
-        // ✅ 텍스트 분석
+        const payload = { jobRole, jobDetail, title, content };
+
         const res = await fetch(`${API_BASE}/api/ci/analyze/text`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            jobRole,
-            jobDetail,
-            title,
-            content,
-          }),
+          body: JSON.stringify(payload),
         });
 
-        if (!res.ok) throw new Error("텍스트 분석 API 응답 실패");
+        if (!res.ok) throw new Error("텍스트 분석 API 실패");
         result = await res.json();
       } else {
-        // ✅ PDF 분석 (multipart)
         const formData = new FormData();
         formData.append("file", selectedFile);
         formData.append("jobRole", jobRole);
@@ -150,14 +127,16 @@ const ClAnalysis = ({ isOpen, onClose }) => {
           body: formData,
         });
 
-        if (!res.ok) throw new Error("PDF 분석 API 응답 실패");
+        if (!res.ok) throw new Error("PDF 분석 API 실패");
         result = await res.json();
       }
+
+      //로컬 저장
+      localStorage.setItem("ci_result", JSON.stringify(result));
 
       setIsAnalyzing(false);
       handleClose();
 
-      // ✅ result 페이지로 이동 + state로 결과 전달
       navigate(`/analysis/result/${result.analysisId}`, {
         state: { result },
       });
@@ -169,7 +148,8 @@ const ClAnalysis = ({ isOpen, onClose }) => {
     }
   };
 
-  const headerTitle = mode === "HOME" ? "자기소개서 분석" : "자기소개서 입력폼";
+  const headerTitle =
+    mode === "HOME" ? "자기소개서 분석(PDF)" : "자기소개서 입력폼";
   const headerDesc =
     mode === "HOME"
       ? "직군 정보 입력 후 PDF 파일을 업로드해 주세요."
@@ -184,7 +164,7 @@ const ClAnalysis = ({ isOpen, onClose }) => {
         className="bg-white rounded-2xl shadow-xl w-[95%] max-w-2xl h-[640px] overflow-hidden flex flex-col relative"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* ======================= [3] 로딩 화면 ======================= */}
+        {/* 로딩화면 */}
         {viewStep === "analyzing" ? (
           <div className="flex-1 flex flex-col items-center justify-center p-8 animate-fade-in">
             <svg
@@ -217,7 +197,7 @@ const ClAnalysis = ({ isOpen, onClose }) => {
             </p>
           </div>
         ) : viewStep === "confirm" ? (
-          /* ======================= [2] 확인 화면 ======================= */
+          /* 확인 화면 */
           <div className="flex flex-col h-full animate-fade-in">
             <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-white shrink-0">
               <div className="flex items-center gap-3">
@@ -241,7 +221,7 @@ const ClAnalysis = ({ isOpen, onClose }) => {
                     분석 요청 확인
                   </h2>
                   <p className="text-sm text-gray-500 mt-0.5">
-                    입력하신 정보가 맞는지 마지막으로 확인해 주세요.
+                    입력하신 정보가 맞는지 확인해 주세요.
                   </p>
                 </div>
               </div>
@@ -266,30 +246,6 @@ const ClAnalysis = ({ isOpen, onClose }) => {
             </div>
 
             <div className="p-8 flex-1 bg-gray-50/50 flex flex-col items-center justify-center overflow-y-auto min-h-0">
-              <div className="text-center mb-6">
-                <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
-                  <svg
-                    className="w-7 h-7"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2.5"
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-1">
-                  분석 준비 완료!
-                </h3>
-                <p className="text-sm text-gray-500">
-                  아래 정보로 AI 분석을 시작합니다.
-                </p>
-              </div>
-
               <div className="w-full max-w-md bg-white border border-gray-200 rounded-2xl shadow-sm p-1">
                 <div className="flex flex-col">
                   <Row label="지원 직군" value={jobRole} />
@@ -301,7 +257,10 @@ const ClAnalysis = ({ isOpen, onClose }) => {
                   ) : null}
 
                   <Divider />
-                  <Row label="분석 방식" value={headerTitle} />
+                  <Row
+                    label="분석 방식"
+                    value={mode === "HOME" ? "PDF" : "입력폼"}
+                  />
 
                   {mode === "HOME" ? (
                     <>
@@ -349,7 +308,7 @@ const ClAnalysis = ({ isOpen, onClose }) => {
             </div>
           </div>
         ) : (
-          /* ======================= 기본 입력 화면 ======================= */
+          /* 입력 화면 */
           <div className="flex flex-col h-full animate-fade-in">
             <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-white shrink-0">
               <div className="flex items-center gap-3">
@@ -380,7 +339,7 @@ const ClAnalysis = ({ isOpen, onClose }) => {
                 <button
                   onClick={() => {
                     setMode((prev) => (prev === "HOME" ? "FORM" : "HOME"));
-                    setViewStep("input"); // 안전
+                    setViewStep("input");
                   }}
                   className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-bold rounded-lg hover:bg-gray-50 transition-colors text-sm"
                 >
@@ -446,7 +405,7 @@ const ClAnalysis = ({ isOpen, onClose }) => {
                 </div>
               </div>
 
-              {/* HOME: PDF 업로드 */}
+              {/* PDF 업로드 */}
               {mode === "HOME" ? (
                 <div className="flex flex-col flex-1 mt-2 min-h-[160px]">
                   <label className="block text-sm font-semibold text-gray-800 mb-2">
@@ -552,7 +511,7 @@ const ClAnalysis = ({ isOpen, onClose }) => {
                   </div>
                 </div>
               ) : (
-                /* FORM: 입력폼 */
+                /* 자소서 입력폼 */
                 <div className="flex flex-col gap-6">
                   <div>
                     <label className="block text-sm font-semibold text-gray-800 mb-2">
@@ -608,7 +567,7 @@ const ClAnalysis = ({ isOpen, onClose }) => {
       </div>
     </div>
   );
-};
+}
 
 function Divider() {
   return <div className="h-px bg-gray-100 mx-4" />;
@@ -655,5 +614,3 @@ function Row({ label, value, sub, multiline }) {
     </div>
   );
 }
-
-export default ClAnalysis;
