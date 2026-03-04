@@ -367,13 +367,20 @@ export default function InterviewSession() {
   }
 
   async function viewResults() {
-    try {
-      const data = await uploadRecordingsToServer();
+  try {
+    const data = await uploadRecordingsToServer();
+    const sessionId = data?.sessionId;
+
+    if (!sessionId) {
       navigate("/interview/result", { state: { uploadResult: data } });
-    } catch (err) {
-      alert(err.message);
+      return;
     }
+
+    navigate(`/interview/result?sessionId=${sessionId}`, { state: { uploadResult: data } });
+  } catch (err) {
+    alert(err.message);
   }
+}
 
   function closeModal() {
     setModalOpen(false);
