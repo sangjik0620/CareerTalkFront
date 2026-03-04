@@ -2,11 +2,6 @@ import React from "react";
 import EmptyBlock from "../components/EmptyBlock";
 import { clamp100, getScoreColor, isPlainObject } from "../utils/evalUtils";
 
-/**
- * props:
- * - data: evaluation.evaluation (기존 summary/analysis 구조)
- * - turns: A안 응답의 turns[] (turn별 stt/metrics/scores 포함)
- */
 export default function InterviewTab({ data, turns = [] }) {
   const ia = data?.interviewAnalysis;
   if (!ia) {
@@ -21,36 +16,44 @@ export default function InterviewTab({ data, turns = [] }) {
   const stt = ia?.sttAnalysis;
   const keywordUsage = stt?.keywordUsage;
 
-  // turns가 없으면 fallback으로 기존 questionResponses를 보여줄 수도 있지만,
-  // 요청이 "turns 기반"이라 turns 없으면 안내만 띄우도록 처리
   const hasTurns = Array.isArray(turns) && turns.length > 0;
 
   return (
     <div className="tab-content">
       <h2>면접 음성 및 답변 분석</h2>
-
-      {/* =========================
-          1) 음성 분석(기존 유지)
-         ========================= */}
       {isPlainObject(voiceMetrics) ? (
         <div className="voice-analysis">
           <h3>🎤 음성 분석</h3>
           <div className="voice-metrics">
             {Object.entries(voiceMetrics).map(([key, value]) => {
+              const labels = {
+                clarity: "명확성",
+                pace: "말하기 속도",
+                volume: "음량",
+                confidence: "자신감",
+                fillerWords: "추임새 (개)",
+              };
+
               const v = clamp100(value);
+
               return (
                 <div key={key} className="voice-metric">
                   <div className="metric-header">
-                    <span className="metric-name">{VOICE_LABELS[key] ?? key}</span>
-                    <span className="metric-score" style={{ color: getScoreColor(v) }}>
-                      {v}{key !== "fillerWords" ? "%" : "회"}
+                    <span className="metric-name">{labels[key] ?? key}</span>
+                    <span className="metric-score">
+                      {v}
+                      {key !== "fillerWords" && "%"}
                     </span>
                   </div>
+
                   {key !== "fillerWords" && (
                     <div className="metric-bar">
                       <div
-                        className="metric-fill"
-                        style={{ width: `${v}%`, background: getScoreColor(v) }}
+                        className="metric-fill voice"
+                        style={{
+                          width: `${v}%`,
+                          backgroundColor: getScoreColor(v),
+                        }}
                       />
                     </div>
                   )}
@@ -61,13 +64,13 @@ export default function InterviewTab({ data, turns = [] }) {
         </div>
       ) : (
         <div className="voice-analysis">
-          <EmptyBlock title="음성 분석 데이터가 없습니다" desc="누락: interviewAnalysis.voiceMetrics" />
+          <EmptyBlock
+            title="음성 분석 데이터가 없습니다"
+            desc="누락: interviewAnalysis.voiceMetrics"
+          />
         </div>
       )}
 
-      {/* =========================
-          2) STT 분석(기존 유지)
-         ========================= */}
       {isPlainObject(stt) ? (
         <div className="stt-analysis">
           <h3>📝 STT 분석</h3>
@@ -75,14 +78,18 @@ export default function InterviewTab({ data, turns = [] }) {
           <div className="stt-stats">
             <div className="stt-stat-card">
               <div className="stt-icon">💬</div>
-              <div className="stt-value">{Number(stt?.totalWords ?? 0).toLocaleString()}</div>
+              <div className="stt-value">
+                {Number(stt?.totalWords ?? 0).toLocaleString()}
+              </div>
               <div className="stt-label">총 단어 수</div>
             </div>
+
             <div className="stt-stat-card">
               <div className="stt-icon">⏱️</div>
               <div className="stt-value">{stt?.averageResponseTime ?? 0}초</div>
               <div className="stt-label">평균 답변 시간</div>
             </div>
+
             <div className="stt-stat-card">
               <div className="stt-icon">😊</div>
               <div className="stt-value">{stt?.sentimentScore ?? 0}%</div>
@@ -93,17 +100,34 @@ export default function InterviewTab({ data, turns = [] }) {
           {isPlainObject(keywordUsage) ? (
             <div className="keyword-usage">
               <h4>키워드 사용 분포</h4>
+
               <div className="keyword-chart">
                 {Object.entries(keywordUsage).map(([type, count]) => {
-                  const total = Object.values(keywordUsage).reduce((a, b) => a + (Number(b) || 0), 0);
+                  const total = Object.values(keywordUsage).reduce(
+                    (a, b) => a + (Number(b) || 0),
+                    0
+                  );
                   const c = Number(count) || 0;
-                  const pct = total > 0 ? ((c / total) * 100).toFixed(1) : "0.0";
+                  const percentage =
+                    total > 0 ? ((c / total) * 100).toFixed(1) : "0.0";
+
+                  const labels = {
+                    technical: "기술",
+                    soft: "소프트스킬",
+                    company: "회사",
+                  };
+
                   return (
                     <div key={type} className="keyword-bar-item">
-                      <div className="keyword-bar-label">{KEYWORD_LABELS[type] ?? type}</div>
+                      <div className="keyword-bar-label">{labels[type] ?? type}</div>
                       <div className="keyword-bar-container">
-                        <div className="keyword-bar-fill" style={{ width: `${pct}%` }} />
-                        <span className="keyword-bar-value">{c}회 ({pct}%)</span>
+                        <div
+                          className="keyword-bar-fill"
+                          style={{ width: `${percentage}%` }}
+                        />
+                        <span className="keyword-bar-value">
+                          {c}회 ({percentage}%)
+                        </span>
                       </div>
                     </div>
                   );
@@ -112,7 +136,10 @@ export default function InterviewTab({ data, turns = [] }) {
             </div>
           ) : (
             <div className="keyword-usage">
-              <EmptyBlock title="키워드 사용 데이터가 없습니다" desc="누락: sttAnalysis.keywordUsage" />
+              <EmptyBlock
+                title="키워드 사용 데이터가 없습니다"
+                desc="누락: interviewAnalysis.sttAnalysis.keywordUsage"
+              />
             </div>
           )}
         </div>
@@ -122,9 +149,6 @@ export default function InterviewTab({ data, turns = [] }) {
         </div>
       )}
 
-      {/* =========================
-          3) 질문별(턴별) 분석: turns 기반
-         ========================= */}
       <div className="question-responses">
         <h3>📋 질문별 답변 분석</h3>
 
@@ -141,7 +165,6 @@ export default function InterviewTab({ data, turns = [] }) {
 
             const duration = Number(t?.audio?.durationSec ?? 0) || 0;
 
-            // ===== 음성 점수들 =====
             const s = t?.scores || {};
             const overallVoiceScore = clamp100(s?.overallVoiceScore);
             const confidenceScore = clamp100(s?.confidenceScore);
@@ -152,26 +175,21 @@ export default function InterviewTab({ data, turns = [] }) {
 
             const flags = Array.isArray(s?.flags) ? s.flags : [];
 
-            // 진행바/색상용
             const overallColor = getScoreColor(overallVoiceScore);
 
-            // 짧은 미리보기
             const preview = response ? response.substring(0, 100) : "";
 
             return (
               <div key={t?.turnId ?? idx} className="response-card">
-                {/* 카드 헤더 */}
                 <div className="response-header">
                   <span className="question-number">Q{idx + 1}</span>
                   <span className="question-text">{question}</span>
 
-                  {/* ✅ 우측 점수: 음성 종합 점수 */}
                   <span className="response-score" style={{ color: overallColor }}>
                     {Number.isFinite(overallVoiceScore) ? overallVoiceScore : 0}점
                   </span>
                 </div>
 
-                {/* 답변/메타 */}
                 <div className="response-body">
                   <div className="response-preview">
                     {preview ? `${preview}${response.length > 100 ? "..." : ""}` : "(답변 없음)"}
@@ -191,7 +209,6 @@ export default function InterviewTab({ data, turns = [] }) {
                   </div>
                 </div>
 
-                {/* ✅ 음성 종합 점수 바 */}
                 <div className="metric-bar" style={{ marginTop: 10 }}>
                   <div
                     className="metric-fill voice"
@@ -204,15 +221,10 @@ export default function InterviewTab({ data, turns = [] }) {
                   />
                 </div>
 
-                {/* ✅ 아래: 음성 점수 상세 */}
                 <div style={{ marginTop: 12 }}>
                   <div style={{ fontWeight: 700, marginBottom: 8 }}>🎧 음성 점수</div>
-
-                  {/* 3개 바: Confidence / Fluency / TremorRisk */}
                   <ScoreRow label="자신감" value={confidenceScore} />
                   <ScoreRow label="유창성" value={fluencyScore} />
-
-                  {/* tremorRisk는 '높을수록 위험'이라서 사용자에게는 “안정성(100-위험)”로 보여주는 게 자연스러움 */}
                   <ScoreRow
                     label="안정성"
                     value={Number.isFinite(tremorRiskScore) ? 100 - tremorRiskScore : 0}
@@ -247,7 +259,6 @@ export default function InterviewTab({ data, turns = [] }) {
                   </div>
                 </div>
 
-                {/* (선택) 오디오 재생 링크가 있으면 작은 버튼 */}
                 {t?.audio?.audioUrl ? (
                   <div style={{ marginTop: 14 }}>
                     <audio controls style={{ width: "100%" }} src={t.audio.audioUrl} />
@@ -262,7 +273,6 @@ export default function InterviewTab({ data, turns = [] }) {
   );
 }
 
-/** 내부 컴포넌트: 점수 row + bar (기존 스타일을 해치지 않게 최소 스타일) */
 function ScoreRow({ label, value, subLabel }) {
   const v = clamp100(value);
   return (
