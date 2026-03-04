@@ -3,30 +3,71 @@ import "../css/Evaluation.css";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { interviewApi } from "../lib/api/interviewApi";
 
-import SummaryTab from "./evaluation/tabs/SummaryTab";
-import DocumentTab from "./evaluation/tabs/DocumentTab";
-import InterviewTab from "./evaluation/tabs/InterviewTab";
+import SummaryTab    from "./evaluation/tabs/SummaryTab";
+import DocumentTab   from "./evaluation/tabs/DocumentTab";
+import InterviewTab  from "./evaluation/tabs/InterviewTab";
 import ComparisonTab from "./evaluation/tabs/ComparisonTab";
 import CompetencyTab from "./evaluation/tabs/CompetencyTab";
 import EvaluationLoading from "./evaluation/components/EvaluationLoading";
 
+/* ── SVG icon helpers (no dependency) ── */
+const Icon = {
+  Summary:    () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+    </svg>
+  ),
+  Document:   () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+    </svg>
+  ),
+  Interview:  () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 1a3 3 0 000 6 3 3 0 000-6z"/><path d="M19 10H5a2 2 0 00-2 2v1a7 7 0 0014 0v-1a2 2 0 00-2-2z"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8"  y1="23" x2="16" y2="23"/>
+    </svg>
+  ),
+  Comparison: () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6"  y1="20" x2="6"  y2="14"/>
+    </svg>
+  ),
+  Competency: () => (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+    </svg>
+  ),
+  Export: () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+    </svg>
+  ),
+};
+
+const TABS = [
+  { id: "summary",    label: "요약",   IconComp: Icon.Summary    },
+  { id: "document",   label: "문서",   IconComp: Icon.Document   },
+  { id: "interview",  label: "면접",   IconComp: Icon.Interview  },
+  { id: "comparison", label: "비교",   IconComp: Icon.Comparison },
+  { id: "competency", label: "역량",   IconComp: Icon.Competency },
+];
+
 const Evaluation = ({ evaluationData }) => {
   const [activeTab, setActiveTab] = useState("summary");
 
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState("");
+  const [data, setData]                   = useState(null);
+  const [loading, setLoading]             = useState(true);
+  const [err, setErr]                     = useState("");
 
-  const [analysisStatus, setAnalysisStatus] = useState("PENDING"); // PENDING/PROCESSING/DONE/FAILED
-  const [phase, setPhase] = useState("ANALYZING"); // ANALYZING | DONE_SPLASH | FETCH_RESULT | SHOW_RESULT
+  const [analysisStatus, setAnalysisStatus] = useState("PENDING");
+  const [phase, setPhase]                   = useState("ANALYZING");
 
-  const [docLoading, setDocLoading] = useState(false);
-  const [docErr, setDocErr] = useState("");
+  const [docLoading, setDocLoading]       = useState(false);
+  const [docErr, setDocErr]               = useState("");
   const [docAnalysisMap, setDocAnalysisMap] = useState({});
 
   const doneTimerRef = useRef(null);
-
-  const location = useLocation();
+  const location     = useLocation();
   const [searchParams] = useSearchParams();
 
   const [turns, setTurns] = useState([]);
@@ -46,34 +87,24 @@ const Evaluation = ({ evaluationData }) => {
     return fromState ?? (fromQuery ? Number(fromQuery) : null);
   }, [location?.state, searchParams]);
 
-  // 2) sessionId 바뀌면 문서 캐시 초기화
   useEffect(() => {
     setDocAnalysisMap({});
     setDocErr("");
     setDocLoading(false);
   }, [sessionId]);
 
-  // 문서 분석 로드(공통 함수) - 프리패치/탭진입 로드에서 같이 사용
   const fetchDocAnalysesMap = async (sid) => {
-    const targets = await interviewApi.getSessionTargets(sid);
-    const analysisIds = (targets || [])
-      .map((t) => t.analysisId)
-      .filter(Boolean);
-
+    const targets    = await interviewApi.getSessionTargets(sid);
+    const analysisIds = (targets || []).map((t) => t.analysisId).filter(Boolean);
     if (!analysisIds.length) return {};
-
     const analyses = await interviewApi.getAnalysesByIds(analysisIds);
     const map = {};
-    (analyses || []).forEach((a) => {
-      map[a.targetType] = a;
-    });
+    (analyses || []).forEach((a) => { map[a.targetType] = a; });
     return map;
   };
 
-  // 3) 분석 시작 + 폴링
   useEffect(() => {
     if (!sessionId) return;
-
     let alive = true;
     let pollTimer = null;
 
@@ -84,40 +115,31 @@ const Evaluation = ({ evaluationData }) => {
         setPhase("ANALYZING");
         setAnalysisStatus("PENDING");
 
-        // 분석 시작 (백엔드 비동기라면 즉시 반환)
         await interviewApi.startAnalysis(sessionId);
 
         const poll = async () => {
           const res = await interviewApi.getAnalysisStatus(sessionId);
-          const st = res?.data?.status ?? "PENDING";
+          const st  = res?.data?.status ?? "PENDING";
           if (!alive) return;
-
           setAnalysisStatus(st);
 
           if (st === "DONE") {
             setPhase("DONE_SPLASH");
             setLoading(true);
-
-            // ✅ 완료 화면 1초 보여준 뒤 결과 fetch 단계로 전환
             if (doneTimerRef.current) window.clearTimeout(doneTimerRef.current);
             doneTimerRef.current = window.setTimeout(() => {
               if (!alive) return;
               setPhase("FETCH_RESULT");
             }, 1000);
-
             return;
           }
-
           if (st === "FAILED") {
             setErr("분석에 실패했습니다.");
             setLoading(false);
             return;
           }
-
-          // 계속 분석중
           setPhase("ANALYZING");
           setLoading(true);
-
           pollTimer = window.setTimeout(poll, 1200);
         };
 
@@ -130,43 +152,30 @@ const Evaluation = ({ evaluationData }) => {
     };
 
     startAndPoll();
-
     return () => {
       alive = false;
-      if (pollTimer) window.clearTimeout(pollTimer);
+      if (pollTimer)           window.clearTimeout(pollTimer);
       if (doneTimerRef.current) window.clearTimeout(doneTimerRef.current);
     };
   }, [sessionId]);
 
-  // 4) 결과 조회 (DONE_SPLASH 이후 FETCH_RESULT 단계에서만 실행)
   useEffect(() => {
     let alive = true;
 
-    // props로 결과가 들어오면 우선 사용
     if (evaluationData) {
       setData(evaluationData);
       setLoading(false);
       setPhase("SHOW_RESULT");
-      return () => {
-        alive = false;
-      };
+      return () => { alive = false; };
     }
 
     if (!sessionId) {
       setLoading(false);
-      setErr(
-        "sessionId가 없습니다. 업로드 후 이동하거나, ?sessionId= 로 접근하세요.",
-      );
-      return () => {
-        alive = false;
-      };
+      setErr("sessionId가 없습니다. 업로드 후 이동하거나 ?sessionId= 로 접근하세요.");
+      return () => { alive = false; };
     }
 
-    if (phase !== "FETCH_RESULT") {
-      return () => {
-        alive = false;
-      };
-    }
+    if (phase !== "FETCH_RESULT") return () => { alive = false; };
 
     setLoading(true);
     setErr("");
@@ -188,54 +197,33 @@ const Evaluation = ({ evaluationData }) => {
         setLoading(false);
       });
 
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [sessionId, evaluationData, phase]);
 
-  // 5) 문서 분석 프리패치 (결과(data) 준비되면 백그라운드로 한 번 당겨오기)
   useEffect(() => {
     if (!sessionId || !data) return;
-
-    // 이미 있으면 프리패치 스킵
     if (Object.keys(docAnalysisMap || {}).length > 0) return;
-
     let alive = true;
-
     (async () => {
       try {
-        // console.log("[prefetch] start", sessionId);
-
         const map = await fetchDocAnalysesMap(sessionId);
         if (!alive) return;
-        // console.log("[prefetch] done", Object.keys(map).length);
         setDocAnalysisMap(map);
       } catch (e) {
-        // 프리패치 실패는 치명적이지 않음 (탭 진입 시 다시 시도 가능)
         console.error("document prefetch failed:", e);
       }
     })();
-
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, data]);
 
-  // 6) 문서탭 진입 시 로드 (프리패치 실패/지연 대비 fallback)
   useEffect(() => {
     if (activeTab !== "document") return;
     if (!sessionId || !data) return;
-
-    console.log("[document tab] fetch start");
-
-    // 프리패치가 채워놨으면 로딩/재요청 스킵
     if (Object.keys(docAnalysisMap || {}).length > 0) return;
-
     let alive = true;
     setDocLoading(true);
     setDocErr("");
-
     (async () => {
       try {
         const map = await fetchDocAnalysesMap(sessionId);
@@ -249,49 +237,49 @@ const Evaluation = ({ evaluationData }) => {
         if (alive) setDocLoading(false);
       }
     })();
-
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, sessionId, data]);
 
-  // 7) 가드(UI)
+  /* ── Guards ── */
   if (loading) {
-    // DONE_SPLASH는 무조건 DONE UI
     if (phase === "DONE_SPLASH")
       return <EvaluationLoading analysisStatus="DONE" />;
-
-    // 그 외는 현재 분석상태 기반(결과 fetch 동안도 기존 상태로 그냥 표시)
     return <EvaluationLoading analysisStatus={analysisStatus} />;
   }
 
-  if (err) return <div className="evaluation-container">에러: {err}</div>;
-  if (!data) return <div className="evaluation-container">데이터 없음</div>;
+  if (err)   return <div className="evaluation-container" style={{ paddingTop: "4rem", textAlign: "center", color: "#ef4444" }}>⚠️ {err}</div>;
+  if (!data) return <div className="evaluation-container" style={{ paddingTop: "4rem", textAlign: "center", color: "#94a3b8" }}>데이터가 없습니다.</div>;
 
   return (
     <div className="evaluation-container">
+      {/* ── Header ── */}
       <div className="evaluation-header">
         <h1>면접 평가 결과</h1>
-        <button className="export-btn">📥 PDF 내보내기</button>
+        <button className="export-btn">
+          <Icon.Export />
+          PDF 내보내기
+        </button>
       </div>
 
+      {/* ── Tab Nav ── */}
       <div className="tabs">
-        {tabs.map((tab) => (
+        {TABS.map(({ id, label, IconComp }) => (
           <button
-            key={tab.id}
-            className={`tab ${activeTab === tab.id ? "active" : ""}`}
-            onClick={() => setActiveTab(tab.id)}
+            key={id}
+            className={`tab${activeTab === id ? " active" : ""}`}
+            onClick={() => setActiveTab(id)}
           >
-            <span className="tab-icon">{tab.icon}</span>
-            <span className="tab-label">{tab.label}</span>
+            <span className="tab-icon"><IconComp /></span>
+            <span className="tab-label">{label}</span>
           </button>
         ))}
       </div>
 
+      {/* ── Content ── */}
       <div className="tab-content-wrapper">
-        {activeTab === "summary" && <SummaryTab data={data} />}
-        {activeTab === "document" && (
+        {activeTab === "summary"    && <SummaryTab data={data} />}
+        {activeTab === "document"   && (
           <DocumentTab
             docLoading={docLoading}
             docErr={docErr}

@@ -37,34 +37,20 @@ export default function InterviewTab({ data, turns = [] }) {
           <h3>🎤 음성 분석</h3>
           <div className="voice-metrics">
             {Object.entries(voiceMetrics).map(([key, value]) => {
-              const labels = {
-                clarity: "명확성",
-                pace: "말하기 속도",
-                volume: "음량",
-                confidence: "자신감",
-                fillerWords: "추임새 (개)",
-              };
-
               const v = clamp100(value);
-
               return (
                 <div key={key} className="voice-metric">
                   <div className="metric-header">
-                    <span className="metric-name">{labels[key] ?? key}</span>
-                    <span className="metric-score">
-                      {v}
-                      {key !== "fillerWords" && "%"}
+                    <span className="metric-name">{VOICE_LABELS[key] ?? key}</span>
+                    <span className="metric-score" style={{ color: getScoreColor(v) }}>
+                      {v}{key !== "fillerWords" ? "%" : "회"}
                     </span>
                   </div>
-
                   {key !== "fillerWords" && (
                     <div className="metric-bar">
                       <div
-                        className="metric-fill voice"
-                        style={{
-                          width: `${v}%`,
-                          backgroundColor: getScoreColor(v),
-                        }}
+                        className="metric-fill"
+                        style={{ width: `${v}%`, background: getScoreColor(v) }}
                       />
                     </div>
                   )}
@@ -75,10 +61,7 @@ export default function InterviewTab({ data, turns = [] }) {
         </div>
       ) : (
         <div className="voice-analysis">
-          <EmptyBlock
-            title="음성 분석 데이터가 없습니다"
-            desc="누락: interviewAnalysis.voiceMetrics"
-          />
+          <EmptyBlock title="음성 분석 데이터가 없습니다" desc="누락: interviewAnalysis.voiceMetrics" />
         </div>
       )}
 
@@ -92,18 +75,14 @@ export default function InterviewTab({ data, turns = [] }) {
           <div className="stt-stats">
             <div className="stt-stat-card">
               <div className="stt-icon">💬</div>
-              <div className="stt-value">
-                {Number(stt?.totalWords ?? 0).toLocaleString()}
-              </div>
+              <div className="stt-value">{Number(stt?.totalWords ?? 0).toLocaleString()}</div>
               <div className="stt-label">총 단어 수</div>
             </div>
-
             <div className="stt-stat-card">
               <div className="stt-icon">⏱️</div>
               <div className="stt-value">{stt?.averageResponseTime ?? 0}초</div>
               <div className="stt-label">평균 답변 시간</div>
             </div>
-
             <div className="stt-stat-card">
               <div className="stt-icon">😊</div>
               <div className="stt-value">{stt?.sentimentScore ?? 0}%</div>
@@ -114,34 +93,17 @@ export default function InterviewTab({ data, turns = [] }) {
           {isPlainObject(keywordUsage) ? (
             <div className="keyword-usage">
               <h4>키워드 사용 분포</h4>
-
               <div className="keyword-chart">
                 {Object.entries(keywordUsage).map(([type, count]) => {
-                  const total = Object.values(keywordUsage).reduce(
-                    (a, b) => a + (Number(b) || 0),
-                    0
-                  );
+                  const total = Object.values(keywordUsage).reduce((a, b) => a + (Number(b) || 0), 0);
                   const c = Number(count) || 0;
-                  const percentage =
-                    total > 0 ? ((c / total) * 100).toFixed(1) : "0.0";
-
-                  const labels = {
-                    technical: "기술",
-                    soft: "소프트스킬",
-                    company: "회사",
-                  };
-
+                  const pct = total > 0 ? ((c / total) * 100).toFixed(1) : "0.0";
                   return (
                     <div key={type} className="keyword-bar-item">
-                      <div className="keyword-bar-label">{labels[type] ?? type}</div>
+                      <div className="keyword-bar-label">{KEYWORD_LABELS[type] ?? type}</div>
                       <div className="keyword-bar-container">
-                        <div
-                          className="keyword-bar-fill"
-                          style={{ width: `${percentage}%` }}
-                        />
-                        <span className="keyword-bar-value">
-                          {c}회 ({percentage}%)
-                        </span>
+                        <div className="keyword-bar-fill" style={{ width: `${pct}%` }} />
+                        <span className="keyword-bar-value">{c}회 ({pct}%)</span>
                       </div>
                     </div>
                   );
@@ -150,10 +112,7 @@ export default function InterviewTab({ data, turns = [] }) {
             </div>
           ) : (
             <div className="keyword-usage">
-              <EmptyBlock
-                title="키워드 사용 데이터가 없습니다"
-                desc="누락: interviewAnalysis.sttAnalysis.keywordUsage"
-              />
+              <EmptyBlock title="키워드 사용 데이터가 없습니다" desc="누락: sttAnalysis.keywordUsage" />
             </div>
           )}
         </div>
