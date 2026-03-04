@@ -37,12 +37,12 @@ export default function SummaryTab({ data }) {
   };
 
   const kpis = [
-    { label: "백분위",  value: `상위 ${summary?.percentileRank ?? 0}%`,  sub: "전체 대비",  tone: "brand" },
-    { label: "평균 답변", value: `${summary?.avgResponseTimeSec ?? 0}s`, sub: "응답 속도",  tone: "neutral" },
-    { label: "추임새",  value: `${summary?.fillerWordRate ?? 0}%`,        sub: "비중",      tone: "neutral" },
-    { label: "긍정도",  value: `${summary?.sentimentScore ?? 0}%`,        sub: "감정",      tone: "neutral" },
-    { label: "직무적합", value: `${summary?.jobFitIndex ?? 0}`,           sub: "Index",     tone: "brand"  },
-    { label: "자신감",  value: `${summary?.confidenceIndex ?? 0}`,        sub: "Index",     tone: "brand"  },
+    { label: "백분위",  value: `상위 ${summary?.percentileRank ?? 0}%`,  tone: "brand" },
+    { label: "평균 답변", value: `${summary?.avgResponseTimeSec ?? 0}s`, tone: "neutral" },
+    { label: "추임새",  value: `${summary?.fillerWordRate ?? 0}%`, tone: "neutral" },
+    { label: "긍정도",  value: `${summary?.sentimentScore ?? 0}%`, tone: "neutral" },
+    { label: "직무적합", value: `${summary?.jobFitIndex ?? 0}`, tone: "brand"  },
+    { label: "자신감",  value: `${summary?.confidenceIndex ?? 0}`, tone: "brand"  },
   ];
 
   const indexes = [
@@ -136,7 +136,6 @@ export default function SummaryTab({ data }) {
         <section className="summaryCard summaryCardCompact">
           <div className="summaryCardHeader">
             <h3 className="summaryCardTitle">핵심 지표</h3>
-            <span className="summaryCardHint">Index 기반 요약</span>
           </div>
 
           <div className="indexList">
