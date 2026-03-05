@@ -1329,7 +1329,6 @@ export default function Home() {
         onClose={() => setIsResumeModalOpen(false)}
         onAnalyzeSuccess={() => {
           setIsResumeModalOpen(false);
-          navigate("/resume/result")
         }}
       />
 

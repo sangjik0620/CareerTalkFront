@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
+const API_BASE = import.meta?.env?.VITE_API_BASE || "http://localhost:8080";
+
 export default function CIAnalysisResult() {
   const { analysisId } = useParams();
   const navigate = useNavigate();
@@ -8,7 +10,7 @@ export default function CIAnalysisResult() {
 
   const passedResult = location.state?.result;
 
-  //db 연결하기 전까지 목업
+  // DB 연결 전까지 목업(안전망)
   const mock = useMemo(
     () => ({
       analysisId,
@@ -23,6 +25,8 @@ export default function CIAnalysisResult() {
       questions: [],
       questionIntents: [],
       updatedAt: "2026-02-26 12:30",
+      jobRole: "",
+      jobDetail: "",
     }),
     [analysisId],
   );
@@ -58,10 +62,10 @@ export default function CIAnalysisResult() {
   const llm = data.llmScore ?? 0;
   const total = data.totalScore ?? 0;
 
+  //질문 정규화
   const normalizedQuestions = (() => {
     const q = data.questions;
-    if (!Array.isArray(q)) return [];
-    if (q.length === 0) return [];
+    if (!Array.isArray(q) || q.length === 0) return [];
 
     if (typeof q[0] === "string") {
       return q.map((question, i) => ({
@@ -89,6 +93,7 @@ export default function CIAnalysisResult() {
 
   const top3 = normalizedQuestions.slice(0, 3);
 
+  //rewrite ai개선본 호출
   const handleGenerateRewrite = async () => {
     if (isGenerating) return;
 
@@ -96,17 +101,30 @@ export default function CIAnalysisResult() {
     setToast("");
 
     try {
-      const result = await fakeGenerateRewrite({
-        title: data.title,
-        content: data.content,
+      const res = await fetch(`${API_BASE}/api/ci/rewrite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          jobRole: data.jobRole || "",
+          jobDetail: data.jobDetail || "",
+          title: data.title,
+          content: data.content,
+        }),
       });
 
-      setRewrite(result.rewrittenEssay);
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(`rewrite API 실패: ${res.status} ${text}`);
+      }
+
+      const result = await res.json();
+
+      setRewrite(result.rewrittenEssay || "");
       setRewriteNotes(result.changeSummary || []);
       setTab("REWRITE");
     } catch (e) {
       console.error(e);
-      setToast("개선본 생성에 실패했어요. 잠시 후 다시 시도해주세요.");
+      setToast("개선본 생성에 실패했어요. (백엔드/콘솔 확인)");
       setTimeout(() => setToast(""), 2000);
     } finally {
       setIsGenerating(false);
@@ -360,25 +378,6 @@ function QuestionCardTailwind({ index, question, intent }) {
       )}
     </div>
   );
-}
-
-async function fakeGenerateRewrite({ title, content }) {
-  await new Promise((r) => setTimeout(r, 900));
-
-  const rewritten =
-    `안녕하세요. ${title} 직무에 지원한 지원자입니다.\n\n` +
-    `저는 문제를 정의하고 끝까지 해결하는 과정을 즐깁니다.\n\n` +
-    `---\n` +
-    `원문 참고(요약): ${content?.slice(0, 60) || ""}...`;
-
-  return {
-    rewrittenEssay: rewritten,
-    changeSummary: [
-      "지원 동기를 직무 키워드와 연결",
-      "프로젝트 경험을 구조화",
-      "성과는 과장 없이 표현",
-    ],
-  };
 }
 
 /* 스타일 */
