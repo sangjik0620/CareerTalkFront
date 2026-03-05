@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import PortfolioUploadModal from "../../components/portfolio/PortfolioUploadModal";
 import ClAnalysis from "../ClAnalysis";
 import Resume from "../Resume";
+import logo from "../../img/logo.png";
 
 const FILE_META = {
   resume: {
@@ -478,9 +479,13 @@ export default function InterviewSelect() {
       <nav className="fixed w-full z-50 bg-white/95 backdrop-blur-md shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              CareerTalk
-            </h1>
+            <div className="flex justify-between items-center h-32">
+                        <img
+                          src={logo}
+                          alt="CareerTalk Logo"
+                          className="h-44 w-auto object-contain"
+                        />
+                      </div>
             <button
               onClick={() => navigate("/")}
               className="text-gray-700 hover:text-blue-600 transition font-medium flex items-center gap-2"
