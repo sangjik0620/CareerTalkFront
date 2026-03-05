@@ -181,13 +181,7 @@ export default function RsResume() {
         </div>
         <div style={questionGridStyle}>
           {(data.expectedQuestionsJson || []).map((item, idx) => (
-            <div key={idx} style={questionCardStyle}>
-              <div style={qIndexStyle}>Q{idx + 1}</div>
-              <div>
-                <div style={qTextStyle}>{item.q}</div>
-                {item.intent && <div style={qIntentStyle}>💡 {item.intent}</div>}
-              </div>
-            </div>
+            <QuestionCard key={idx} index={idx} question={item.q} intent={item.intent} />
           ))}
         </div>
       </div>
@@ -225,6 +219,41 @@ function ListCard({ title, items, color, bgColor, borderColor }) {
           <li key={i} style={{ ...listItemStyle, color }}>{item}</li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+function QuestionCard({ index, question, intent }) {
+  const [isOpen, setIsOpen] = useState(false);
+  if (!question) return null;
+
+  return (
+    <div style={{ ...questionCardStyle, flexDirection: "column", alignItems: "stretch", padding: 0, gap: 0 }}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        style={{ display: "flex", gap: 12, alignItems: "center", padding: 14, background: "transparent", border: "none", cursor: "pointer", textAlign: "left", width: "100%" }}
+      >
+        <div style={qIndexStyle}>Q{index + 1}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={qTextStyle}>{question}</div>
+        </div>
+        <div style={{ flexShrink: 0, color: "rgba(11,27,58,0.4)", fontSize: 11, fontWeight: 900 }}>
+          {isOpen ? "▲" : "▼"}
+        </div>
+      </button>
+
+      {isOpen && (
+        <div style={{ padding: "0 14px 14px" }}>
+          <div style={{ borderTop: "1px solid rgba(15,60,160,0.08)", paddingTop: 12 }}>
+            <span style={{ display: "inline-block", padding: "3px 8px", borderRadius: 6, background: "rgba(31,85,255,0.10)", color: "#1f55ff", fontSize: 11, fontWeight: 900, marginBottom: 6 }}>
+              질문 의도
+            </span>
+            <div style={{ fontSize: 13, color: "rgba(11,27,58,0.80)", lineHeight: 1.6, fontWeight: 500 }}>
+              {intent?.trim() ? intent : "(의도 데이터가 없어요.)"}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -269,7 +298,7 @@ const listUlStyle    = { margin: 0, paddingLeft: 18 };
 const listItemStyle  = { fontSize: 12, lineHeight: 1.7 };
 const bottomStyle = { maxWidth: 1200, margin: "16px auto 0", background: "#ffffff", borderRadius: 16, border: "1px solid rgba(15,60,160,0.10)", boxShadow: "0 12px 34px rgba(10,30,80,0.08)", overflow: "hidden" };
 const bottomHeaderStyle = { padding: "14px 14px", borderBottom: "1px solid rgba(15,60,160,0.08)", background: "linear-gradient(180deg,rgba(245,250,255,1) 0%,rgba(255,255,255,1) 60%)" };
-const questionGridStyle = { padding: 14, display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 12 };
+const questionGridStyle = { padding: 14, display: "grid", gridTemplateColumns: "repeat(3,minmax(0,1fr))", gap: 12, alignItems: "start" };
 const questionCardStyle = { border: "1px solid rgba(15,60,160,0.12)", borderRadius: 16, padding: 14, background: "linear-gradient(180deg,#ffffff 0%,#f6f9ff 100%)", boxShadow: "0 10px 26px rgba(10,30,80,0.06)", display: "flex", gap: 12, alignItems: "flex-start" };
 const qIndexStyle = { width: 40, height: 40, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 900, color: "#1f55ff", border: "1px solid rgba(31,85,255,0.25)", background: "#ffffff", flex: "0 0 auto" };
 const qTextStyle   = { fontSize: 13, color: "#0b1b3a", lineHeight: 1.5, fontWeight: 700 };
