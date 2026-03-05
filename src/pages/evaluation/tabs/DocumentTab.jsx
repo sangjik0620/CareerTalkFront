@@ -43,7 +43,7 @@ function DocDetailCard({ docKey, analysisEntity }) {
     scoreObj?.keywords || scoreObj?.topKeywords || scoreObj?.keyWords || [];
 
   return (
-    <div className="doc-detail-card">
+    <div className="doc-detail-card pdf-doc">
       <h3>{emoji} {label} 상세 분석</h3>
 
       {analysisEntity?.oneLineReview && (
@@ -81,7 +81,7 @@ function DocDetailCard({ docKey, analysisEntity }) {
 export default function DocumentTab({ docLoading, docErr, docAnalysisMap }) {
   if (docLoading) {
     return (
-      <div className="tab-content">
+      <div className="tab-content pdf-doc-tab">
         <div className="empty-card">
           <div className="ev-spinner" style={{ width: 28, height: 28, margin: 0 }} />
           <span className="muted">문서 분석 데이터 불러오는 중...</span>
