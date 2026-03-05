@@ -380,7 +380,7 @@ const PortfolioUploadModal = ({ isOpen, onClose }) => {
               <div className="flex flex-col gap-6 shrink-0">
                 <div>
                   <label className="block text-sm font-semibold text-gray-800 mb-2">
-                    지원 직군 <span className="text-red-500">*</span>
+                    지원 직군 <span className="text-red-500">(필수)</span>
                   </label>
                   <select
                     value={jobCategory}
@@ -415,7 +415,7 @@ const PortfolioUploadModal = ({ isOpen, onClose }) => {
 
               <div className="flex flex-col flex-1 mt-2 min-h-[160px]">
                 <label className="block text-sm font-semibold text-gray-800 mb-2">
-                  파일 업로드 <span className="text-red-500">*</span>
+                  파일 업로드 <span className="text-red-500">(필수)</span>
                 </label>
 
                 <div
