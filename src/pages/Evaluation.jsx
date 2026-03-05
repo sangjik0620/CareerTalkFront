@@ -70,6 +70,17 @@ const Evaluation = ({ evaluationData }) => {
   const location     = useLocation();
   const [searchParams] = useSearchParams();
 
+  const [turns, setTurns] = useState([]);
+
+  const tabs = [
+    { id: "summary", label: "요약", icon: "📌" },
+    { id: "document", label: "문서", icon: "📄" },
+    { id: "interview", label: "면접", icon: "🎤" },
+    { id: "comparison", label: "비교", icon: "📊" },
+    { id: "competency", label: "역량", icon: "🧭" },
+  ];
+
+  // 1) sessionId 확보
   const sessionId = useMemo(() => {
     const fromState = location?.state?.uploadResult?.sessionId;
     const fromQuery = searchParams.get("sessionId");
@@ -174,6 +185,7 @@ const Evaluation = ({ evaluationData }) => {
       .then((res) => {
         if (!alive) return;
         setData(res?.evaluation ?? null);
+        setTurns(res?.turns ?? []);
         setPhase("SHOW_RESULT");
       })
       .catch((e) => {
@@ -274,7 +286,7 @@ const Evaluation = ({ evaluationData }) => {
             docAnalysisMap={docAnalysisMap}
           />
         )}
-        {activeTab === "interview"  && <InterviewTab data={data} />}
+        {activeTab === "interview" && <InterviewTab data={data} turns={turns} />}
         {activeTab === "comparison" && <ComparisonTab data={data} />}
         {activeTab === "competency" && <CompetencyTab data={data} />}
       </div>
