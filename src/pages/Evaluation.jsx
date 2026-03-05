@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "../css/Evaluation.css";
-import { useLocation, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { interviewApi } from "../lib/api/interviewApi";
 
 import SummaryTab    from "./evaluation/tabs/SummaryTab";
@@ -71,14 +71,7 @@ const Evaluation = ({ evaluationData }) => {
   const [searchParams] = useSearchParams();
 
   const [turns, setTurns] = useState([]);
-
-  const tabs = [
-    { id: "summary", label: "요약", icon: "📌" },
-    { id: "document", label: "문서", icon: "📄" },
-    { id: "interview", label: "면접", icon: "🎤" },
-    { id: "comparison", label: "비교", icon: "📊" },
-    { id: "competency", label: "역량", icon: "🧭" },
-  ];
+  const navigate = useNavigate();
 
   // 1) sessionId 확보
   const sessionId = useMemo(() => {
@@ -256,10 +249,15 @@ const Evaluation = ({ evaluationData }) => {
       {/* ── Header ── */}
       <div className="evaluation-header">
         <h1>면접 평가 결과</h1>
-        <button className="export-btn">
-          <Icon.Export />
-          PDF 내보내기
-        </button>
+        <div className="header-actions">
+          <button className="export-btn">
+            <Icon.Export />
+            PDF 내보내기
+          </button>
+          <button className="home-btn" onClick={()=>navigate("/")}>
+            홈으로
+          </button>
+        </div>
       </div>
 
       {/* ── Tab Nav ── */}

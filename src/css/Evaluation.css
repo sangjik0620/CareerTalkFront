@@ -1117,6 +1117,64 @@
   color: var(--text-muted);
   font-weight: 500;
 }
+.evaluation-header {
+  display: flex;
+  align-items: center;
+}
+
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 12px;
+}
+
+/* PDF 버튼 */
+.export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 500;
+
+  color: #000;
+  background: #f3f4f6;
+
+  border: none;
+  border-radius: 999px;
+
+  cursor: pointer;
+
+  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+  transition: all 0.18s ease;
+}
+
+.export-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.18);
+}
+
+/* 홈 버튼 */
+.home-btn {
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 500;
+
+  color: #fff;
+  background: var(--brand);
+
+  border: none;
+  border-radius: 999px;
+
+  cursor: pointer;
+
+  transition: all 0.18s ease;
+}
+
+.home-btn:hover {
+  background: var(--brand-dark)
+}
 
 /* ────────────────────────────────────────────────
    Responsive
