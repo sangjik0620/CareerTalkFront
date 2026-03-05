@@ -425,7 +425,7 @@ export default function InterviewSelect() {
   const [settings, setSettings] = useState({
     questionCount: "10",
     difficulty: "medium",
-    jobPosition: "developer",
+    jobPosition: "it-data",
   });
 
   useEffect(() => {
@@ -601,7 +601,6 @@ export default function InterviewSelect() {
               >
                 <option value="5">5개 (약 10분)</option>
                 <option value="10">10개 (약 20분)</option>
-                <option value="15">15개 (약 30분)</option>
               </select>
             </div>
 
@@ -624,21 +623,35 @@ export default function InterviewSelect() {
 
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                <span className="text-green-600">💼</span> 지원 직무
+                <span className="text-green-600">💼</span> 지원 직군
               </label>
               <select
                 value={settings.jobPosition}
                 onChange={(e) =>
                   setSettings((p) => ({ ...p, jobPosition: e.target.value }))
                 }
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition bg-white hover:border-green-300 font-medium"
-              >
-                <option value="developer">소프트웨어 개발자</option>
-                <option value="designer">디자이너</option>
-                <option value="marketer">마케터</option>
-                <option value="pm">프로덕트 매니저</option>
-                <option value="data">데이터 분석가</option>
-                <option value="general">일반 직무</option>
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition bg-white hover:border-green-300 font-medium">
+                <option value="strategy">기획∙전략</option>
+                <option value="marketing">마케팅∙홍보∙조사</option>
+                <option value="finance-accounting">회계∙세무∙재무</option>
+                <option value="hr">인사∙노무∙HRD</option>
+                <option value="admin-legal">총무∙법무∙사무</option>
+                <option value="it-data">IT개발∙데이터</option>
+                <option value="design">디자인</option>
+                <option value="sales-trade">영업∙판매∙무역</option>
+                <option value="cs-tm">고객상담∙TM</option>
+                <option value="logistics">구매∙자재∙물류</option>
+                <option value="md">상품기획∙MD</option>
+                <option value="transport">운전∙운송∙배송</option>
+                <option value="service">서비스</option>
+                <option value="production">생산</option>
+                <option value="construction">건설∙건축</option>
+                <option value="medical">의료</option>
+                <option value="rnd">연구∙R&D</option>
+                <option value="education">교육</option>
+                <option value="media-culture-sports">미디어∙문화∙스포츠</option>
+                <option value="banking-insurance">금융∙보험</option>
+                <option value="public-welfare">공공∙복지</option>
               </select>
             </div>
           </div>
