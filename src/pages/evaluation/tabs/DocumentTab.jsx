@@ -3,27 +3,44 @@ import EmptyBlock from "../components/EmptyBlock";
 import { getScoreColor, hasItems, safeJson } from "../utils/evalUtils";
 
 const DOC_META = {
-  RESUME:    { label: "이력서",     emoji: "📝" },
-  ESSAY:     { label: "자기소개서", emoji: "✍️" },
+  RESUME: { label: "이력서", emoji: "📝" },
+  ESSAY: { label: "자기소개서", emoji: "✍️" },
   PORTFOLIO: { label: "포트폴리오", emoji: "💼" },
 };
+
+function parseSummary(text = "") {
+  const strengthPart = text.split("보완점:")[0] || "";
+  const weaknessPart = text.split("보완점:")[1] || "";
+
+  const strength = strengthPart.replace("장점:", "").trim();
+  const weakness = weaknessPart.trim();
+
+  return { strength, weakness };
+}
 
 function DocScoreCard({ docKey, analysisEntity }) {
   const { label, emoji } = DOC_META[docKey] ?? { label: docKey, emoji: "📄" };
   if (!analysisEntity) {
     return (
       <div className="doc-score-card">
-        <div className="doc-type">{emoji} {label}</div>
-        <div className="muted" style={{ fontSize: "1rem" }}>데이터 없음</div>
+        <div className="doc-type">
+          {emoji} {label}
+        </div>
+        <div className="muted" style={{ fontSize: "1rem" }}>
+          데이터 없음
+        </div>
       </div>
     );
   }
   const score = analysisEntity?.overallScore ?? 0;
   return (
     <div className="doc-score-card">
-      <div className="doc-type">{emoji} {label}</div>
-      <div className="doc-score" style={{ color: getScoreColor(score) }}>{score}점</div>
-      <div className="doc-match">분석 ID: {analysisEntity.analysisId}</div>
+      <div className="doc-type">
+        {emoji} {label}
+      </div>
+      <div className="doc-score" style={{ color: getScoreColor(score) }}>
+        {score}점
+      </div>
     </div>
   );
 }
@@ -42,9 +59,12 @@ function DocDetailCard({ docKey, analysisEntity }) {
   const keywords =
     scoreObj?.keywords || scoreObj?.topKeywords || scoreObj?.keyWords || [];
 
+  const { strength, weakness } = parseSummary(analysisEntity?.summaryDetail);
   return (
     <div className="doc-detail-card pdf-doc">
-      <h3>{emoji} {label} 상세 분석</h3>
+      <h3>
+        {emoji} {label} 상세 분석
+      </h3>
 
       {analysisEntity?.oneLineReview && (
         <div className="analysis-section">
@@ -55,25 +75,22 @@ function DocDetailCard({ docKey, analysisEntity }) {
 
       {analysisEntity?.summaryDetail && (
         <div className="analysis-section">
-          <h4>요약</h4>
-          <div style={{ whiteSpace: "pre-wrap" }}>{analysisEntity.summaryDetail}</div>
-        </div>
-      )}
 
-      <div className="keywords-section">
-        <h4>핵심 키워드</h4>
-        <div className="keywords">
-          {hasItems(keywords) ? (
-            keywords.map((k, i) => (
-              <span key={i} className={`keyword-tag${docKey === "ESSAY" ? " secondary" : ""}`}>
-                {k}
-              </span>
-            ))
-          ) : (
-            <span className="muted">키워드 데이터 없음</span>
+          {strength && (
+            <div style={{ marginBottom: "10px" }}>
+              <strong>장점</strong>
+              <div style={{ whiteSpace: "pre-wrap" }}>{strength}</div>
+            </div>
+          )}
+
+          {weakness && (
+            <div>
+              <strong>보완점</strong>
+              <div style={{ whiteSpace: "pre-wrap" }}>{weakness}</div>
+            </div>
           )}
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -83,7 +100,10 @@ export default function DocumentTab({ docLoading, docErr, docAnalysisMap }) {
     return (
       <div className="tab-content pdf-doc-tab">
         <div className="empty-card">
-          <div className="ev-spinner" style={{ width: 28, height: 28, margin: 0 }} />
+          <div
+            className="ev-spinner"
+            style={{ width: 28, height: 28, margin: 0 }}
+          />
           <span className="muted">문서 분석 데이터 불러오는 중...</span>
         </div>
       </div>
@@ -97,9 +117,9 @@ export default function DocumentTab({ docLoading, docErr, docAnalysisMap }) {
     );
   }
 
-  const resumeA = docAnalysisMap?.RESUME    || null;
-  const essayA  = docAnalysisMap?.ESSAY     || null;
-  const pfA     = docAnalysisMap?.PORTFOLIO || null;
+  const resumeA = docAnalysisMap?.RESUME || null;
+  const essayA = docAnalysisMap?.ESSAY || null;
+  const pfA = docAnalysisMap?.PORTFOLIO || null;
 
   if (!resumeA && !essayA && !pfA) {
     return (
@@ -117,15 +137,15 @@ export default function DocumentTab({ docLoading, docErr, docAnalysisMap }) {
       <h2>문서 분석 결과</h2>
 
       <div className="document-overview">
-        <DocScoreCard docKey="RESUME"    analysisEntity={resumeA} />
-        <DocScoreCard docKey="ESSAY"     analysisEntity={essayA}  />
-        <DocScoreCard docKey="PORTFOLIO" analysisEntity={pfA}     />
+        <DocScoreCard docKey="RESUME" analysisEntity={resumeA} />
+        <DocScoreCard docKey="ESSAY" analysisEntity={essayA} />
+        <DocScoreCard docKey="PORTFOLIO" analysisEntity={pfA} />
       </div>
 
       <div className="document-details">
-        <DocDetailCard docKey="RESUME"    analysisEntity={resumeA} />
-        <DocDetailCard docKey="ESSAY"     analysisEntity={essayA}  />
-        <DocDetailCard docKey="PORTFOLIO" analysisEntity={pfA}     />
+        <DocDetailCard docKey="RESUME" analysisEntity={resumeA} />
+        <DocDetailCard docKey="ESSAY" analysisEntity={essayA} />
+        <DocDetailCard docKey="PORTFOLIO" analysisEntity={pfA} />
       </div>
     </div>
   );

@@ -28,3 +28,28 @@ export const safeJson = (s) => {
     return null;
   }
 };
+export function normalizeTopPercent(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+
+  const normalized = n <= 1 ? n * 100 : n;
+  return Math.max(0, Math.min(100, normalized));
+}
+
+export function topPercentToPercentile(value) {
+  const top = normalizeTopPercent(value);
+  if (top == null) return null;
+  return 100 - top;
+}
+
+export function formatTopPercent(value) {
+  const top = normalizeTopPercent(value);
+  if (top == null) return "-";
+  return `상위 ${Math.round(top)}%`;
+}
+
+export function formatPercentileFromTopPercent(value) {
+  const percentile = topPercentToPercentile(value);
+  if (percentile == null) return "-";
+  return `${Math.round(percentile)}%`;
+}

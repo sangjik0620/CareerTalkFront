@@ -37,7 +37,7 @@ export default function SummaryTab({ data }) {
   };
 
   const kpis = [
-    { label: "백분위",  value: `상위 ${summary?.percentileRank ?? 0}%`,  tone: "brand" },
+    { label: "백분위",  value: `상위 ${100-(summary?.percentileRank ?? 0)}%`,  tone: "brand" },
     { label: "평균 답변", value: `${summary?.avgResponseTimeSec ?? 0}s`, tone: "neutral" },
     { label: "추임새",  value: `${summary?.fillerWordRate ?? 0}%`, tone: "neutral" },
     { label: "긍정도",  value: `${summary?.sentimentScore ?? 0}%`, tone: "neutral" },
