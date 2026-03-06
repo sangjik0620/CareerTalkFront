@@ -5,6 +5,8 @@ import { clamp100, getScoreColor, isPlainObject } from "../utils/evalUtils";
 export default function InterviewTab({ data, turns = [] }) {
 
   const ia = data?.interviewAnalysis;
+  const voiceCoaching = Array.isArray(ia?.voiceCoaching) ? ia.voiceCoaching : [];
+  const qResponses = Array.isArray(ia?.questionResponses) ? ia.questionResponses : [];
 
   if (!ia) {
     return (
@@ -27,7 +29,41 @@ export default function InterviewTab({ data, turns = [] }) {
     <div className="tab-content">
 
       <h2>면접 음성 및 답변 분석</h2>
+{voiceCoaching.length > 0 && (
+  <div className="voice-coaching">
+    <h3>💡 종합 코칭</h3>
+    <ul className="coaching-list">
+      {voiceCoaching.map((c, i) => (
+        <li key={i}>{c}</li>
+      ))}
+    </ul>
+  </div>
+)}
 
+{qResponses.length > 0 && (
+  <div className="question-feedback">
+    <h3>🧾 질문별 피드백(LLM)</h3>
+
+    {qResponses.map((qr) => (
+      <div key={qr.turnNo} className="qr-card">
+        <div className="qr-head">
+          <span className="qr-no">Q{qr.turnNo}</span>
+          <span
+            className="qr-score"
+            style={{ color: getScoreColor(clamp100(qr.score)) }}
+          >
+            {clamp100(qr.score)}점
+          </span>
+        </div>
+
+        {qr.question && <div className="qr-q">질문: {qr.question}</div>}
+        {qr.answer && <div className="qr-a">답변: {qr.answer}</div>}
+        {qr.oneLineFeedback && <div className="qr-one">한줄: {qr.oneLineFeedback}</div>}
+        {qr.fullFeedback && <div className="qr-full">{qr.fullFeedback}</div>}
+      </div>
+    ))}
+  </div>
+)}
       {/* =========================
           1️⃣ 음성 분석
       ========================= */}
