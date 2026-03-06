@@ -459,7 +459,7 @@ const Navigation = ({ onStart }) => {
   const handleLogout = () => {
     localStorage.removeItem('user'); // 스토리지 비우기
     setUser(null); // 상태 초기화
-    alert("로그아웃 되었습니다.");
+    // alert("로그아웃 되었습니다.");
     window.location.href = "/";
   };
 
@@ -512,14 +512,25 @@ const Navigation = ({ onStart }) => {
             >
               FAQ
             </a>
+
+            {/* ⭐ 마이페이지 버튼: 로그인 상태(user)일 때만 FAQ 우측에 표시 */}
+            {user && (
+              <a
+                href="/mypage"
+                className="text-gray-700 hover:text-blue-600 transition font-medium"
+              >
+                마이페이지
+              </a>
+            )}
+
             {user ? (
               <div className="flex items-center space-x-4">
-                <span className={`font-semibold ${scrolled ? "text-primary-600" : "text-white"}`}>
+                <span className={`font-semibold ${scrolled ? "text-primary-600" : "text-blue-600"}`}>
                   {user.nickname}님
                 </span>
                 <button 
                   onClick={handleLogout}
-                  className={`hover:text-red-500 transition ${scrolled ? "text-gray-700" : "text-white"}`}
+                  className="text-gray-700 hover:text-blue-600 transition font-medium"
                 >
                   로그아웃
                 </button>
@@ -527,7 +538,7 @@ const Navigation = ({ onStart }) => {
             ) : (
               <a 
                 href="/login" 
-                className={`hover:text-primary-600 transition ${scrolled ? "text-gray-700" : "text-white"}`}
+                className="text-gray-700 hover:text-blue-600 transition font-medium"
               >
                 로그인
               </a>
@@ -581,6 +592,16 @@ const Navigation = ({ onStart }) => {
             >
               FAQ
             </a>
+
+            {user && (
+            <a
+              href="/mypage"
+              className="block px-3 py-2 text-gray-700 hover:bg-blue-50 rounded-md"
+            >
+              마이페이지
+            </a>
+            )}
+
             {user ? (
               <>
                 <div className="px-3 py-2 text-primary-600 font-bold border-b border-gray-100">
@@ -1279,10 +1300,7 @@ export default function Home() {
       // 5. 주소창 미리 깨끗하게 청소
       window.history.replaceState({}, document.title, window.location.pathname);
 
-      // 6. 알림창 띄우기 (이제 진짜 딱 한 번만 뜹니다)
-      alert(`${userData.nickname}님, 소셜 로그인이 완료되었습니다!`);
-
-      // 7. 메인으로 이동하며 새로고침
+      // 6. 메인으로 이동하며 새로고침
       window.location.href = '/'; 
     }
   }, [location]);

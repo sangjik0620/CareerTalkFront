@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -19,7 +19,7 @@ const Login = () => {
         try {
             const response = await axios.post('http://localhost:8080/api/member/login', formData);
             if (response.status === 200) {
-                alert(`${response.data.nickname}님 환영합니다!`);
+                // alert(`${response.data.nickname}님 환영합니다!`);
                 localStorage.setItem('user', JSON.stringify(response.data));
                 navigate('/');
             }
@@ -28,13 +28,38 @@ const Login = () => {
         }
     };
 
-    // ⭐ 구글 로그인 시작 함수
     const handleGoogleLogin = () => {
         window.location.href = 'http://localhost:8080/oauth2/authorization/google';
     };
 
+    const handleNaverLogin = () => {
+        window.location.href = "http://localhost:8080/oauth2/authorization/naver";
+    };
+
+    const handleKakaoLogin = () => {
+        window.location.href = "http://localhost:8080/oauth2/authorization/kakao";
+    };
+
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const error = params.get('error');
+
+        if (error === 'duplicate_email') {
+            alert("이미 다른 소셜 계정으로 가입된 이메일 주소입니다.\n기존에 가입하셨던 소셜 계정으로 로그인해주세요.");
+            // 알림 확인 후 URL에서 파라미터 지우기 (선택 사항)
+            navigate('/login', { replace: true });
+        }
+    }, [location, navigate]);
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 font-sans">
+            <Link 
+                to="/" 
+                className="absolute top-8 left-8 flex items-center gap-2 text-gray-400 hover:text-gray-900 transition-colors font-semibold group"
+            >
+                <span className="text-xl group-hover:-translate-x-1 transition-transform">←</span>
+                <span>홈으로 이동</span>
+            </Link>
             <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md border border-gray-100">
                 <div className="text-center mb-8">
                     <h2 className="text-3xl font-bold text-gray-900 mb-2">로그인</h2>
@@ -75,7 +100,6 @@ const Login = () => {
                         로그인
                     </button>
 
-                    {/* ⭐ 구글 로그인 버튼 섹션 추가 */}
                     <div className="mt-6 space-y-3">
                         <div className="relative flex items-center justify-center">
                             <div className="border-t border-gray-200 w-full"></div>
@@ -85,7 +109,7 @@ const Login = () => {
                         <button
                             type="button"
                             onClick={handleGoogleLogin}
-                            className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 py-3 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition shadow-sm"
+                            className="w-full h-[52px] flex items-center justify-center gap-3 bg-white border border-gray-300 rounded-lg font-semibold text-gray-700 transition-all shadow-sm hover:brightness-95 active:scale-[0.98"
                         >
                             <img 
                                 src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
@@ -93,6 +117,27 @@ const Login = () => {
                                 className="w-5 h-5" 
                             />
                             구글로 시작하기
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={handleNaverLogin}
+                            className="w-full flex items-center justify-center gap-3 bg-[#03C75A] text-white py-3 rounded-lg font-semibold hover:bg-[#02b350] transition shadow-sm"
+                        >
+                            <span className="font-bold text-lg mr-1">N</span>
+                            네이버로 시작하기
+                        </button>
+
+                        <button 
+                            type="button"
+                            onClick={handleKakaoLogin}
+                            className="w-full h-[52px] rounded-lg overflow-hidden transition-all shadow-sm hover:brightness-90 active:scale-[0.98]"
+                        >
+                            <img 
+                                src="src/img/kakao.png" 
+                                alt="카카오로 시작하기" 
+                                className="w-full h-full object-cover" 
+                            />
                         </button>
                     </div>
                 </form>
