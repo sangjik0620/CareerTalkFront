@@ -12,28 +12,10 @@ export default function ComparisonTab({ data }) {
     );
   }
 
-const rawScoreHistory = comp?.scoreHistory;
-const categoryComparison = comp?.categoryComparison;
-const userScore = clamp100(data?.summary?.overallScore);
-
-const scoreHistory = Array.isArray(rawScoreHistory)
-  ? rawScoreHistory.map((item, idx) => {
-      if (typeof item === "number") {
-        return { date: `#${idx + 1}`, score: item };
-      }
-      if (item && typeof item === "object") {
-        return {
-          date: item.date ?? `#${idx + 1}`,
-          score: clamp100(item.score),
-        };
-      }
-      return { date: `#${idx + 1}`, score: 0 };
-    })
-  : [];
-
-const hasCategoryComparison =
-  isPlainObject(categoryComparison) &&
-  Object.keys(categoryComparison).length > 0;
+  const scoreHistory       = comp?.scoreHistory;
+  const categoryComparison = comp?.categoryComparison;
+  const userScore          = clamp100(data?.summary?.overallScore);
+  const hasCategoryComparison = isPlainObject(categoryComparison);
 
   return (
     <div className="tab-content">
@@ -185,9 +167,9 @@ const hasCategoryComparison =
           <div className="comparison-chart">
             {Object.entries(categoryComparison).map(([category, values]) => {
               if (!isPlainObject(values)) return null;
-              const user = clamp100(values?.user ?? values?.mine ?? 0);
-              const average = clamp100(values?.average ?? values?.avg ?? 0);
-              const previous = clamp100(values?.previous ?? values?.prev ?? 0);
+              const user    = clamp100(values?.user);
+              const average = clamp100(values?.average);
+              const previous= clamp100(values?.previous);
 
               const CAT_LABELS = {
                 technical:     "기술",
