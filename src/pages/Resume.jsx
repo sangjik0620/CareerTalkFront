@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { api } from "../lib/api";
 
 const JOB_CATEGORIES = [
   "기획∙전략",
@@ -90,30 +90,21 @@ export default function Resume({ isOpen, onClose, onAnalyzeSuccess }) {
     formData.append("detailedPosition", detailedPosition);
 
     try {
-      // ✅ 서버 엔드포인트는 프로젝트에 맞게 조정하세요.
-      // 예: /api/resumes/analyze
-      const response = await axios.post(
-        "http://localhost:8080/api/resumes/analyze",
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
+      const response = await api.post("/api/resumes/analyze", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
       const result = response.data;
 
       setIsAnalyzing(false);
       onClose?.();
-
-      // 부모가 성공 콜백을 쓰는 경우 대비
       onAnalyzeSuccess?.(result);
 
-      // 결과 페이지 라우팅도 프로젝트에 맞게 조정 가능
-      // 예: /resume/result/:analysisId
       if (result?.analysisId) {
         navigate(`/resume/result/${result.analysisId}`, {
           state: { analysisData: result },
         });
       } else {
-        // analysisId가 없다면 그대로 데이터만 전달
         navigate(`/resume/result`, { state: { analysisData: result } });
       }
     } catch (error) {
@@ -124,10 +115,12 @@ export default function Resume({ isOpen, onClose, onAnalyzeSuccess }) {
     }
   };
 
+  // Spring Boot static resource로 서빙 (/src/main/resources/static/templates/)
   const handleTemplateDownload = () => {
-    // ✅ 서버 템플릿 다운로드 API에 맞게 변경하세요.
-    // 예: window.location.href = "http://localhost:8080/api/resumes/template";
-    window.location.href = "http://localhost:8080/api/resumes/template";
+    const link = document.createElement("a");
+    link.href = "/templates/resume-template.docx";
+    link.download = "이력서_서식.docx";
+    link.click();
   };
 
   return (
@@ -376,7 +369,7 @@ export default function Resume({ isOpen, onClose, onAnalyzeSuccess }) {
                     이력서 분석
                   </h2>
                   <p className="text-sm text-gray-500 mt-0.5">
-                    이력서 양식을 다운로드 후 양식에 맞춰 Docx 파일로 업로드
+                    반드시 이력서 양식을 다운로드 후 양식에 맞춰 Docx 파일로 업로드
                     해주세요.
                   </p>
                 </div>
@@ -405,7 +398,7 @@ export default function Resume({ isOpen, onClose, onAnalyzeSuccess }) {
               <div className="flex flex-col gap-6 shrink-0">
                 <div>
                   <label className="block text-sm font-semibold text-gray-800 mb-2">
-                    지원 직군 <span className="text-red-500">*</span>
+                    지원 직군 <span className="text-red-500">(필수)</span>
                   </label>
                   <select
                     value={jobCategory}
@@ -425,7 +418,7 @@ export default function Resume({ isOpen, onClose, onAnalyzeSuccess }) {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-800 mb-2">
-                    상세 포지션 <span className="text-red-500">*</span>
+                    상세 포지션 <span className="text-red-500">(필수)</span>
                   </label>
                   <input
                     type="text"
@@ -439,7 +432,7 @@ export default function Resume({ isOpen, onClose, onAnalyzeSuccess }) {
 
               <div className="flex flex-col flex-1 mt-2 min-h-[160px]">
                 <label className="block text-sm font-semibold text-gray-800 mb-2">
-                  파일 업로드 <span className="text-red-500">*</span>
+                  파일 업로드 <span className="text-red-500">(필수)</span>
                 </label>
 
                 <div
@@ -486,7 +479,6 @@ export default function Resume({ isOpen, onClose, onAnalyzeSuccess }) {
                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                           />
                         </svg>
-
                         <span
                           className="text-lg font-bold text-gray-900 break-all line-clamp-2 max-w-xs text-center px-2"
                           title={selectedFile.name}

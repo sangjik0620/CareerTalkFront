@@ -1,6 +1,4 @@
 import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
 import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
@@ -11,6 +9,7 @@ import InterviewSelect from "./pages/interview/InterviewSelect"; // 이름을 In
 import PortfolioResultPage from "./components/portfolio/PortfolioResultPage"; // 결과 페이지 임포트 추가
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import MyPage from "./pages/MyPage";
 import SocialSignup from "./pages/SocialSignup";
 import Evaluation from "./pages/Evaluation";
 import CIAnalysis from "./pages/ClAnalysis";
@@ -42,7 +41,7 @@ function App() {
 
         {/* 이력서 관련 라우트 */}
         <Route path="/resume" element={<Resume />} />
-        <Route path="/resume/result" element={<RsResume />} />
+        <Route path="/resume/result/:analysisId" element={<RsResume />} />
 
         {/* 로그인 관련 라우트 */}
         <Route path="/login" element={<Login />} />
@@ -50,6 +49,9 @@ function App() {
 
         {/* 소셜 로그인 관련 라우트 */}
         <Route path="/social-signup" element={<SocialSignup />} />
+
+        {/* 마이페이지 라우트 */}
+        <Route path="/mypage" element={<MyPage />} />
       </Routes>
     </BrowserRouter>
   );

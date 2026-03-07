@@ -51,9 +51,9 @@ const PortfolioUploadModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   const validateAndSetFile = (file) => {
-    const allowedExtensions = /(\.pdf|\.pptx)$/i;
+    const allowedExtensions = /(\.pdf)$/i;
     if (!allowedExtensions.test(file.name)) {
-      alert("PDF 또는 PPTX 파일만 업로드해 주세요.");
+      alert("PDF 파일만 업로드해 주세요.");
       return false;
     }
     const maxSize = 50 * 1024 * 1024;
@@ -352,7 +352,7 @@ const PortfolioUploadModal = ({ isOpen, onClose }) => {
                     포트폴리오 분석
                   </h2>
                   <p className="text-sm text-gray-500 mt-0.5">
-                    직군 정보 입력 후 PDF/PPTX 파일을 업로드해 주세요.
+                    직군 정보 입력 후 PDF 파일을 업로드해 주세요.
                   </p>
                 </div>
               </div>
@@ -380,7 +380,7 @@ const PortfolioUploadModal = ({ isOpen, onClose }) => {
               <div className="flex flex-col gap-6 shrink-0">
                 <div>
                   <label className="block text-sm font-semibold text-gray-800 mb-2">
-                    지원 직군 <span className="text-red-500">*</span>
+                    지원 직군 <span className="text-red-500">(필수)</span>
                   </label>
                   <select
                     value={jobCategory}
@@ -415,7 +415,7 @@ const PortfolioUploadModal = ({ isOpen, onClose }) => {
 
               <div className="flex flex-col flex-1 mt-2 min-h-[160px]">
                 <label className="block text-sm font-semibold text-gray-800 mb-2">
-                  파일 업로드 <span className="text-red-500">*</span>
+                  파일 업로드 <span className="text-red-500">(필수)</span>
                 </label>
 
                 <div
@@ -437,7 +437,7 @@ const PortfolioUploadModal = ({ isOpen, onClose }) => {
                     id="fileInput"
                     className="hidden"
                     onChange={(e) => validateAndSetFile(e.target.files[0])}
-                    accept=".pdf,.pptx"
+                    accept="application/pdf, .pdf"
                   />
                   <label
                     htmlFor="fileInput"
@@ -487,7 +487,7 @@ const PortfolioUploadModal = ({ isOpen, onClose }) => {
                           파일 선택하기
                         </span>
                         <span className="text-sm text-gray-500">
-                          PDF(.pdf), PPTX(.pptx) 지원
+                          PDF(.pdf) 지원
                         </span>
                         <p className="text-xs text-gray-400 mt-2">
                           최대 50MB까지 업로드 가능합니다.

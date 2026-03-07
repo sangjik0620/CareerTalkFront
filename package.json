@@ -12,14 +12,15 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.2.0",
     "aos": "^2.3.4",
-    "axios": "^1.13.5",
+    "axios": "^1.13.6",
     "core-js": "^3.48.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.0",
     "raf": "^3.4.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-router-dom": "^7.13.0",
+    "react-router-dom": "^7.13.1",
+    "react-to-print": "^3.3.0",
     "rechart": "^0.0.1",
     "recharts": "^3.7.0"
   },
