@@ -17,10 +17,13 @@ export default function ComparisonTab({ data }) {
   const categoryComparison = comp?.categoryComparison;
   const userScore = clamp100(data?.summary?.overallScore);
 
+  const history = comp?.scoreHistory ?? [];
+  const categories = comp?.categoryComparison ?? {};
+
   const categoryEntries = isPlainObject(categoryComparison)
     ? Object.entries(categoryComparison).filter(([, values]) =>
-        isPlainObject(values)
-      )
+      isPlainObject(values)
+    )
     : [];
 
   const percentileRank =
