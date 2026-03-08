@@ -10,7 +10,7 @@ import {
 
 export default function SummaryTab({ data }) {
   const summary = data?.summary;
-  const info    = data?.interviewInfo;
+  const info = data?.interviewInfo;
 
   if (!summary || !info) {
     return (
@@ -24,11 +24,18 @@ export default function SummaryTab({ data }) {
   }
 
   const overall = clamp100(summary?.overallScore);
-  const prev    = clamp100(summary?.previousScore);
-  const avg     = clamp100(summary?.passedAverage);
+  const prev =
+    typeof summary?.previousScore === "number"
+      ? clamp100(summary.previousScore)
+      : null;
 
-  const diffPrev = overall - prev;
-  const diffAvg  = overall - avg;
+  const avg =
+    typeof summary?.passedAverage === "number"
+      ? clamp100(summary.passedAverage)
+      : null;
+
+  const diffPrev = prev == null ? null : overall - prev;
+  const diffAvg = avg == null ? null : overall - avg;
 
   const verdictTone = (v) => {
     if (v === "합격권") return "good";
@@ -37,23 +44,23 @@ export default function SummaryTab({ data }) {
   };
 
   const kpis = [
-    { label: "백분위",  value: `상위 ${100-(summary?.percentileRank ?? 0)}%`,  tone: "brand" },
-    { label: "평균 답변", value: `${summary?.avgResponseTimeSec ?? 0}s`, tone: "neutral" },
-    { label: "추임새",  value: `${summary?.fillerWordRate ?? 0}%`, tone: "neutral" },
-    { label: "긍정도",  value: `${summary?.sentimentScore ?? 0}%`, tone: "neutral" },
-    { label: "직무적합", value: `${summary?.jobFitIndex ?? 0}`, tone: "brand"  },
-    { label: "자신감",  value: `${summary?.confidenceIndex ?? 0}`, tone: "brand"  },
+    { label: "백분위", value: `상위 ${100 - (summary?.percentileRank ?? 0)}%`, tone: "brand", value: summary?.jobFitIndex != null ? `${summary.jobFitIndex}` : "-" },
+    { label: "평균 답변", value: `${summary?.avgResponseSec ?? 0}s`, tone: "neutral", value: summary?.jobFitIndex != null ? `${summary.jobFitIndex}` : "-" },
+    { label: "추임새", value: `${summary?.fillerWordRate ?? 0}%`, tone: "neutral", value: summary?.jobFitIndex != null ? `${summary.jobFitIndex}` : "-" },
+    { label: "긍정도", value: `${summary?.sentimentScore ?? 0}%`, tone: "neutral", value: summary?.jobFitIndex != null ? `${summary.jobFitIndex}` : "-" },
+    { label: "직무적합", value: `${summary?.jobFitIndex ?? 0}`, tone: "brand", value: summary?.jobFitIndex != null ? `${summary.jobFitIndex}` : "-" },
+    { label: "자신감", value: `${summary?.confidenceIndex ?? 0}`, tone: "brand", value: summary?.jobFitIndex != null ? `${summary.jobFitIndex}` : "-" },
   ];
 
   const indexes = [
-    { label: "기술",        value: clamp100(summary?.technicalIndex) },
+    { label: "기술", value: clamp100(summary?.technicalIndex) },
     { label: "커뮤니케이션", value: clamp100(summary?.communicationIndex) },
-    { label: "직무적합",     value: clamp100(summary?.jobFitIndex) },
+    { label: "직무적합", value: clamp100(summary?.jobFitIndex) },
   ];
 
   const topKeywords = asArray(summary?.topKeywords);
-  const strengths   = asArray(summary?.strengths);
-  const weaknesses  = asArray(summary?.weaknesses);
+  const strengths = asArray(summary?.strengths);
+  const weaknesses = asArray(summary?.weaknesses);
 
   const circumference = 2 * Math.PI * 90;
 
@@ -106,15 +113,24 @@ export default function SummaryTab({ data }) {
             <div className="scoreDelta">
               <div className="deltaItem">
                 <span className="deltaLabel">이전 대비</span>
-                <span className={`deltaValue ${diffPrev >= 0 ? "pos" : "neg"}`}>
-                  {diffPrev >= 0 ? `+${diffPrev}` : diffPrev}점
-                </span>
+                {diffPrev == null ? (
+                  <span className="deltaValue">-</span>
+                ) : (
+                  <span className={`deltaValue ${diffPrev >= 0 ? "pos" : "neg"}`}>
+                    {diffPrev >= 0 ? `+${diffPrev}` : diffPrev}점
+                  </span>
+                )}
               </div>
+
               <div className="deltaItem">
                 <span className="deltaLabel">평균 대비</span>
-                <span className={`deltaValue ${diffAvg >= 0 ? "pos" : "neg"}`}>
-                  {diffAvg >= 0 ? `+${diffAvg}` : diffAvg}점
-                </span>
+                {diffAvg == null ? (
+                  <span className="deltaValue">-</span>
+                ) : (
+                  <span className={`deltaValue ${diffAvg >= 0 ? "pos" : "neg"}`}>
+                    {diffAvg >= 0 ? `+${diffAvg}` : diffAvg}점
+                  </span>
+                )}
               </div>
             </div>
           </div>

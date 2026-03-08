@@ -242,11 +242,14 @@ export default function InterviewTab({ data, turns = [] }) {
                 <div className="response-header">
                   <span className="question-number">Q{idx + 1}</span>
                   <span className="question-text">{question}</span>
+                  <span className="response-duration">
+                    ⏱️ {Math.floor(duration / 60)}분 {duration % 60}초
+                  </span>
                   <span
                     className="response-score"
                     style={{ color: overallColor }}
                   >
-                    {overallVoiceScore}점
+                    {answerScore}점
                   </span>
                 </div>
 
@@ -265,27 +268,9 @@ export default function InterviewTab({ data, turns = [] }) {
                       flexWrap: "wrap",
                     }}
                   >
-                    <span className="response-duration">
-                      ⏱️ {Math.floor(duration / 60)}분 {duration % 60}초
-                    </span>
-
-                    <span className="response-duration">
-                      📝 STT: {sttStatus}
-                    </span>
-
-                    {grade && (
-                      <span className="response-duration">🏷️ {grade}</span>
-                    )}
-
                     {reliability != null && (
                       <span className="response-duration">
                         ✅ 신뢰도 {(reliability * 100).toFixed(0)}%
-                      </span>
-                    )}
-
-                    {answerScore > 0 && (
-                      <span className="response-duration">
-                        📌 답변 점수 {answerScore}점
                       </span>
                     )}
                   </div>
@@ -312,6 +297,12 @@ export default function InterviewTab({ data, turns = [] }) {
                   </div>
 
                   <div className="voice-score-area">
+                    <div className="voice-score-summary">
+                      <span className="voice-score-summary-label">종합 음성 점수</span>
+                      <span className="voice-score-summary-value">
+                        {overallVoiceScore != null ? `${overallVoiceScore}점` : "-"}
+                      </span>
+                    </div>
                     <div className="voice-bar-chart">
                       <VerticalBar label="자신감" value={confidenceScore} />
                       <VerticalBar label="유창성" value={fluencyScore} />

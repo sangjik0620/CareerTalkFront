@@ -2232,3 +2232,56 @@
 .analysis-section div {
   line-height: 1.4;
 }
+.question-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.question-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.question-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.question-duration {
+  font-size: 14px;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.question-score {
+  font-weight: 700;
+  color: #ef4444;
+  white-space: nowrap;
+}
+.voice-score-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.voice-score-summary-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.voice-score-summary-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: #ef4444;
+}
