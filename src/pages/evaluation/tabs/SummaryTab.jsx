@@ -44,13 +44,71 @@ export default function SummaryTab({ data }) {
   };
 
   const kpis = [
-    { label: "백분위", value: `상위 ${100 - (summary?.percentileRank ?? 0)}%`, tone: "brand", value: summary?.jobFitIndex != null ? `${summary.jobFitIndex}` : "-" },
-    { label: "평균 답변", value: `${summary?.avgResponseSec ?? 0}s`, tone: "neutral", value: summary?.jobFitIndex != null ? `${summary.jobFitIndex}` : "-" },
-    { label: "추임새", value: `${summary?.fillerWordRate ?? 0}%`, tone: "neutral", value: summary?.jobFitIndex != null ? `${summary.jobFitIndex}` : "-" },
-    { label: "긍정도", value: `${summary?.sentimentScore ?? 0}%`, tone: "neutral", value: summary?.jobFitIndex != null ? `${summary.jobFitIndex}` : "-" },
-    { label: "직무적합", value: `${summary?.jobFitIndex ?? 0}`, tone: "brand", value: summary?.jobFitIndex != null ? `${summary.jobFitIndex}` : "-" },
-    { label: "자신감", value: `${summary?.confidenceIndex ?? 0}`, tone: "brand", value: summary?.jobFitIndex != null ? `${summary.jobFitIndex}` : "-" },
-  ];
+  {
+    label: "백분위",
+    value:
+      typeof summary?.percentileRank === "number"
+        ? `상위 ${100 - summary.percentileRank}%`
+        : "-",
+    tone: "brand",
+  },
+  {
+    label: "평균 답변",
+    value:
+      typeof summary?.avgResponseSec === "number"
+        ? `${summary.avgResponseSec}s`
+        : "-",
+    tone: "neutral",
+  },
+  {
+    label: "완료율",
+    value:
+      typeof summary?.completionRate === "number"
+        ? `${summary.completionRate}%`
+        : "-",
+    tone: "neutral",
+  },
+  {
+    label: "총 단어 수",
+    value:
+      typeof summary?.totalWordCount === "number"
+        ? `${summary.totalWordCount} 개`
+        : "-",
+    tone: "neutral",
+  },
+  {
+    label: "추임새",
+    value:
+      typeof summary?.fillerWordRate === "number"
+        ? `${summary.fillerWordRate}%`
+        : "-",
+    tone: "neutral",
+  },
+  {
+    label: "긍정도",
+    value:
+      typeof summary?.sentimentScore === "number"
+        ? `${summary.sentimentScore}%`
+        : "-",
+    tone: "neutral",
+  },
+  {
+    label: "직무적합",
+    value:
+      typeof summary?.jobFitIndex === "number"
+        ? `${summary.jobFitIndex}`
+        : "-",
+    tone: "brand",
+  },
+  {
+    label: "자신감",
+    value:
+      typeof summary?.confidenceIndex === "number"
+        ? `${summary.confidenceIndex}`
+        : "-",
+    tone: "brand",
+  },
+];
 
   const indexes = [
     { label: "기술", value: clamp100(summary?.technicalIndex) },
