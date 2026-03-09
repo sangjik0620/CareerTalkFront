@@ -18,6 +18,7 @@ const SocialSignup = () => {
 
     const [nicknameMessage, setNicknameMessage] = useState('');
     const [isNicknameAvailable, setIsNicknameAvailable] = useState(false);
+    const [showWelcomeModal, setShowWelcomeModal] = useState(false);
 
     const isFormValid = 
         formData.name.trim() !== '' &&        // 카카오 유저는 직접 입력
@@ -93,7 +94,13 @@ const SocialSignup = () => {
             const response = await axios.post('http://localhost:8080/api/member/social-signup-complete', formData);
             localStorage.setItem('token', response.data.accessToken); 
             localStorage.setItem('user', JSON.stringify(response.data.user));
-            window.location.href = "/";
+            
+            setShowWelcomeModal(true);
+            setTimeout(() => {
+                setShowWelcomeModal(false);
+                window.location.href = "/";
+            }, 3000);
+
         } catch (error) {
             alert(error.response?.data || "정보 등록 중 오류가 발생했습니다.");
         }
@@ -101,6 +108,17 @@ const SocialSignup = () => {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 font-sans">
+            {showWelcomeModal && (
+                <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[200] w-full max-w-sm px-4">
+                    <div className="bg-white border-2 border-blue-500 p-8 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] flex flex-col items-center text-center animate-in fade-in slide-in-from-top-10 duration-500">
+                        <h3 className="text-xl font-black text-gray-900 mb-2">가입을 축하합니다!</h3>
+                        <p className="text-gray-600 font-medium text-sm leading-relaxed">
+                            이제 CareerTalk의 모든 기능을 이용하실 수 있습니다!<br/>
+                            <span className="text-blue-500 text-xs mt-2 block">3초 후 메인 페이지로 이동합니다.</span>
+                        </p>
+                    </div>
+                </div>
+            )}
             <Link 
                 to="/" 
                 className="absolute top-8 left-8 flex items-center gap-2 text-gray-400 hover:text-gray-900 transition-colors font-semibold group"
@@ -132,7 +150,6 @@ const SocialSignup = () => {
                             value={formData.name} 
                             onChange={handleChange}
                             placeholder="정확한 실명을 입력하세요"
-                            // ⭐ 설명: 페이지 진입 시 URL에 name이 있었으면(네이버 등) 수정 불가, 없으면(구글/카카오) 입력 가능
                             disabled={!!new URLSearchParams(location.search).get('name')} 
                             className={`w-full px-4 py-3 rounded-lg border outline-none transition 
                                 ${!!new URLSearchParams(location.search).get('name') 
