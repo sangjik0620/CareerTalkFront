@@ -7,6 +7,8 @@ import Resume from "../Resume";
 import logo from "../../img/logo.png";
 import DeviceTestModal from "../interview/DeviceTestModal";
 
+import { api } from "../../lib/api";
+
 // ─────────────────────────────────────────────
 const FILE_META = {
   resume: {
@@ -76,36 +78,8 @@ const FILE_META = {
 
 // ─────────────────────────────────────────────
 const fetchUserAnalyses = async () => {
-  return {
-    resume: [      
-      // {
-      //   id: "r1",
-      //   title: "2024 상반기 이력서",
-      //   fileName: "resume_2024_1H.pdf",
-      //   analyzedAt: "2024-03-15",
-      //   score: 88,
-      //   keywords: ["React", "TypeScript", "3년 경력"],
-      // },
-      // {
-      //   id: "r2",
-      //   title: "스타트업 지원용 이력서",
-      //   fileName: "resume_startup.pdf",
-      //   analyzedAt: "2024-05-02",
-      //   score: 92,
-      //   keywords: ["Node.js", "AWS", "풀스택"],
-      // },
-      // {
-      //   id: "r2",
-      //   title: "스타트업 지원용 이력서",
-      //   fileName: "resume_startup.pdf",
-      //   analyzedAt: "2024-05-02",
-      //   score: 92,
-      //   keywords: ["Node.js", "AWS", "풀스택"],
-      // },
-    ],
-    coverLetter: [],
-    portfolio: [],
-  };
+  const res = await api.get("/api/analysis/my");
+  return res.data;
 };
 
 // ─────────────────────────────────────────────
@@ -517,11 +491,46 @@ export default function InterviewSelect() {
 
   const handleSelect = (key, id) => setSelectedIds((p) => ({ ...p, [key]: id }));
 
+  const buildSelectedTargets = () => {
+  const targets = [];
+
+  const mapping = [
+    { key: "resume", targetType: "RESUME" },
+    { key: "coverLetter", targetType: "ESSAY" },
+    { key: "portfolio", targetType: "PORTFOLIO" },
+  ];
+
+  mapping.forEach(({ key, targetType }) => {
+    const selectedAnalysisId = selectedIds[key];
+    if (!selectedAnalysisId) return;
+
+    const selectedItem = analyses[key].find((item) => item.id === selectedAnalysisId);
+    if (!selectedItem) return;
+
+    targets.push({
+      targetType,
+      targetId: selectedItem.targetId,
+      analysisId: selectedItem.analysisId,
+    });
+  });
+
+  return targets;
+};
+
   // ✅ 교체: 바로 이동 대신 기기 테스트 모달 먼저 열기
 const startInterview = () => {
-  if (!hasSelection) return;
-  localStorage.setItem("interviewData", JSON.stringify({ selectedAnalyses: selectedIds, settings }));
-  setIsDeviceTestOpen(true); // 👈 모달 열기
+  const targets = buildSelectedTargets();
+
+  localStorage.setItem(
+    "interviewData",
+    JSON.stringify({
+      selectedAnalyses: selectedIds,
+      selectedTargets: targets,
+      settings,
+    })
+  );
+
+  setIsDeviceTestOpen(true);
 };
 
 // 기기 테스트 통과 후 실제 이동

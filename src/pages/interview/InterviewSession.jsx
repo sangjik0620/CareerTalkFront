@@ -67,15 +67,26 @@ export default function InterviewSession() {
     }
   }, []);
 
+  // 기존 호환 + 신규 구조 둘 다 지원
+  const selectedTargets = useMemo(() => {
+    if (Array.isArray(interviewData?.selectedTargets)) return interviewData.selectedTargets;
+    if (Array.isArray(interviewData?.targets)) return interviewData.targets;
+    return [];
+  }, [interviewData]);
+
   const totalCount = Number(interviewData?.settings?.questionCount ?? 10);
 
   const questions = useMemo(() => {
+    if (Array.isArray(interviewData?.questions) && interviewData.questions.length > 0) {
+      return interviewData.questions;
+    }
+
     const arr = [];
     for (let i = 0; i < totalCount; i++) {
       arr.push(DEFAULT_QUESTIONS[i % DEFAULT_QUESTIONS.length]);
     }
     return arr;
-  }, [totalCount]);
+  }, [interviewData, totalCount]);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [recordings, setRecordings] = useState(() => Array(questions.length).fill(null));
@@ -127,14 +138,17 @@ export default function InterviewSession() {
       mounted = false;
       if (timerRef.current) clearInterval(timerRef.current);
       window.speechSynthesis?.cancel();
+
       try {
         if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
           mediaRecorderRef.current.stop();
         }
       } catch {}
+
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => t.stop());
       }
+
       recordings.forEach((r) => revokeUrlSafely(r?.url));
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -144,26 +158,30 @@ export default function InterviewSession() {
     if (isRecording) stopRecording();
     setTranscript("답변 버튼을 눌러 녹음해주세요...");
     setListeningStatus("녹음 대기 중");
-    speakQuestion(currentQuestion);
+    if (currentQuestion) speakQuestion(currentQuestion);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex]);
 
   function speakQuestion(text) {
     const synth = window.speechSynthesis;
-    if (!synth) return;
+    if (!synth || !text) return;
+
     synth.cancel();
     const utter = new SpeechSynthesisUtterance(text);
     utter.lang = "ko-KR";
     utter.rate = 0.9;
     utter.pitch = 1.0;
+
     utter.onstart = () => {
       setAiSpeaking(true);
       setAiStatus("질문 읽는 중...");
     };
+
     utter.onend = () => {
       setAiSpeaking(false);
       setAiStatus("답변 대기 중");
     };
+
     synth.speak(utter);
   }
 
@@ -172,10 +190,12 @@ export default function InterviewSession() {
       alert("마이크 스트림이 없습니다. 권한을 확인해주세요.");
       return;
     }
+
     if (!isMicOn) {
       alert("마이크가 꺼져 있습니다. 마이크를 켜주세요.");
       return;
     }
+
     if (isRecording) return;
 
     setIsRecording(true);
@@ -194,7 +214,9 @@ export default function InterviewSession() {
       );
 
       recorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) audioChunksRef.current.push(e.data);
+        if (e.data && e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
+        }
       };
 
       recorder.onstop = () => {
@@ -205,7 +227,12 @@ export default function InterviewSession() {
         setRecordings((prev) => {
           const next = [...prev];
           revokeUrlSafely(next[currentIndex]?.url);
-          next[currentIndex] = { blob, url, mimeType: mime, createdAt: new Date().toISOString() };
+          next[currentIndex] = {
+            blob,
+            url,
+            mimeType: mime,
+            createdAt: new Date().toISOString(),
+          };
           return next;
         });
 
@@ -228,10 +255,12 @@ export default function InterviewSession() {
     setIsRecording(false);
     setListeningStatus("저장 중...");
     const recorder = mediaRecorderRef.current;
+
     if (!recorder) {
       setListeningStatus("녹음 대기 중");
       return;
     }
+
     try {
       if (recorder.state !== "inactive") recorder.stop();
     } catch (err) {
@@ -245,6 +274,7 @@ export default function InterviewSession() {
       alert("현재 녹음 중입니다. 먼저 답변 완료를 눌러주세요.");
       return;
     }
+
     if (!confirm("이 질문의 기존 녹음을 삭제하고 다시 녹음할까요?")) return;
 
     setRecordings((prev) => {
@@ -263,19 +293,23 @@ export default function InterviewSession() {
       alert("먼저 답변 녹음을 완료해주세요.");
       return;
     }
+
     if (currentIndex + 1 >= questions.length) {
       endInterview();
       return;
     }
+
     setCurrentIndex((i) => i + 1);
   }
 
   function skipQuestion() {
     if (!confirm("이 질문을 건너뛰시겠습니까?")) return;
+
     if (currentIndex + 1 >= questions.length) {
       endInterview();
       return;
     }
+
     setCurrentIndex((i) => i + 1);
   }
 
@@ -287,8 +321,10 @@ export default function InterviewSession() {
   function toggleCamera() {
     const stream = streamRef.current;
     if (!stream) return;
+
     const track = stream.getVideoTracks()[0];
     if (!track) return;
+
     const next = !isCameraOn;
     track.enabled = next;
     setIsCameraOn(next);
@@ -297,105 +333,113 @@ export default function InterviewSession() {
   function toggleMic() {
     const stream = streamRef.current;
     if (!stream) return;
+
     const track = stream.getAudioTracks()[0];
     if (!track) return;
+
     const next = !isMicOn;
     track.enabled = next;
     setIsMicOn(next);
+
     if (!next && isRecording) stopRecording();
   }
 
   function endInterview() {
     if (timerRef.current) clearInterval(timerRef.current);
+
     window.speechSynthesis?.cancel();
+
     try {
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
         mediaRecorderRef.current.stop();
       }
     } catch {}
+
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
     }
+
     setModalOpen(true);
   }
 
-async function uploadRecordingsToServer() {
-  const filesToUpload = recordings
-    .map((r, idx) => ({ r, idx }))
-    .filter(({ r }) => r?.blob);
+  async function uploadRecordingsToServer() {
+    const filesToUpload = recordings
+      .map((r, idx) => ({ r, idx }))
+      .filter(({ r }) => r?.blob);
 
-  if (filesToUpload.length === 0) {
-    throw new Error("업로드할 녹음 파일이 없습니다.");
-  }
-
-  const fd = new FormData();
-
-  filesToUpload.forEach(({ r, idx }) => {
-    const ext = r.mimeType?.includes("webm") ? "webm" : "wav";
-    const audioFile = new File(
-      [r.blob],
-      `answer-${idx + 1}.${ext}`,
-      { type: r.mimeType || "audio/webm" }
-    );
-
-    fd.append("files", audioFile);
-  });
-
-  questions.forEach((q) => fd.append("questions", q));
-  fd.append("durationSec", String(seconds));
-  fd.append("questionCount", String(questions.length));
-
-  if (interviewData?.targets?.length) {
-    fd.append("targetsJson", JSON.stringify(interviewData.targets));
-  }
-
-  setIsUploading(true);
-  setUploadProgress(0);
-  setUploadError("");
-
-  try {
-    const res = await api.post("/api/interview/upload", fd, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-      onUploadProgress: (evt) => {
-        if (!evt.total) return;
-        const pct = Math.round((evt.loaded * 100) / evt.total);
-        setUploadProgress(pct);
-      },
-    });
-
-    const sessionId = res?.data?.sessionId ?? null;
-    setUploadedSessionId(sessionId);
-    return res.data;
-  } catch (e) {
-    const msg =
-      e?.response?.data?.message ||
-      e?.message ||
-      "업로드에 실패했습니다. 잠시 후 다시 시도해주세요.";
-
-    setUploadError(msg);
-    throw new Error(msg);
-  } finally {
-    setIsUploading(false);
-  }
-}
-
-  async function viewResults() {
-  try {
-    const data = await uploadRecordingsToServer();
-    const sessionId = data?.sessionId;
-
-    if (!sessionId) {
-      navigate("/interview/result", { state: { uploadResult: data } });
-      return;
+    if (filesToUpload.length === 0) {
+      throw new Error("업로드할 녹음 파일이 없습니다.");
     }
 
-    navigate(`/interview/result?sessionId=${sessionId}`, { state: { uploadResult: data } });
-  } catch (err) {
-    alert(err.message);
+    const fd = new FormData();
+
+    filesToUpload.forEach(({ r, idx }) => {
+      const ext = r.mimeType?.includes("webm") ? "webm" : "wav";
+      const audioFile = new File([r.blob], `answer-${idx + 1}.${ext}`, {
+        type: r.mimeType || "audio/webm",
+      });
+
+      fd.append("files", audioFile);
+    });
+
+    questions.forEach((q) => fd.append("questions", q));
+    fd.append("durationSec", String(seconds));
+    fd.append("questionCount", String(questions.length));
+
+    // 핵심 수정: InterviewSelect에서 저장한 선택 분석 문서 정보 전달
+    if (selectedTargets.length > 0) {
+      fd.append("targetsJson", JSON.stringify(selectedTargets));
+    }
+
+    setIsUploading(true);
+    setUploadProgress(0);
+    setUploadError("");
+
+    try {
+      const res = await api.post("/api/interview/upload", fd, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        onUploadProgress: (evt) => {
+          if (!evt.total) return;
+          const pct = Math.round((evt.loaded * 100) / evt.total);
+          setUploadProgress(pct);
+        },
+      });
+
+      const sessionId = res?.data?.sessionId ?? null;
+      setUploadedSessionId(sessionId);
+      return res.data;
+    } catch (e) {
+      const msg =
+        e?.response?.data?.message ||
+        e?.message ||
+        "업로드에 실패했습니다. 잠시 후 다시 시도해주세요.";
+
+      setUploadError(msg);
+      throw new Error(msg);
+    } finally {
+      setIsUploading(false);
+    }
   }
-}
+
+  async function viewResults() {
+    try {
+      const data = await uploadRecordingsToServer();
+      const sessionId = data?.sessionId;
+
+      if (!sessionId) {
+        navigate("/interview/result", { state: { uploadResult: data } });
+        return;
+      }
+
+      navigate(`/interview/result?sessionId=${sessionId}`, {
+        state: { uploadResult: data },
+      });
+    } catch (err) {
+      alert(err.message);
+    }
+  }
 
   function closeModal() {
     setModalOpen(false);
@@ -410,7 +454,6 @@ async function uploadRecordingsToServer() {
       <div className="fixed top-0 left-0 right-0 z-40 bg-white/70 backdrop-blur-xl border-b border-slate-200 shadow-sm">
         <div className="max-w-[1800px] mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
-            {/* Left: Logo & Progress */}
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-md">
@@ -449,7 +492,6 @@ async function uploadRecordingsToServer() {
               </div>
             </div>
 
-            {/* Right: Timer & Exit */}
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-3 bg-white/70 backdrop-blur-xl border border-slate-200 px-5 py-2.5 rounded-xl shadow-sm">
                 <div className="w-2 h-2 bg-rose-500 rounded-full animate-pulse"></div>
@@ -475,9 +517,7 @@ async function uploadRecordingsToServer() {
       {/* Main */}
       <div className="relative z-10 max-w-[1800px] mx-auto px-6 pt-28 pb-12">
         <div className="grid lg:grid-cols-[1fr_400px] gap-6">
-          {/* Left Column */}
           <div className="space-y-6">
-            {/* Webcam Card */}
             <div className={`group relative ${glassCard} overflow-hidden`}>
               <div className="relative aspect-video bg-black">
                 <video
@@ -488,7 +528,6 @@ async function uploadRecordingsToServer() {
                   className="w-full h-full object-cover -scale-x-100"
                 />
 
-                {/* REC Badge */}
                 {isRecording && (
                   <div className="absolute top-6 left-6 bg-rose-600/90 backdrop-blur-sm px-5 py-2.5 rounded-full flex items-center gap-3 shadow-lg animate-pulse-subtle text-white">
                     <div className="w-3 h-3 bg-white rounded-full animate-ping"></div>
@@ -496,7 +535,6 @@ async function uploadRecordingsToServer() {
                   </div>
                 )}
 
-                {/* Camera Off Overlay */}
                 {!isCameraOn && (
                   <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center">
                     <div className="text-center">
@@ -506,7 +544,6 @@ async function uploadRecordingsToServer() {
                   </div>
                 )}
 
-                {/* Controls */}
                 <div className="absolute bottom-6 left-0 right-0 flex justify-center gap-3">
                   <button
                     onClick={toggleCamera}
@@ -535,10 +572,8 @@ async function uploadRecordingsToServer() {
               </div>
             </div>
 
-            {/* AI Question Card */}
             <div className={`${glassCard} p-8`}>
               <div className="flex items-start gap-6">
-                {/* AI Avatar */}
                 <div className="flex-shrink-0">
                   <div
                     className={`w-20 h-20 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-md transform transition-all duration-500 ${
@@ -550,7 +585,6 @@ async function uploadRecordingsToServer() {
                 </div>
 
                 <div className="flex-1">
-                  {/* AI Status */}
                   <div className="flex items-center gap-4 mb-5">
                     <h3 className="text-xl font-bold">
                       <span className="bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent">
@@ -568,7 +602,6 @@ async function uploadRecordingsToServer() {
                     </div>
                   </div>
 
-                  {/* Question Box */}
                   <div className={`${glassInner} p-6`}>
                     <div className="flex items-center gap-2 text-sm text-blue-700 mb-4 font-semibold">
                       <span>💬</span>
@@ -579,7 +612,6 @@ async function uploadRecordingsToServer() {
                     </p>
                   </div>
 
-                  {/* AI Speaking Indicator */}
                   {aiSpeaking && (
                     <div className="flex items-center gap-3 mt-5">
                       <span className="text-sm text-blue-700 font-semibold">음성 출력 중</span>
@@ -601,7 +633,6 @@ async function uploadRecordingsToServer() {
               </div>
             </div>
 
-            {/* Answer Card */}
             <div className={`${glassCard} p-8`}>
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold flex items-center gap-3">
@@ -619,12 +650,10 @@ async function uploadRecordingsToServer() {
                 </div>
               </div>
 
-              {/* Transcript */}
               <div className={`${glassInner} p-6 min-h-[120px] mb-6`}>
                 <p className="text-lg leading-relaxed text-slate-700">{transcript}</p>
               </div>
 
-              {/* Audio Player */}
               {currentRecording?.url && (
                 <div className="bg-white/70 backdrop-blur-xl border border-emerald-200/70 rounded-2xl p-5 mb-6 shadow-sm">
                   <div className="flex items-center gap-2 text-sm text-emerald-700 mb-3 font-semibold">
@@ -636,7 +665,6 @@ async function uploadRecordingsToServer() {
                 </div>
               )}
 
-              {/* Recording Controls */}
               <div className="space-y-3">
                 {!isRecording ? (
                   <button
@@ -684,9 +712,7 @@ async function uploadRecordingsToServer() {
             </div>
           </div>
 
-          {/* Right Sidebar */}
           <div className="space-y-6">
-            {/* Interview Tips */}
             <div className={`${glassCard} p-6`}>
               <h3 className="text-lg font-bold mb-5 flex items-center gap-3">
                 <span className="text-2xl">💡</span>
@@ -728,7 +754,6 @@ async function uploadRecordingsToServer() {
               </div>
             </div>
 
-            {/* Question Progress */}
             <div className={`${glassCard} p-6`}>
               <h3 className="text-lg font-bold mb-5 flex items-center gap-3">
                 <span className="text-2xl">📋</span>
@@ -768,7 +793,6 @@ async function uploadRecordingsToServer() {
               </div>
             </div>
 
-            {/* AI Analysis Info */}
             <div className={`${glassCard} p-6`}>
               <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                 <span className="text-2xl">🔍</span>
@@ -802,7 +826,6 @@ async function uploadRecordingsToServer() {
         </div>
       </div>
 
-      {/* Completion Modal */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white/75 backdrop-blur-xl border border-slate-200 rounded-3xl p-10 max-w-lg w-full text-center shadow-[0_30px_90px_-50px_rgba(15,23,42,0.35)] transform animate-scale-in">
@@ -817,7 +840,6 @@ async function uploadRecordingsToServer() {
             </p>
             <p className="text-slate-700 mb-8">답변을 완료하셨습니다</p>
 
-            {/* Upload UI */}
             <div className="space-y-4 mb-6">
               {uploadError && (
                 <div className="bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl p-4 text-sm">
@@ -847,7 +869,6 @@ async function uploadRecordingsToServer() {
               )}
             </div>
 
-            {/* Buttons */}
             <div className="flex gap-4">
               <button
                 onClick={viewResults}
@@ -913,15 +934,15 @@ async function uploadRecordingsToServer() {
 
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: rgba(226, 232, 240, 0.8); /* slate-200 */
+          background: rgba(226, 232, 240, 0.8);
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: linear-gradient(180deg, #2563eb, #4f46e5); /* blue-600 -> indigo-600 */
+          background: linear-gradient(180deg, #2563eb, #4f46e5);
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: linear-gradient(180deg, #1d4ed8, #4338ca); /* blue-700 -> indigo-700 */
+          background: linear-gradient(180deg, #1d4ed8, #4338ca);
         }
       `}</style>
     </div>
