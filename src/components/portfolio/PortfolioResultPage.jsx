@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import PortfolioRadarChart from "./PortfolioRadarChart";
 import PortfolioQuestionItem from "./PortfolioQuestionItem";
@@ -8,33 +8,64 @@ const PortfolioResultPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // 💡 중복 호출 방지를 위한 플래그
+  const isFetching = useRef(false);
+
   const [currentData, setCurrentData] = useState(
     location.state?.analysisData || null,
   );
   const [isLoading, setIsLoading] = useState(!currentData);
 
-  const portfolioId = currentData?.portfolioId;
-
   useEffect(() => {
+    // 이미 데이터가 있으면 종료
     if (currentData && String(currentData.analysisId) === String(analysisId)) {
       setIsLoading(false);
       return;
     }
 
+    // 💡 이미 호출 중이면 중복 실행 방지
+    if (isFetching.current) return;
+
     const fetchResultData = async () => {
+      isFetching.current = true; // 호출 시작
       setIsLoading(true);
+
       try {
+        const token = localStorage.getItem("token");
         const response = await fetch(
           `http://localhost:8080/api/portfolios/${analysisId}/result`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          },
         );
-        if (!response.ok) throw new Error("결과를 불러오지 못했습니다.");
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || "결과를 불러오지 못했습니다.");
+        }
+
         const data = await response.json();
         setCurrentData(data);
       } catch (error) {
-        console.error(error);
-        alert("데이터를 불러오는데 실패했습니다.");
+        console.error("결과 조회 실패");
+
+        // 💡 JSON 형태의 에러 메시지라면 "접근 권한" 키워드만 찾아서 예쁘게 보여줌
+        let displayMessage = "데이터를 불러오는 중 오류가 발생했습니다.";
+
+        if (error.message.includes("접근 권한")) {
+          displayMessage = "분석 결과를 조회할 수 없습니다.";
+        } else if (error.message.includes("존재하지 않는")) {
+          displayMessage = "해당 분석 결과를 찾을 수 없습니다.";
+        }
+
+        alert(displayMessage); // 👈 이제 지저분한 JSON 대신 예쁜 문구가 뜹니다.
+        navigate("/");
       } finally {
         setIsLoading(false);
+        isFetching.current = false;
       }
     };
 
@@ -57,26 +88,6 @@ const PortfolioResultPage = () => {
     );
   }
 
-  if (!currentData) {
-    return (
-      <div
-        style={pageStyle}
-        className="flex flex-col justify-center items-center h-screen"
-      >
-        <span className="text-5xl mb-4">😮</span>
-        <p style={{ color: "#0b1b3a", fontWeight: 900 }}>
-          아직 분석 결과가 없습니다.
-        </p>
-        <button
-          style={{ ...btnPrimary, marginTop: 20, width: "auto" }}
-          onClick={() => navigate("/")}
-        >
-          홈으로 이동
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div style={pageStyle}>
       <div style={topBarStyle}>
@@ -85,13 +96,21 @@ const PortfolioResultPage = () => {
             ← 뒤로
           </button>
           <div>
-            <div style={topTitleStyle}>포트폴리오 분석 결과</div>
+            {/* 💡 닉네임을 강조하여 표시 */}
+            <div style={topTitleStyle}>
+              <span style={{ color: "#1f55ff", fontWeight: 900 }}>
+                {currentData.nickname}
+              </span>
+              님의 포트폴리오 분석 결과
+            </div>
             <div style={topSubStyle}>
               지원 직무: {currentData.targetJob}
               {currentData.updatedAt && ` · 업데이트: ${currentData.updatedAt}`}
             </div>
           </div>
         </div>
+
+        {/* 오른쪽 영역 (점수 및 홈 버튼) */}
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={scorePillStyle}>
             <span style={{ opacity: 0.75, marginRight: 8 }}>TOTAL</span>
