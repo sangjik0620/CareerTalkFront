@@ -413,11 +413,11 @@ const Signup = () => {
                         <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">목표 직무</label>
                         <select name="targetJob" value={formData.targetJob} onChange={handleChange} className="w-full px-4 py-3 rounded-lg border border-gray-300 outline-none focus:ring-2 focus:ring-blue-500 bg-white transition" required>
                             <option value="">직무를 선택하세요</option>
-                            <option value="frontend">프론트엔드 개발자</option>
-                            <option value="backend">백엔드 개발자</option>
-                            <option value="design">UI/UX 디자이너</option>
-                            <option value="marketing">마케팅</option>
-                            <option value="planner">기획자</option>
+                            <option value="IT개발∙데이터">IT개발∙데이터</option>
+                            <option value="기획∙전략">기획∙전략</option>
+                            <option value="디자인">디자인</option>
+                            <option value="마케팅∙홍보">마케팅∙홍보</option>
+                            <option value="인사∙노무">인사∙노무</option>
                         </select>
                     </div>
 
