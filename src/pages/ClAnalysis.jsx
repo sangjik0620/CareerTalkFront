@@ -65,7 +65,6 @@ export default function ClAnalysis({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  // PDF만 허용
   const validateAndSetFile = (file) => {
     if (!file) return false;
 
@@ -98,40 +97,72 @@ export default function ClAnalysis({ isOpen, onClose }) {
     setViewStep("confirm");
   };
 
+  const buildRequestPayload = () => {
+    const targetJob = jobDetail?.trim() || jobRole;
+
+    if (mode === "HOME") {
+      return {
+        title: selectedFile?.name?.replace(/\.pdf$/i, "") || "PDF 자기소개서",
+        content: "",
+        targetJob,
+      };
+    }
+
+    return {
+      title: title.trim(),
+      content: content.trim(),
+      targetJob,
+    };
+  };
+
   const handleConfirmAnalyze = async () => {
     setViewStep("analyzing");
     setIsAnalyzing(true);
 
     try {
-      let result;
+      const token = localStorage.getItem("token");
 
-      if (mode === "FORM") {
-        const payload = { jobRole, jobDetail, title, content };
-
-        const res = await fetch(`${API_BASE}/api/ci/analyze/text`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        if (!res.ok) throw new Error("텍스트 분석 API 실패");
-        result = await res.json();
-      } else {
-        const formData = new FormData();
-        formData.append("file", selectedFile);
-        formData.append("jobRole", jobRole);
-        if (jobDetail?.trim()) formData.append("jobDetail", jobDetail);
-
-        const res = await fetch(`${API_BASE}/api/ci/analyze/pdf`, {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!res.ok) throw new Error("PDF 분석 API 실패");
-        result = await res.json();
+      if (!token) {
+        throw new Error("로그인 토큰이 없습니다.");
       }
 
-      //로컬 저장
+      const payload = buildRequestPayload();
+
+      const formData = new FormData();
+      formData.append(
+        "request",
+        new Blob([JSON.stringify(payload)], { type: "application/json" }),
+      );
+
+      if (mode === "HOME" && selectedFile) {
+        formData.append("file", selectedFile);
+      }
+
+      const res = await fetch(`${API_BASE}/api/ci/analyze`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const raw = await res.text();
+
+      if (!res.ok) {
+        throw new Error(raw || "분석 API 실패");
+      }
+
+      let result;
+      try {
+        result = JSON.parse(raw);
+      } catch (e) {
+        console.error("응답 JSON 파싱 실패:", e);
+        throw new Error("서버 응답 형식이 올바르지 않습니다.");
+      }
+
+      console.log("analysis result =", result);
+
+      localStorage.removeItem("ci_result");
       localStorage.setItem("ci_result", JSON.stringify(result));
 
       setIsAnalyzing(false);
@@ -141,8 +172,8 @@ export default function ClAnalysis({ isOpen, onClose }) {
         state: { result },
       });
     } catch (e) {
-      console.error(e);
-      alert("분석 중 오류가 발생했습니다. (백엔드/콘솔 확인)");
+      console.error("분석 에러:", e);
+      alert(e.message || "분석 중 오류가 발생했습니다.");
       setIsAnalyzing(false);
       setViewStep("input");
     }
@@ -164,7 +195,6 @@ export default function ClAnalysis({ isOpen, onClose }) {
         className="bg-white rounded-2xl shadow-xl w-[95%] max-w-2xl h-[640px] overflow-hidden flex flex-col relative"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* 로딩화면 */}
         {viewStep === "analyzing" ? (
           <div className="flex-1 flex flex-col items-center justify-center p-8 animate-fade-in">
             <svg
@@ -197,7 +227,6 @@ export default function ClAnalysis({ isOpen, onClose }) {
             </p>
           </div>
         ) : viewStep === "confirm" ? (
-          /* 확인 화면 */
           <div className="flex flex-col h-full animate-fade-in">
             <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-white shrink-0">
               <div className="flex items-center gap-3">
@@ -308,7 +337,6 @@ export default function ClAnalysis({ isOpen, onClose }) {
             </div>
           </div>
         ) : (
-          /* 입력 화면 */
           <div className="flex flex-col h-full animate-fade-in">
             <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-white shrink-0">
               <div className="flex items-center gap-3">
@@ -368,11 +396,10 @@ export default function ClAnalysis({ isOpen, onClose }) {
             </div>
 
             <div className="p-8 flex-1 flex flex-col gap-6 bg-gray-50/50 overflow-y-auto min-h-0">
-              {/* 공통 입력 */}
               <div className="flex flex-col gap-6 shrink-0">
                 <div>
                   <label className="block text-sm font-semibold text-gray-800 mb-2">
-                    지원 직군 <span className="text-red-500">*</span>
+                    지원 직군 <span className="text-red-500">(필수)</span>
                   </label>
                   <select
                     value={jobRole}
@@ -405,11 +432,10 @@ export default function ClAnalysis({ isOpen, onClose }) {
                 </div>
               </div>
 
-              {/* PDF 업로드 */}
               {mode === "HOME" ? (
                 <div className="flex flex-col flex-1 mt-2 min-h-[160px]">
                   <label className="block text-sm font-semibold text-gray-800 mb-2">
-                    PDF 업로드 <span className="text-red-500">*</span>
+                    PDF 업로드 <span className="text-red-500">(필수)</span>
                   </label>
 
                   <div
@@ -511,11 +537,10 @@ export default function ClAnalysis({ isOpen, onClose }) {
                   </div>
                 </div>
               ) : (
-                /* 자소서 입력폼 */
                 <div className="flex flex-col gap-6">
                   <div>
                     <label className="block text-sm font-semibold text-gray-800 mb-2">
-                      제목 <span className="text-red-500">*</span>
+                      제목 <span className="text-red-500">(필수)</span>
                     </label>
                     <input
                       type="text"
@@ -528,7 +553,8 @@ export default function ClAnalysis({ isOpen, onClose }) {
 
                   <div className="flex flex-col flex-1 min-h-[220px]">
                     <label className="block text-sm font-semibold text-gray-800 mb-2">
-                      자기소개서 내용 <span className="text-red-500">*</span>
+                      자기소개서 내용{" "}
+                      <span className="text-red-500">(필수)</span>
                     </label>
                     <textarea
                       value={content}
