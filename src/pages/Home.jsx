@@ -606,10 +606,10 @@ const Navigation = ({ onStart }) => {
 
             {user ? (
               <>
-                <div className="px-3 py-2 text-primary-600 font-bold border-b border-gray-100">
+                {/* <div className="px-3 py-2 text-primary-600 font-bold border-b border-gray-100">
                   {user.nickname}님 환영합니다
-                </div>
-                <button
+                </div> */}
+                <button 
                   onClick={handleLogout}
                   className="w-full text-left px-3 py-2 text-red-500 hover:bg-red-50 rounded-md"
                 >
