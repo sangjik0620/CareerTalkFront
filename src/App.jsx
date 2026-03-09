@@ -20,17 +20,22 @@ import RsResume from "./pages/RsResume";
 
 // 토큰 만료 시 자동 로그아웃
 axios.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => { return response; },
   (error) => {
+    const originalRequestUrl = error.config?.url || "";
+    
     if (error.response && error.response.status === 401) {
+
+      if (originalRequestUrl.includes("/login")) {
+        return Promise.reject(error);
+      }
 
       localStorage.removeItem("user");
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");
 
-      window.dispatchEvent(new CustomEvent("tokenExpired"));    }
+      window.dispatchEvent(new CustomEvent("tokenExpired"));    
+    }
     return Promise.reject(error);
   }
 );
