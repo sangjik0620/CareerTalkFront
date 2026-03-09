@@ -19,8 +19,9 @@ const Signup = () => {
 
     const [emailError, setEmailError] = useState(false);
     const [pwError, setPwError] = useState(false);
+    const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+    const [modalMessage, setModalMessage] = useState('');
 
-    // ⭐ 휴대폰 번호 자동 하이픈 포맷터 함수
     const formatPhoneNumber = (value) => {
         if (!value) return value;
         const phoneNumber = value.replace(/[^\d]/g, ''); // 숫자만 남기기
@@ -37,7 +38,6 @@ const Signup = () => {
         const { name, value } = e.target;
 
         if (name === 'phone') {
-            // ⭐ 휴대폰 번호일 경우 포맷팅 적용
             setFormData({ ...formData, [name]: formatPhoneNumber(value) });
         } else {
             setFormData({ ...formData, [name]: value });
@@ -77,8 +77,6 @@ const Signup = () => {
         try {
             const { passwordConfirm, ...submitData } = formData;
             
-            // 하이픈 제거: "010-1234-5678" -> "01012345678"
-            submitData.phone = submitData.phone.replace(/-/g, '');
 
             const response = await axios.post('http://localhost:8080/api/member/signup', submitData);
             alert("회원가입이 완료되었습니다!"); 
@@ -151,29 +149,48 @@ const Signup = () => {
             setIsEmailSent(true);
             alert("인증 코드가 발송되었습니다.");
         } catch (error) {
-            alert("이메일 발송에 실패했습니다.");
+            // 409(중복)이거나, 500(서버에러-중복데이터때문)일 때 모달 띄우기
+            if (error.response?.status === 409 || error.response?.status === 500) {
+                setModalMessage("동일한 이메일의 계정이 존재합니다.");
+                setShowDuplicateModal(true);
+                setTimeout(() => setShowDuplicateModal(false), 3000);
+            } else {
+                alert(error.response?.data || "이메일 발송에 실패했습니다.");
+            }
         }
     };
 
     // 2. 인증 번호 확인
     const verifyEmailCode = async () => {
-        try {
-            const response = await axios.post(`http://localhost:8080/api/member/verify-email?code=${emailCode}`);
-            if (response.data) {
-                setIsEmailVerified(true);
-                alert("인증에 성공했습니다.");
-            } else {
-                alert("인증 번호가 일치하지 않습니다.");
+    try {
+        const response = await axios.post(`http://localhost:8080/api/member/verify-email`, null, {
+            params: {
+                email: formData.email,
+                code: emailCode
             }
-        } catch (error) {
-            alert("인증 확인 중 오류가 발생했습니다.");
+        });
+        
+        if (response.data) {
+            setIsEmailVerified(true);
+            alert("인증에 성공했습니다.");
+        } else {
+            alert("인증 번호가 일치하지 않습니다.");
         }
-    };
-
-    // ... 상단 import 및 함수(formatPhoneNumber, handleChange 등) 로직은 동일 ...
+    } catch (error) {
+        alert("인증 확인 중 오류가 발생했습니다.");
+    }
+};
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 font-sans py-12 px-4">
+            {showDuplicateModal && (
+                <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[100] animate-bounce">
+                    <div className="bg-red-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border-2 border-red-400">
+                        <span className="text-xl">⚠️</span>
+                        <span className="font-bold text-lg">{modalMessage}</span>
+                    </div>
+                </div>
+            )}
             <Link 
                 to="/" 
                 className="absolute top-8 left-8 flex items-center gap-2 text-gray-400 hover:text-gray-900 transition-colors font-semibold group"

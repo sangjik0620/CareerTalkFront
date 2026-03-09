@@ -84,7 +84,6 @@ const SocialSignup = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // 버튼 비활성화를 뚫고 들어올 경우를 대비한 2중 체크
         if (!isNicknameAvailable || !formData.targetJob) {
             alert("모든 필수 정보를 입력하고 닉네임 중복 확인을 해주세요.");
             return;
@@ -92,9 +91,9 @@ const SocialSignup = () => {
 
         try {
             const response = await axios.post('http://localhost:8080/api/member/social-signup-complete', formData);
-            alert("회원가입이 완료되었습니다!");
-            localStorage.setItem('user', JSON.stringify(response.data));
-            navigate('/');
+            localStorage.setItem('token', response.data.accessToken); 
+            localStorage.setItem('user', JSON.stringify(response.data.user));
+            window.location.href = "/";
         } catch (error) {
             alert(error.response?.data || "정보 등록 중 오류가 발생했습니다.");
         }

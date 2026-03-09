@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 
 const Login = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    
     const [formData, setFormData] = useState({
         loginId: '', 
         password: ''
@@ -17,14 +19,18 @@ const Login = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post('http://localhost:8080/api/member/login', formData);
-            if (response.status === 200) {
-                // alert(`${response.data.nickname}님 환영합니다!`);
-                localStorage.setItem('user', JSON.stringify(response.data));
-                navigate('/');
-            }
+            const response = await axios.post('http://localhost:8080/api/member/login', {
+                loginId: formData.loginId,
+                password: formData.password
+            });
+            
+            localStorage.setItem('token', response.data.accessToken);
+            localStorage.setItem('user', JSON.stringify(response.data.user));
+
+            window.location.href = "/";
+
         } catch (error) {
-            alert(error.response?.data || '아이디 또는 비밀번호를 확인해주세요.');
+            alert(error.response?.data || "로그인에 실패했습니다.");
         }
     };
 
@@ -46,7 +52,6 @@ const Login = () => {
 
         if (error === 'duplicate_email') {
             alert("이미 다른 소셜 계정으로 가입된 이메일 주소입니다.\n기존에 가입하셨던 소셜 계정으로 로그인해주세요.");
-            // 알림 확인 후 URL에서 파라미터 지우기 (선택 사항)
             navigate('/login', { replace: true });
         }
     }, [location, navigate]);
@@ -109,13 +114,9 @@ const Login = () => {
                         <button
                             type="button"
                             onClick={handleGoogleLogin}
-                            className="w-full h-[52px] flex items-center justify-center gap-3 bg-white border border-gray-300 rounded-lg font-semibold text-gray-700 transition-all shadow-sm hover:brightness-95 active:scale-[0.98"
+                            className="w-full h-[52px] flex items-center justify-center gap-3 bg-white border border-gray-300 rounded-lg font-semibold text-gray-700 transition-all shadow-sm hover:brightness-95"
                         >
-                            <img 
-                                src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-                                alt="google" 
-                                className="w-5 h-5" 
-                            />
+                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="google" className="w-5 h-5" />
                             구글로 시작하기
                         </button>
 
@@ -131,13 +132,9 @@ const Login = () => {
                         <button 
                             type="button"
                             onClick={handleKakaoLogin}
-                            className="w-full h-[52px] rounded-lg overflow-hidden transition-all shadow-sm hover:brightness-90 active:scale-[0.98]"
+                            className="w-full h-[52px] rounded-lg overflow-hidden transition-all shadow-sm hover:brightness-90"
                         >
-                            <img 
-                                src="src/img/kakao.png" 
-                                alt="카카오로 시작하기" 
-                                className="w-full h-full object-cover" 
-                            />
+                            <img src="src/img/kakao.png" alt="카카오로 시작하기" className="w-full h-full object-cover" />
                         </button>
                     </div>
                 </form>
@@ -145,12 +142,9 @@ const Login = () => {
                 <div className="mt-8 text-center">
                     <p className="text-gray-600">
                         계정이 없으신가요?{' '}
-                        <a 
-                            href="/signup" 
-                            className="text-blue-600 font-bold hover:underline ml-1"
-                        >
+                        <Link to="/signup" className="text-blue-600 font-bold hover:underline ml-1">
                             회원가입
-                        </a>
+                        </Link>
                     </p>
                 </div>
             </div>
