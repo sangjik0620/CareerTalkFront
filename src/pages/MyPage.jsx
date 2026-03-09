@@ -19,6 +19,26 @@ const MyPage = () => {
     const [showAlert, setShowAlert] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
 
+    const [mainTab, setMainTab] = useState('analysis');
+    const [subTab, setSubTab] = useState('이력서');
+
+    // 임시 모크 데이터 (나중에 DB에서 가져올 데이터)
+    const mockAnalyses = {
+        '이력서': [
+            { id: 1, date: '2026-03-08', title: '네이버 프론트엔드 지원용 이력서', score: 85 },
+            { id: 2, date: '2026-02-15', title: '기본 이력서 초안 피드백', score: 72 },
+        ],
+        '자기소개서': [
+            { id: 3, date: '2026-03-05', title: '카카오 성장과정 문항 분석', score: 92 },
+        ],
+        '포트폴리오': [] // 포트폴리오는 비어있을 때의 화면을 위해 비워둠
+    };
+
+    const mockInterviews = [
+        { id: 1, date: '2026-03-01', type: '기술 면접', title: 'React/Vue 실무진 면접 대비', duration: '25분' },
+        { id: 2, date: '2026-02-20', type: '인성 면접', title: '임원진 컬처핏 모의면접', duration: '15분' },
+    ];
+
     useEffect(() => {
         const fetchUserData = async () => {
             const token = localStorage.getItem('token');
@@ -90,7 +110,7 @@ const MyPage = () => {
             setOriginalData(formData);
             setEditMode(false);
             setErrorMsg('');
-            alert("정보가 성공적으로 수정되었습니다.");
+            // alert("정보가 성공적으로 수정되었습니다.");
             
             const currentUserStr = localStorage.getItem('user');
             if (currentUserStr) {
@@ -103,7 +123,7 @@ const MyPage = () => {
     };
 
     const handleWithdrawal = async () => {
-        console.log("탈퇴 요청 시작..."); // 디버깅용 로그
+        console.log("탈퇴 요청 시작..."); 
         try {
             const token = localStorage.getItem('token');
             await axios.delete(`http://localhost:8080/api/member/delete/me`, {
@@ -136,7 +156,7 @@ const MyPage = () => {
 
             <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-sm border border-gray-100 p-12">
                 <div className="flex justify-between items-center mb-12">
-                    <h2 className="text-3xl font-extrabold text-gray-900 text-center flex-1 ml-10">마이페이지</h2>
+                    <h2 className="text-3xl font-semibold text-gray-900 text-center flex-1 ml-10">마이페이지</h2>
                     <button 
                         onClick={() => { if(editMode) handleUpdate(); else setEditMode(true); }}
                         disabled={editMode && !isNicknameVerified}
@@ -180,16 +200,134 @@ const MyPage = () => {
                         </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-8">
-                        <div>
-                            <p className="text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest">이메일 (변경 불가)</p>
-                            <input type="email" value={formData.email} disabled className="w-full text-lg font-semibold bg-transparent text-gray-400 cursor-not-allowed" />
+                        <div className="flex flex-col">
+                            <p className="h-5 flex items-end text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest whitespace-nowrap">
+                                이메일 (변경 불가)
+                            </p>
+                            <input 
+                                type="email" 
+                                value={formData.email} 
+                                disabled 
+                                className="w-full text-lg font-semibold bg-transparent text-gray-500 outline-none py-1" 
+                            />
                         </div>
-                        <div>
-                            <p className="text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest">목표 직무</p>
-                            <p className="text-lg font-bold text-blue-600 py-1">{user.targetJob || "미설정"}</p>
+                        
+                        <div className="flex flex-col">
+                            <p className="h-5 flex items-end text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest whitespace-nowrap">
+                                목표 직무
+                            </p>
+                            <input 
+                                type="text" 
+                                value={user.targetJob || "미설정"} 
+                                disabled 
+                                className="w-full text-lg font-semibold bg-transparent text-gray-500 outline-none py-1" 
+                            />
                         </div>
                     </div>
                 </div>
+                
+                {/* 🌟 여기서부터 새로 추가된 분석결과/면접기록 영역입니다 */}
+                <div className="flex border-b-2 border-gray-100 mb-10 mt-12">
+                    <button 
+                        onClick={() => setMainTab('analysis')}
+                        className={`flex-1 py-4 text-lg font-black flex items-center justify-center gap-2 transition-colors relative 
+                            ${mainTab === 'analysis' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                        <span className="text-xl">분석 결과</span> 
+                        {mainTab === 'analysis' && <div className="absolute bottom-[-2px] left-0 w-full h-1 bg-blue-600 rounded-t-full"></div>}
+                    </button>
+                    
+                    <button 
+                        onClick={() => setMainTab('interview')}
+                        className={`flex-1 py-4 text-lg font-black flex items-center justify-center gap-2 transition-colors relative 
+                            ${mainTab === 'interview' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
+                    >
+                        <span className="text-xl">면접 기록</span> 
+                        {mainTab === 'interview' && <div className="absolute bottom-[-2px] left-0 w-full h-1 bg-blue-600 rounded-t-full"></div>}
+                    </button>
+                </div>
+
+                <div className="min-h-[300px] mb-12">
+                    {/* 분석 결과 탭 내용 */}
+                    {mainTab === 'analysis' && (
+                        <div className="animate-in fade-in duration-300">
+                            <h3 className="text-2xl font-semibold text-gray-900 mb-6 text-left">분석 결과 조회</h3>
+                            
+                            <div className="flex gap-3 mb-8">
+                                {['이력서', '자기소개서', '포트폴리오'].map((tab) => (
+                                    <button 
+                                        key={tab}
+                                        onClick={() => setSubTab(tab)}
+                                        className={`px-6 py-2.5 rounded-full font-bold text-sm transition-all
+                                            ${subTab === tab 
+                                                ? 'bg-blue-600 text-white shadow-md shadow-blue-200' 
+                                                : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                                    >
+                                        {tab}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {mockAnalyses[subTab].length > 0 ? (
+                                    mockAnalyses[subTab].map((item) => (
+                                        <div key={item.id} className="group border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-blue-200 transition-all cursor-pointer bg-white">
+                                            <div className="flex justify-between items-center mb-4">
+                                                <span className="text-xs font-bold px-3 py-1 bg-blue-50 text-blue-600 rounded-lg">{subTab}</span>
+                                                <span className="text-xs text-gray-400 font-medium">{item.date}</span>
+                                            </div>
+                                            <h4 className="text-lg font-bold text-gray-900 mb-4 line-clamp-2">{item.title}</h4>
+                                            <div className="flex justify-between items-end mt-auto">
+                                                <div>
+                                                    <p className="text-xs text-gray-400 font-bold mb-1">AI 종합 점수</p>
+                                                    <p className="text-2xl font-black text-gray-900">{item.score}<span className="text-sm font-medium text-gray-500 ml-1">점</span></p>
+                                                </div>
+                                                <button className="px-4 py-2 bg-gray-50 text-gray-600 rounded-xl text-sm font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors">결과 보기</button>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="col-span-2 py-16 text-center bg-gray-50 rounded-2xl border border-gray-100 border-dashed">
+                                        <p className="text-gray-400 font-semibold">아직 분석된 {subTab}가 없습니다.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 면접 기록 탭 내용 */}
+                    {mainTab === 'interview' && (
+                        <div className="animate-in fade-in duration-300">
+                            <h3 className="text-2xl font-semibold text-gray-900 mb-6 text-left">면접 기록 조회</h3>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {mockInterviews.length > 0 ? (
+                                    mockInterviews.map((item) => (
+                                        <div key={item.id} className="group border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-purple-200 transition-all cursor-pointer bg-white">
+                                            <div className="flex justify-between items-center mb-4">
+                                                <span className="text-xs font-bold px-3 py-1 bg-purple-50 text-purple-600 rounded-lg">{item.type}</span>
+                                                <span className="text-xs text-gray-400 font-medium">{item.date}</span>
+                                            </div>
+                                            <h4 className="text-lg font-bold text-gray-900 mb-4 line-clamp-2">{item.title}</h4>
+                                            <div className="flex justify-between items-end mt-auto">
+                                                <div>
+                                                    <p className="text-xs text-gray-400 font-bold mb-1">진행 시간</p>
+                                                    <p className="text-xl font-bold text-gray-700">{item.duration}</p>
+                                                </div>
+                                                <button className="px-4 py-2 bg-gray-50 text-gray-600 rounded-xl text-sm font-bold group-hover:bg-purple-600 group-hover:text-white transition-colors">기록 보기</button>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="col-span-2 py-16 text-center bg-gray-50 rounded-2xl border border-gray-100 border-dashed">
+                                        <p className="text-gray-400 font-semibold">아직 면접 기록이 없습니다.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+                {/* 🌟 여기까지가 추가된 영역입니다 */}
 
                 <div className="border-t border-gray-100 pt-10">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-red-50 p-6 rounded-2xl border border-red-100">
@@ -198,7 +336,7 @@ const MyPage = () => {
                             <p className="text-red-600/80 text-sm font-medium">탈퇴 시 모든 활동 데이터가 삭제됩니다.</p>
                         </div>
                         <button 
-                            onClick={() => setShowModal(true)} // 1. 모달 띄우기 버튼
+                            onClick={() => setShowModal(true)}
                             className="bg-red-600 text-white px-8 py-3 rounded-xl hover:bg-red-700 transition-all font-bold shadow-lg shadow-red-200 active:scale-95"
                         >
                             회원 탈퇴
