@@ -347,7 +347,7 @@ const Signup = () => {
                         )}
                     </div>
 
-                    {/* 비밀번호 섹션 (비밀번호와 확인을 나란히 배치하고 싶다면 flex 가능하나, 안정감을 위해 수직 배치 유지 및 py 확장) */}
+                    {/* 비밀번호 섹션 */}
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">비밀번호</label>
                         <input type="password" name="password" value={formData.password} onChange={handleChange} onBlur={handlePwBlur} placeholder="8자 이상 영문, 숫자, 특수문자 조합" className={`w-full px-4 py-3 rounded-lg border outline-none transition ${pwError ? 'border-red-500 focus:ring-2 focus:ring-red-200' : 'border-gray-300 focus:ring-2 focus:ring-blue-500'}`} required />

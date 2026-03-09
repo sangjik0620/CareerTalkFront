@@ -102,7 +102,6 @@ const MyPage = () => {
         }
     };
 
-    // 🌟 탈퇴 실행 함수 (실제 요청이 날아가는 곳)
     const handleWithdrawal = async () => {
         console.log("탈퇴 요청 시작..."); // 디버깅용 로그
         try {
@@ -192,7 +191,6 @@ const MyPage = () => {
                     </div>
                 </div>
 
-                {/* 🌟 탈퇴 섹션 */}
                 <div className="border-t border-gray-100 pt-10">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-red-50 p-6 rounded-2xl border border-red-100">
                         <div>
@@ -209,23 +207,47 @@ const MyPage = () => {
                 </div>
             </div>
 
-            {/* 🌟 2. 회원 탈퇴 유의사항 모달 (이 코드가 반드시 있어야 함!) */}
             {showModal && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center z-[100] px-4">
-                    <div className="bg-white rounded-[2.5rem] p-10 max-w-md w-full shadow-2xl">
-                        <div className="text-center mb-8">
-                            <h3 className="text-2xl font-black text-gray-900 mb-2">정말 탈퇴하시겠습니까?</h3>
-                            <p className="text-gray-500 font-medium italic">탈퇴 시 모든 데이터가 즉시 삭제됩니다.</p>
+                <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center z-[100] px-4 animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl p-8 max-w-[400px] w-full shadow-2xl border border-gray-100">
+                        
+                        <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mb-6">
+                            <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
                         </div>
-                        <div className="flex gap-4">
-                            <button onClick={() => setShowModal(false)} className="flex-1 py-4 bg-gray-100 text-gray-700 rounded-2xl font-bold">취소</button>
-                            <button onClick={handleWithdrawal} className="flex-1 py-4 bg-red-600 text-white rounded-2xl font-bold hover:bg-red-700">탈퇴확인</button>
+
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">계정을 삭제하시겠습니까?</h3>
+                        <p className="text-gray-500 text-sm leading-relaxed mb-6">
+                            탈퇴 시 <strong className="text-gray-700 font-semibold">모든 면접 기록과 분석 리포트</strong>가 영구적으로 삭제되며, 이 작업은 되돌릴 수 없습니다.
+                        </p>
+
+                        <div className="bg-gray-50 rounded-xl p-4 mb-8 border border-gray-100">
+                            <ul className="text-xs text-gray-500 space-y-2 list-disc list-inside">
+                                <li>모든 활동 데이터 즉시 파기</li>
+                                <li>재가입 시 기존 데이터 복구 불가</li>
+                            </ul>
                         </div>
+
+                        <div className="flex gap-3">
+                            <button 
+                                onClick={() => setShowModal(false)} 
+                                className="flex-1 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors text-sm"
+                            >
+                                취소
+                            </button>
+                            <button 
+                                onClick={handleWithdrawal} 
+                                className="flex-1 py-3.5 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-colors text-sm shadow-sm"
+                            >
+                                계정 삭제
+                            </button>
+                        </div>
+                        
                     </div>
                 </div>
             )}
 
-            {/* 🌟 탈퇴 완료 알림창 */}
             {showAlert && (
                 <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[200] w-full max-w-sm px-6">
                     <div className="bg-gray-900 text-white p-6 rounded-[2rem] text-center shadow-2xl">
