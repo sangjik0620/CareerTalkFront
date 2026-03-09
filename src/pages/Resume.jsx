@@ -45,7 +45,14 @@ export default function Resume({ isOpen, onClose, onAnalyzeSuccess }) {
       setIsDragging(false);
       setIsAnalyzing(false);
       setViewStep("input");
+    }else {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("로그인이 필요한 서비스입니다.");
+      onClose?.();
+      navigate("/login");
     }
+  }
   }, [isOpen]);
 
   if (!isOpen) return null;
