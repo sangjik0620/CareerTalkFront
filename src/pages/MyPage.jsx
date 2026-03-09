@@ -197,6 +197,13 @@ const MyPage = () => {
                                     </button>
                                 )}
                             </div>
+
+                            {editMode && nicknameMsg && (
+                                <p className={`text-sm font-bold mt-2 animate-in fade-in ${isNicknameVerified ? 'text-green-500' : 'text-red-500'}`}>
+                                    {nicknameMsg}
+                                </p>
+                            )}
+
                         </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-8">
