@@ -2285,3 +2285,26 @@
   font-weight: 800;
   color: #ef4444;
 }
+.voice-coaching {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.voice-coaching h4 {
+  margin-bottom: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.voice-coaching-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.voice-coaching-item {
+  margin-bottom: 8px;
+  line-height: 1.6;
+  color: #374151;
+}

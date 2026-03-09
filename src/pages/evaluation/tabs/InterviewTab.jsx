@@ -22,9 +22,13 @@ export default function InterviewTab({ data, turns = [] }) {
 
   const hasTurns = Array.isArray(turns) && turns.length > 0;
 
-  const questionResponses = Array.isArray(ia?.questionResponses)
-    ? ia.questionResponses
-    : [];
+  const rawVoiceCoaching = ia?.voiceCoaching;
+
+  const voiceCoaching = Array.isArray(rawVoiceCoaching)
+    ? rawVoiceCoaching
+    : typeof rawVoiceCoaching === "string" && rawVoiceCoaching.trim()
+      ? [rawVoiceCoaching]
+      : [];
 
   function parseQuestionFeedback(text = "") {
     const clean = String(text).replace("상세 피드백:", "").trim();
@@ -42,64 +46,73 @@ export default function InterviewTab({ data, turns = [] }) {
     <div className="tab-content">
       <h2>면접 음성 및 답변 분석</h2>
 
-      {/* =========================
-          1️⃣ 음성 분석
-      ========================= */}
-      {isPlainObject(voiceMetrics) ? (
+      {isPlainObject(voiceMetrics) || voiceCoaching.length > 0 ? (
         <div className="voice-analysis">
           <h3>🎤 음성 분석</h3>
 
-          <div className="voice-metrics">
-            {Object.entries(voiceMetrics).map(([key, value]) => {
-              const labels = {
-                clarity: "명확성",
-                pace: "말하기 속도",
-                volume: "음량",
-                confidence: "자신감",
-                fillerWords: "추임새 (개)",
-              };
+          {isPlainObject(voiceMetrics) && (
+            <div className="voice-metrics">
+              {Object.entries(voiceMetrics).map(([key, value]) => {
+                const labels = {
+                  clarity: "명확성",
+                  pace: "말하기 속도",
+                  volume: "음량",
+                  confidence: "자신감",
+                  fillerWords: "추임새 (개)",
+                };
 
-              const v = clamp100(value);
+                const v = clamp100(value);
 
-              return (
-                <div key={key} className="voice-metric">
-                  <div className="metric-header">
-                    <span className="metric-name">{labels[key] ?? key}</span>
+                return (
+                  <div key={key} className="voice-metric">
+                    <div className="metric-header">
+                      <span className="metric-name">{labels[key] ?? key}</span>
 
-                    <span className="metric-score">
-                      {v}
-                      {key !== "fillerWords" && "%"}
-                    </span>
-                  </div>
-
-                  {key !== "fillerWords" && (
-                    <div className="metric-bar">
-                      <div
-                        className="metric-fill voice"
-                        style={{
-                          width: `${v}%`,
-                          backgroundColor: getScoreColor(v),
-                        }}
-                      />
+                      <span className="metric-score">
+                        {v}
+                        {key !== "fillerWords" && "%"}
+                      </span>
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+
+                    {key !== "fillerWords" && (
+                      <div className="metric-bar">
+                        <div
+                          className="metric-fill voice"
+                          style={{
+                            width: `${v}%`,
+                            backgroundColor: getScoreColor(v),
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {voiceCoaching.length > 0 && (
+            <div className="voice-coaching">
+              <h4>음성 코칭</h4>
+              <ul className="voice-coaching-list">
+                {voiceCoaching.map((item, idx) => (
+                  <li key={idx} className="voice-coaching-item">
+                    {typeof item === "string" ? item : JSON.stringify(item)}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       ) : (
         <div className="voice-analysis">
           <EmptyBlock
             title="음성 분석 데이터가 없습니다"
-            desc="누락: interviewAnalysis.voiceMetrics"
+            desc="누락: interviewAnalysis.voiceMetrics / interviewAnalysis.voiceCoaching"
           />
         </div>
       )}
 
-      {/* =========================
-          2️⃣ STT 분석
-      ========================= */}
       {isPlainObject(stt) ? (
         <div className="stt-analysis">
           <h3>📝 STT 분석</h3>
@@ -134,7 +147,7 @@ export default function InterviewTab({ data, turns = [] }) {
                 {Object.entries(keywordUsage).map(([type, count]) => {
                   const total = Object.values(keywordUsage).reduce(
                     (a, b) => a + (Number(b) || 0),
-                    0
+                    0,
                   );
 
                   const c = Number(count) || 0;
@@ -186,9 +199,6 @@ export default function InterviewTab({ data, turns = [] }) {
         </div>
       )}
 
-      {/* =========================
-          3️⃣ 질문별 분석 (turns)
-      ========================= */}
       <div className="question-responses">
         <h3>📋 질문별 답변 분석</h3>
 
@@ -201,10 +211,10 @@ export default function InterviewTab({ data, turns = [] }) {
           turns.map((t, idx) => {
             const question = t?.question ?? "";
             const response = t?.sttText ?? "";
-            const sttStatus = t?.sttStatus ?? "-";
-
             const duration = Number(t?.audio?.durationSec ?? 0);
+
             const s = t?.scores || {};
+            const fb = t?.feedback || {};
 
             const overallVoiceScore = clamp100(s?.overallVoiceScore);
             const confidenceScore = clamp100(s?.confidenceScore);
@@ -216,7 +226,6 @@ export default function InterviewTab({ data, turns = [] }) {
                 ? s.overallReliability
                 : null;
 
-            const grade = s?.overallGrade ?? "";
             const flags = Array.isArray(s?.flags) ? s.flags : [];
             const rawFlags =
               s?.raw?.tremor?.flags || s?.raw?.confidence?.flags || [];
@@ -225,17 +234,23 @@ export default function InterviewTab({ data, turns = [] }) {
             const overallColor = getScoreColor(overallVoiceScore);
             const preview = response ? response.substring(0, 100) : "";
 
-            const questionFeedback =
-              questionResponses.find(
-                (item) => Number(item?.turnNo ?? 0) === idx + 1
-              ) || null;
-
-            const oneLineFeedback = questionFeedback?.oneLineFeedback ?? "";
-            const fullFeedback = questionFeedback?.fullFeedback ?? "";
-            const answerScore = Number(questionFeedback?.score ?? 0);
+            const oneLineFeedback = fb?.oneLineFeedback ?? "";
+            const fullFeedback = fb?.fullFeedback ?? "";
+            const answerScore = Number(fb?.score ?? 0);
+            const sentimentScore =
+              typeof fb?.sentimentScore === "number" ? fb.sentimentScore : null;
+            const keywords = Array.isArray(fb?.keywords) ? fb.keywords : [];
 
             const { strength: feedbackStrength, weakness: feedbackWeakness } =
               parseQuestionFeedback(fullFeedback);
+
+            const hasFeedbackSection =
+              !!oneLineFeedback ||
+              !!feedbackStrength ||
+              !!feedbackWeakness ||
+              !!fullFeedback ||
+              keywords.length > 0 ||
+              sentimentScore != null;
 
             return (
               <div key={t?.turnId ?? idx} className="response-card">
@@ -298,11 +313,16 @@ export default function InterviewTab({ data, turns = [] }) {
 
                   <div className="voice-score-area">
                     <div className="voice-score-summary">
-                      <span className="voice-score-summary-label">종합 음성 점수</span>
+                      <span className="voice-score-summary-label">
+                        종합 음성 점수
+                      </span>
                       <span className="voice-score-summary-value">
-                        {overallVoiceScore != null ? `${overallVoiceScore}점` : "-"}
+                        {overallVoiceScore != null
+                          ? `${overallVoiceScore}점`
+                          : "-"}
                       </span>
                     </div>
+
                     <div className="voice-bar-chart">
                       <VerticalBar label="자신감" value={confidenceScore} />
                       <VerticalBar label="유창성" value={fluencyScore} />
@@ -344,7 +364,7 @@ export default function InterviewTab({ data, turns = [] }) {
                   </div>
                 )}
 
-                {(oneLineFeedback || feedbackStrength || feedbackWeakness) && (
+                {hasFeedbackSection && (
                   <div className="analysis-section" style={{ marginTop: 15 }}>
                     <h4>답변 피드백</h4>
 
@@ -367,11 +387,47 @@ export default function InterviewTab({ data, turns = [] }) {
                     )}
 
                     {feedbackWeakness && (
-                      <div>
+                      <div style={{ marginBottom: "5px" }}>
                         <strong>보완점</strong>
                         <div style={{ whiteSpace: "pre-wrap" }}>
                           {feedbackWeakness}
                         </div>
+                      </div>
+                    )}
+
+                    {fullFeedback && !feedbackStrength && !feedbackWeakness && (
+                      <div style={{ marginBottom: "10px" }}>
+                        <strong>상세 피드백</strong>
+                        <div style={{ whiteSpace: "pre-wrap" }}>
+                          {fullFeedback}
+                        </div>
+                      </div>
+                    )}
+
+                    {keywords.length > 0 && (
+                      <div style={{ marginTop: "10px" }}>
+                        <strong>키워드</strong>
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: 8,
+                            flexWrap: "wrap",
+                            marginTop: 6,
+                          }}
+                        >
+                          {keywords.map((kw, i) => (
+                            <span key={`${kw}-${i}`} className="flag-chip info">
+                              {kw}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {sentimentScore != null && (
+                      <div style={{ marginTop: "10px" }}>
+                        <strong>긍정도</strong>
+                        <div>😊 {sentimentScore}%</div>
                       </div>
                     )}
                   </div>

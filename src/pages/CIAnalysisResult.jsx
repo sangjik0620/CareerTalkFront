@@ -10,144 +10,198 @@ export default function CIAnalysisResult() {
 
   const passedResult = location.state?.result;
 
-  // DB 연결 전까지 목업(안전망)
-  const mock = useMemo(
-    () => ({
-      analysisId,
-      title: "네이버 백엔드 지원",
-      content: "샘플 자기소개서 내용입니다.",
-      ruleScore: 0,
-      llmScore: 0,
-      totalScore: 0,
-      strengths: "샘플 강점",
-      weaknesses: "샘플 약점",
-      feedback: "샘플 피드백",
-      questions: [],
-      questionIntents: [],
-      updatedAt: "2026-02-26 12:30",
-      jobRole: "",
-      jobDetail: "",
-    }),
-    [analysisId],
-  );
-
   const [data, setData] = useState(null);
   const [tab, setTab] = useState("ORIGINAL");
   const [rewrite, setRewrite] = useState("");
   const [rewriteNotes, setRewriteNotes] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [toast, setToast] = useState("");
 
+  const ANALYSIS_DETAIL_URL = useMemo(
+    () => `${API_BASE}/api/coverletter/analysis/${analysisId}`,
+    [analysisId],
+  );
+
   useEffect(() => {
-    if (passedResult) {
-      setData(passedResult);
-      localStorage.setItem("ci_result", JSON.stringify(passedResult));
-      return;
-    }
+    let ignore = false;
 
-    const raw = localStorage.getItem("ci_result");
-    if (raw) {
+    const loadAnalysis = async () => {
       try {
-        setData(JSON.parse(raw));
-        return;
-      } catch {}
-    }
+        setIsLoading(true);
 
-    setData(mock);
-  }, [passedResult, mock]);
+        if (passedResult) {
+          if (!ignore) {
+            setData(passedResult);
+            setRewrite("");
+            setRewriteNotes([]);
+          }
+          return;
+        }
 
-  if (!data) return null;
+        const token =
+          localStorage.getItem("token") || localStorage.getItem("accessToken");
 
-  const rule = data.ruleScore ?? 0;
-  const llm = data.llmScore ?? 0;
-  const total = data.totalScore ?? 0;
+        const response = await fetch(ANALYSIS_DETAIL_URL, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
 
-  //질문 정규화
-  const normalizedQuestions = (() => {
-    const q = data.questions;
+        if (!response.ok) {
+          throw new Error(`분석 결과 조회 실패: ${response.status}`);
+        }
+
+        const resData = await response.json();
+        console.log("analysis detail response:", resData);
+
+        const normalized = resData?.data ?? resData?.result ?? resData;
+
+        if (!ignore) {
+          setData(normalized);
+          setRewrite("");
+          setRewriteNotes([]);
+        }
+      } catch (error) {
+        console.error("분석 결과 불러오기 실패:", error);
+        if (!ignore) {
+          setData(null);
+          showToast("분석 결과를 불러오지 못했습니다.");
+        }
+      } finally {
+        if (!ignore) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadAnalysis();
+
+    return () => {
+      ignore = true;
+    };
+  }, [passedResult, ANALYSIS_DETAIL_URL]);
+
+  const showToast = (message, delay = 1800) => {
+    setToast(message);
+    window.setTimeout(() => setToast(""), delay);
+  };
+
+  const normalizedQuestions = useMemo(() => {
+    const q = data?.questions;
     if (!Array.isArray(q) || q.length === 0) return [];
 
-    if (typeof q[0] === "string") {
-      return q.map((question, i) => ({
-        question,
-        intent:
-          Array.isArray(data.questionIntents) && data.questionIntents[i]
-            ? data.questionIntents[i]
-            : "",
-      }));
-    }
-
-    if (typeof q[0] === "object") {
-      return q.map((item, i) => ({
-        question: item?.q || item?.question || "",
-        intent:
-          item?.intent ||
-          (Array.isArray(data.questionIntents) && data.questionIntents[i]
-            ? data.questionIntents[i]
-            : ""),
-      }));
-    }
-
-    return [];
-  })();
+    return q.map((item) => ({
+      question: item?.q || "",
+      intent: item?.intent || "",
+    }));
+  }, [data]);
 
   const top3 = normalizedQuestions.slice(0, 3);
 
-  //rewrite ai개선본 호출
   const handleGenerateRewrite = async () => {
     if (isGenerating) return;
 
-    setIsGenerating(true);
-    setToast("");
-
     try {
+      setIsGenerating(true);
+      setTab("REWRITE");
+      setToast("");
+
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
+
+      const payload = {
+        analysisId: Number(data?.analysisId ?? analysisId),
+        jobRole: data?.jobRole ?? "",
+        jobDetail: data?.jobDetail ?? "",
+        title: data?.title ?? "",
+        content: data?.content ?? "",
+      };
+
+      console.log("rewrite payload =", payload);
+
       const res = await fetch(`${API_BASE}/api/ci/rewrite`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          jobRole: data.jobRole || "",
-          jobDetail: data.jobDetail || "",
-          title: data.title,
-          content: data.content,
-        }),
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(payload),
       });
 
+      const raw = await res.text();
+      console.log("rewrite response =", raw);
+
       if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        throw new Error(`rewrite API 실패: ${res.status} ${text}`);
+        throw new Error(`개선본 생성 실패: ${res.status} / ${raw}`);
       }
 
-      const result = await res.json();
+      const result = JSON.parse(raw);
 
-      setRewrite(result.rewrittenEssay || "");
-      setRewriteNotes(result.changeSummary || []);
-      setTab("REWRITE");
+      setRewrite(result.rewrittenEssay ?? "");
+      setRewriteNotes(result.changeSummary ?? []);
+      showToast("AI 개선본 생성 완료!");
     } catch (e) {
-      console.error(e);
-      setToast("개선본 생성에 실패했어요. (백엔드/콘솔 확인)");
-      setTimeout(() => setToast(""), 2000);
+      console.error("개선본 생성 실패:", e);
+      showToast(e.message || "개선본 생성 중 오류가 발생했습니다.", 2200);
     } finally {
       setIsGenerating(false);
     }
   };
 
   const handleCopy = async () => {
-    const text = tab === "ORIGINAL" ? data.content : rewrite;
+    const text = tab === "ORIGINAL" ? data?.content : rewrite;
     if (!text?.trim()) return;
 
     try {
       await navigator.clipboard.writeText(text);
-      setToast("복사 완료!");
-      setTimeout(() => setToast(""), 1500);
-    } catch {
-      setToast("복사 실패 (브라우저 권한 확인)");
-      setTimeout(() => setToast(""), 2000);
+      showToast("복사 완료!");
+    } catch (error) {
+      console.error("복사 실패:", error);
+      showToast("복사 실패", 2200);
     }
   };
 
+  if (isLoading) {
+    return (
+      <div style={pageStyle}>
+        <div style={loadingCardStyle}>분석 결과를 불러오는 중입니다...</div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div style={pageStyle}>
+        <div style={emptyCardStyle}>
+          분석 결과 데이터가 없습니다. 분석 페이지에서 다시 실행해 주세요.
+          <div style={{ marginTop: 16 }}>
+            <button style={btnPrimary} onClick={() => navigate(-1)}>
+              이전 페이지로
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const rule = data.ruleScore ?? 0;
+  const llm = data.llmScore ?? 0;
+  const total = data.totalScore ?? 0;
+
   return (
     <div style={pageStyle}>
-      {/* 상단 바 */}
+      <style>
+        {`
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+        `}
+      </style>
+
       <div style={topBarStyle}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <button style={btnGhost} onClick={() => navigate(-1)}>
@@ -156,7 +210,8 @@ export default function CIAnalysisResult() {
           <div>
             <div style={topTitleStyle}>자기소개서 분석 결과</div>
             <div style={topSubStyle}>
-              분석 ID: {data.analysisId} · 업데이트: {data.updatedAt}
+              분석 ID: {data.analysisId || analysisId} · 업데이트:{" "}
+              {data.updatedAt || "-"}
             </div>
           </div>
         </div>
@@ -172,7 +227,6 @@ export default function CIAnalysisResult() {
         </div>
       </div>
 
-      {/* 메인 */}
       <div style={mainGridStyle}>
         <div style={wordShellStyle}>
           <div style={wordHeaderStyle}>
@@ -195,7 +249,7 @@ export default function CIAnalysisResult() {
               <button
                 style={tab === "REWRITE" ? tabActiveStyle : tabStyle}
                 onClick={() => setTab("REWRITE")}
-                disabled={!rewrite}
+                disabled={!rewrite && !isGenerating}
               >
                 AI 개선본
               </button>
@@ -223,12 +277,28 @@ export default function CIAnalysisResult() {
               </button>
             </div>
 
-            <pre style={essayTextStyle}>
-              {tab === "ORIGINAL"
-                ? data.content
-                : rewrite ||
-                  "아직 AI 개선본이 없어요. ‘AI 개선본 생성’을 눌러주세요."}
-            </pre>
+            <div style={essayBodyWrapStyle}>
+              {tab === "REWRITE" && isGenerating ? (
+                <div style={rewriteLoadingWrapStyle}>
+                  <div style={spinnerStyle} />
+                  <div style={rewriteLoadingTitleStyle}>
+                    AI가 개선본을 생성하고 있어요
+                  </div>
+                  <div style={rewriteLoadingDescStyle}>
+                    문장 구조와 표현을 다듬는 중입니다.
+                    <br />
+                    잠시만 기다려 주세요.
+                  </div>
+                </div>
+              ) : (
+                <pre style={essayTextStyle}>
+                  {tab === "ORIGINAL"
+                    ? data.content
+                    : rewrite ||
+                      "아직 AI 개선본이 없어요. ‘AI 개선본 생성’을 눌러주세요."}
+                </pre>
+              )}
+            </div>
           </div>
 
           {tab === "REWRITE" && rewriteNotes?.length > 0 && (
@@ -247,7 +317,6 @@ export default function CIAnalysisResult() {
           )}
         </div>
 
-        {/* 피드백 패널 */}
         <div style={sidePanelStyle}>
           <div style={panelHeaderStyle}>
             <div style={{ fontWeight: 900, color: "#0b1b3a" }}>AI 피드백</div>
@@ -271,7 +340,6 @@ export default function CIAnalysisResult() {
         </div>
       </div>
 
-      {/* 예상질문 */}
       <div style={bottomStyle}>
         <div style={bottomHeaderStyle}>
           <div style={{ fontWeight: 900, color: "#0b1b3a" }}>
@@ -332,7 +400,7 @@ function FeedbackCard({ title, text }) {
   return (
     <div style={feedbackCardStyle}>
       <div style={feedbackTitleStyle}>{title}</div>
-      <div style={feedbackTextStyle}>{text}</div>
+      <div style={feedbackTextStyle}>{text || "-"}</div>
     </div>
   );
 }
@@ -380,8 +448,30 @@ function QuestionCardTailwind({ index, question, intent }) {
   );
 }
 
-/* 스타일 */
 const pageStyle = { minHeight: "100vh", background: "#f4f8ff", padding: 24 };
+
+const loadingCardStyle = {
+  maxWidth: 1200,
+  margin: "40px auto",
+  background: "#fff",
+  borderRadius: 16,
+  padding: 24,
+  border: "1px solid rgba(15, 60, 160, 0.10)",
+  boxShadow: "0 12px 34px rgba(10, 30, 80, 0.08)",
+  color: "#0b1b3a",
+};
+
+const emptyCardStyle = {
+  maxWidth: 1200,
+  margin: "40px auto",
+  background: "#fff",
+  borderRadius: 16,
+  padding: 24,
+  border: "1px solid rgba(15, 60, 160, 0.10)",
+  boxShadow: "0 12px 34px rgba(10, 30, 80, 0.08)",
+  color: "#0b1b3a",
+};
+
 const topBarStyle = {
   maxWidth: 1200,
   margin: "0 auto 16px",
@@ -395,12 +485,15 @@ const topBarStyle = {
   justifyContent: "space-between",
   gap: 12,
 };
+
 const topTitleStyle = { fontSize: 16, fontWeight: 900, color: "#0b1b3a" };
+
 const topSubStyle = {
   fontSize: 12,
   color: "rgba(11,27,58,0.65)",
   marginTop: 2,
 };
+
 const scorePillStyle = {
   padding: "10px 14px",
   borderRadius: 999,
@@ -409,6 +502,7 @@ const scorePillStyle = {
   color: "#1f55ff",
   fontSize: 13,
 };
+
 const mainGridStyle = {
   maxWidth: 1200,
   margin: "0 auto",
@@ -418,6 +512,7 @@ const mainGridStyle = {
   minHeight: "calc(100vh - 140px)",
   alignItems: "stretch",
 };
+
 const wordShellStyle = {
   background: "transparent",
   borderRadius: 16,
@@ -425,6 +520,7 @@ const wordShellStyle = {
   flexDirection: "column",
   height: "100%",
 };
+
 const wordHeaderStyle = {
   display: "flex",
   alignItems: "center",
@@ -436,6 +532,7 @@ const wordHeaderStyle = {
   boxShadow: "0 10px 26px rgba(10,30,80,0.06)",
   marginBottom: 12,
 };
+
 const docBadgeStyle = {
   width: 44,
   height: 44,
@@ -448,12 +545,15 @@ const docBadgeStyle = {
   border: "1px solid rgba(31,85,255,0.25)",
   background: "#f4f8ff",
 };
+
 const docTitleStyle = { fontSize: 15, fontWeight: 900, color: "#0b1b3a" };
+
 const docMetaStyle = {
   fontSize: 12,
   color: "rgba(11,27,58,0.65)",
   marginTop: 2,
 };
+
 const tabStyle = {
   padding: "8px 12px",
   borderRadius: 999,
@@ -464,6 +564,7 @@ const tabStyle = {
   color: "rgba(11,27,58,0.75)",
   border: "1px solid rgba(15, 60, 160, 0.16)",
 };
+
 const tabActiveStyle = {
   ...tabStyle,
   background: "linear-gradient(180deg, #ffffff 0%, #f6f9ff 100%)",
@@ -471,6 +572,7 @@ const tabActiveStyle = {
   border: "1px solid rgba(31,85,255,0.35)",
   boxShadow: "0 10px 22px rgba(31,85,255,0.12)",
 };
+
 const wordPageStyle = {
   background: "#ffffff",
   borderRadius: 16,
@@ -480,6 +582,7 @@ const wordPageStyle = {
   flex: 1,
   minHeight: 0,
 };
+
 const wordToolbarStyle = {
   display: "flex",
   justifyContent: "space-between",
@@ -490,6 +593,7 @@ const wordToolbarStyle = {
   background:
     "linear-gradient(180deg, rgba(245,250,255,1) 0%, rgba(255,255,255,1) 60%)",
 };
+
 const toolbarBadgeStyle = {
   padding: "6px 10px",
   borderRadius: 999,
@@ -499,6 +603,13 @@ const toolbarBadgeStyle = {
   border: "1px solid rgba(31,85,255,0.25)",
   background: "#fff",
 };
+
+const essayBodyWrapStyle = {
+  minHeight: 420,
+  display: "flex",
+  alignItems: "stretch",
+};
+
 const essayTextStyle = {
   margin: 0,
   padding: "34px 42px",
@@ -506,9 +617,46 @@ const essayTextStyle = {
   fontSize: 15,
   color: "#0b1b3a",
   whiteSpace: "pre-wrap",
+  width: "100%",
   fontFamily:
     'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif',
 };
+
+const rewriteLoadingWrapStyle = {
+  minHeight: 420,
+  width: "100%",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "40px 24px",
+  color: "#0b1b3a",
+};
+
+const rewriteLoadingTitleStyle = {
+  marginTop: 16,
+  fontSize: 18,
+  fontWeight: 900,
+  color: "#0b1b3a",
+};
+
+const rewriteLoadingDescStyle = {
+  marginTop: 8,
+  fontSize: 13,
+  color: "rgba(11,27,58,0.65)",
+  textAlign: "center",
+  lineHeight: 1.6,
+};
+
+const spinnerStyle = {
+  width: 42,
+  height: 42,
+  borderRadius: "50%",
+  border: "4px solid rgba(31,85,255,0.16)",
+  borderTop: "4px solid #1f55ff",
+  animation: "spin 0.9s linear infinite",
+};
+
 const notesBoxStyle = {
   marginTop: 12,
   background: "#ffffff",
@@ -517,45 +665,55 @@ const notesBoxStyle = {
   boxShadow: "0 12px 34px rgba(10, 30, 80, 0.06)",
   padding: "12px 14px",
 };
+
 const notesListStyle = { margin: "8px 0 0", paddingLeft: 18 };
+
 const notesItemStyle = {
   fontSize: 13,
   color: "rgba(11,27,58,0.78)",
   lineHeight: 1.6,
 };
+
 const sidePanelStyle = {
   background: "#ffffff",
   borderRadius: 16,
   border: "1px solid rgba(15, 60, 160, 0.10)",
   boxShadow: "0 12px 34px rgba(10, 30, 80, 0.08)",
-  overflow: "hidden",
+  overflowY: "auto",
+  overflowX: "hidden",
   position: "sticky",
   top: 18,
   alignSelf: "start",
   maxHeight: "calc(100vh - 140px)",
 };
+
 const panelHeaderStyle = {
   padding: "14px 14px",
   borderBottom: "1px solid rgba(15, 60, 160, 0.08)",
   background:
     "linear-gradient(180deg, rgba(245,250,255,1) 0%, rgba(255,255,255,1) 60%)",
 };
+
 const panelHintStyle = {
   fontSize: 12,
   color: "rgba(11,27,58,0.65)",
   marginTop: 4,
 };
+
 const panelBodyStyle = {
   padding: 14,
   display: "flex",
   flexDirection: "column",
   gap: 10,
+  minHeight: 0,
 };
+
 const panelDividerStyle = {
   height: 1,
   background: "rgba(15, 60, 160, 0.08)",
   margin: "6px 0",
 };
+
 const bottomStyle = {
   maxWidth: 1200,
   margin: "16px auto 0",
@@ -565,18 +723,21 @@ const bottomStyle = {
   boxShadow: "0 12px 34px rgba(10, 30, 80, 0.08)",
   overflow: "hidden",
 };
+
 const bottomHeaderStyle = {
   padding: "14px 14px",
   borderBottom: "1px solid rgba(15, 60, 160, 0.08)",
   background:
     "linear-gradient(180deg, rgba(245,250,255,1) 0%, rgba(255,255,255,1) 60%)",
 };
+
 const questionGridStyle = {
   padding: 14,
   display: "grid",
   gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
   gap: 12,
 };
+
 const scoreCardStyle = {
   border: "1px solid rgba(15, 60, 160, 0.12)",
   borderRadius: 16,
@@ -586,6 +747,7 @@ const scoreCardStyle = {
   gap: 12,
   alignItems: "center",
 };
+
 const scoreCircleStyle = {
   width: 78,
   height: 78,
@@ -599,30 +761,38 @@ const scoreCircleStyle = {
   boxShadow: "0 16px 30px rgba(31,85,255,0.25)",
   flex: "0 0 auto",
 };
+
 const miniRowStyle = {
   display: "flex",
   justifyContent: "space-between",
   marginTop: 8,
   gap: 10,
 };
+
 const miniLabelStyle = { fontSize: 12, color: "rgba(11,27,58,0.65)" };
 const miniValueStyle = { fontSize: 12, fontWeight: 900, color: "#0b1b3a" };
+
 const feedbackCardStyle = {
   border: "1px solid rgba(15, 60, 160, 0.12)",
   borderRadius: 16,
   padding: 12,
   background: "#fff",
 };
+
 const feedbackTitleStyle = {
   fontWeight: 900,
   color: "#0b1b3a",
   marginBottom: 6,
 };
+
 const feedbackTextStyle = {
   fontSize: 13,
   color: "rgba(11,27,58,0.75)",
-  lineHeight: 1.6,
+  lineHeight: 1.7,
+  whiteSpace: "pre-wrap",
+  wordBreak: "keep-all",
 };
+
 const btnBase = {
   padding: "10px 14px",
   borderRadius: 999,
@@ -631,6 +801,7 @@ const btnBase = {
   cursor: "pointer",
   transition: "all 0.15s ease",
 };
+
 const btnPrimary = {
   ...btnBase,
   background: "#1f55ff",
@@ -638,6 +809,7 @@ const btnPrimary = {
   border: "1px solid #1f55ff",
   boxShadow: "0 10px 22px rgba(31,85,255,0.25)",
 };
+
 const btnPrimarySmall = {
   ...btnBase,
   padding: "9px 12px",
@@ -647,18 +819,21 @@ const btnPrimarySmall = {
   border: "1px solid #1f55ff",
   boxShadow: "0 10px 22px rgba(31,85,255,0.22)",
 };
+
 const btnOutline = {
   ...btnBase,
   background: "#fff",
   color: "#1f55ff",
   border: "1px solid rgba(31,85,255,0.35)",
 };
+
 const btnGhost = {
   ...btnBase,
   background: "#fff",
   color: "#0b1b3a",
   border: "1px solid rgba(15, 60, 160, 0.15)",
 };
+
 const toastStyle = {
   position: "fixed",
   left: "50%",
