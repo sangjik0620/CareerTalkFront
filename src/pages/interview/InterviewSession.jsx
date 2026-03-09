@@ -319,52 +319,67 @@ export default function InterviewSession() {
     setModalOpen(true);
   }
 
-  async function uploadRecordingsToServer() {
-    const filesToUpload = recordings
-      .map((r, idx) => ({ r, idx }))
-      .filter(({ r }) => r?.blob);
+async function uploadRecordingsToServer() {
+  const filesToUpload = recordings
+    .map((r, idx) => ({ r, idx }))
+    .filter(({ r }) => r?.blob);
 
-    if (filesToUpload.length === 0) throw new Error("업로드할 녹음 파일이 없습니다.");
+  if (filesToUpload.length === 0) {
+    throw new Error("업로드할 녹음 파일이 없습니다.");
+  }
 
-    const fd = new FormData();
-    filesToUpload.forEach(({ r, idx }) => {
-      const ext = r.mimeType?.includes("webm") ? "webm" : "ogg";
-      const file = new File([r.blob], `q${idx + 1}.${ext}`, { type: r.mimeType });
-      fd.append("files", file);
+  const fd = new FormData();
+
+  filesToUpload.forEach(({ r, idx }) => {
+    const ext = r.mimeType?.includes("webm") ? "webm" : "wav";
+    const audioFile = new File(
+      [r.blob],
+      `answer-${idx + 1}.${ext}`,
+      { type: r.mimeType || "audio/webm" }
+    );
+
+    fd.append("files", audioFile);
+  });
+
+  questions.forEach((q) => fd.append("questions", q));
+  fd.append("durationSec", String(seconds));
+  fd.append("questionCount", String(questions.length));
+
+  if (interviewData?.targets?.length) {
+    fd.append("targetsJson", JSON.stringify(interviewData.targets));
+  }
+
+  setIsUploading(true);
+  setUploadProgress(0);
+  setUploadError("");
+
+  try {
+    const res = await api.post("/api/interview/upload", fd, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+      onUploadProgress: (evt) => {
+        if (!evt.total) return;
+        const pct = Math.round((evt.loaded * 100) / evt.total);
+        setUploadProgress(pct);
+      },
     });
 
-    questions.forEach((q) => fd.append("questions", q));
-    fd.append("durationSec", String(seconds));
-    fd.append("questionCount", String(questions.length));
+    const sessionId = res?.data?.sessionId ?? null;
+    setUploadedSessionId(sessionId);
+    return res.data;
+  } catch (e) {
+    const msg =
+      e?.response?.data?.message ||
+      e?.message ||
+      "업로드에 실패했습니다. 잠시 후 다시 시도해주세요.";
 
-    setIsUploading(true);
-    setUploadProgress(0);
-    setUploadError("");
-
-    try {
-      const res = await api.post("/api/interview/upload", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-        onUploadProgress: (evt) => {
-          if (!evt.total) return;
-          const pct = Math.round((evt.loaded * 100) / evt.total);
-          setUploadProgress(pct);
-        },
-      });
-
-      const sessionId = res?.data?.sessionId ?? null;
-      setUploadedSessionId(sessionId);
-      return res.data;
-    } catch (e) {
-      const msg =
-        e?.response?.data?.message ||
-        e?.message ||
-        "업로드에 실패했습니다. 잠시 후 다시 시도해주세요.";
-      setUploadError(msg);
-      throw new Error(msg);
-    } finally {
-      setIsUploading(false);
-    }
+    setUploadError(msg);
+    throw new Error(msg);
+  } finally {
+    setIsUploading(false);
   }
+}
 
   async function viewResults() {
   try {

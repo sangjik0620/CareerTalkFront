@@ -161,12 +161,12 @@ const Evaluation = ({ evaluationData }) => {
   onPrintError: (err) => console.error("[print] error:", err),
 
   // ✅ 인쇄 iframe 로딩 완료 후 호출 (디버그에도 유용)
-  onAfterPrint: () => console.log("[print] done"),
-  onPrintError: (err) => console.error("[print] error:", err),
+  // onAfterPrint: () => console.log("[print] done"),
+  // onPrintError: (err) => console.error("[print] error:", err),
 
   // ✅ 프린트 전에 렌더 안정화(차트/폰트 반영)
   onBeforePrint: async () => {
-    console.log("[print] beforePrint, ref:", reportPrintRef.current);
+    // console.log("[print] beforePrint, ref:", reportPrintRef.current);
     await new Promise((r) => setTimeout(r, 50));
   },
 });
