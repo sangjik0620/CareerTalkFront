@@ -447,7 +447,7 @@ const Navigation = ({ onStart }) => {
   const [scrolled, setScrolled] = useState(false);
 
   // 로그인 상태 관리
-  const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')));
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -457,7 +457,7 @@ const Navigation = ({ onStart }) => {
 
   // 로그아웃
   const handleLogout = () => {
-    localStorage.removeItem('user'); // 스토리지 비우기
+    localStorage.removeItem("user"); // 스토리지 비우기
     setUser(null); // 상태 초기화
     // alert("로그아웃 되었습니다.");
     window.location.href = "/";
@@ -525,10 +525,12 @@ const Navigation = ({ onStart }) => {
 
             {user ? (
               <div className="flex items-center space-x-4">
-                <span className={`font-semibold ${scrolled ? "text-primary-600" : "text-blue-600"}`}>
+                <span
+                  className={`font-semibold ${scrolled ? "text-primary-600" : "text-blue-600"}`}
+                >
                   {user.nickname}님
                 </span>
-                <button 
+                <button
                   onClick={handleLogout}
                   className="text-gray-700 hover:text-blue-600 transition font-medium"
                 >
@@ -536,8 +538,8 @@ const Navigation = ({ onStart }) => {
                 </button>
               </div>
             ) : (
-              <a 
-                href="/login" 
+              <a
+                href="/login"
                 className="text-gray-700 hover:text-blue-600 transition font-medium"
               >
                 로그인
@@ -594,12 +596,12 @@ const Navigation = ({ onStart }) => {
             </a>
 
             {user && (
-            <a
-              href="/mypage"
-              className="block px-3 py-2 text-gray-700 hover:bg-blue-50 rounded-md"
-            >
-              마이페이지
-            </a>
+              <a
+                href="/mypage"
+                className="block px-3 py-2 text-gray-700 hover:bg-blue-50 rounded-md"
+              >
+                마이페이지
+              </a>
             )}
 
             {user ? (
@@ -607,7 +609,7 @@ const Navigation = ({ onStart }) => {
                 <div className="px-3 py-2 text-primary-600 font-bold border-b border-gray-100">
                   {user.nickname}님 환영합니다
                 </div>
-                <button 
+                <button
                   onClick={handleLogout}
                   className="w-full text-left px-3 py-2 text-red-500 hover:bg-red-50 rounded-md"
                 >
@@ -615,7 +617,10 @@ const Navigation = ({ onStart }) => {
                 </button>
               </>
             ) : (
-              <a href="/login" className="block px-3 py-2 text-gray-700 hover:bg-primary-50 rounded-md">
+              <a
+                href="/login"
+                className="block px-3 py-2 text-gray-700 hover:bg-primary-50 rounded-md"
+              >
                 로그인
               </a>
             )}
@@ -1280,29 +1285,29 @@ export default function Home() {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const isLoginSuccess = params.get('loginSuccess');
+    const isLoginSuccess = params.get("loginSuccess");
 
-    if (isLoginSuccess === 'true' && !isProcessed.current) {
+    if (isLoginSuccess === "true" && !isProcessed.current) {
       isProcessed.current = true;
 
-      const token = params.get('token');
-      const loginId = params.get('loginId');
-      
+      const token = params.get("token");
+      const loginId = params.get("loginId");
+
       if (token) {
-        localStorage.setItem('token', token);
+        localStorage.setItem("token", token);
       }
 
       const userData = {
         loginId: loginId,
-        email: params.get('email'),
-        nickname: params.get('nickname'),
-        targetJob: params.get('targetJob'),
+        email: params.get("email"),
+        nickname: params.get("nickname"),
+        targetJob: params.get("targetJob"),
       };
 
-      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem("user", JSON.stringify(userData));
 
       window.history.replaceState({}, document.title, window.location.pathname);
-      window.location.href = '/'; 
+      window.location.href = "/";
     }
   }, [location]);
 

@@ -99,7 +99,7 @@ const PortfolioResultPage = () => {
             {/* 💡 닉네임을 강조하여 표시 */}
             <div style={topTitleStyle}>
               <span style={{ color: "#1f55ff", fontWeight: 900 }}>
-                {currentData.nickname}
+                {currentData?.nickname}
               </span>
               님의 포트폴리오 분석 결과
             </div>
