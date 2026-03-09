@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 
@@ -21,6 +21,22 @@ const Signup = () => {
     const [pwError, setPwError] = useState(false);
     const [showDuplicateModal, setShowDuplicateModal] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
+    const [showSentModal, setShowSentModal] = useState(false); 
+
+    const [timer, setTimer] = useState(0); 
+    const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+
+    useEffect(() => {
+        let interval;
+        if (timer > 0) {
+            interval = setInterval(() => {
+                setTimer((prev) => prev - 1);
+            }, 1000);
+        } else {
+            clearInterval(interval);
+        }
+        return () => clearInterval(interval);
+    }, [timer]);
 
     const formatPhoneNumber = (value) => {
         if (!value) return value;
@@ -76,11 +92,15 @@ const Signup = () => {
 
         try {
             const { passwordConfirm, ...submitData } = formData;
-            
-
             const response = await axios.post('http://localhost:8080/api/member/signup', submitData);
-            alert("회원가입이 완료되었습니다!"); 
-            navigate('/login');
+
+            // alert("회원가입이 완료되었습니다!"); 
+            setShowWelcomeModal(true);
+            setTimeout(() => {
+                setShowWelcomeModal(false);
+                navigate('/login');
+            }, 3000);
+            // navigate('/login');
         } catch (error) {
             alert(error.response?.data || '회원가입 정보가 올바르지 않습니다.');
         }
@@ -147,7 +167,9 @@ const Signup = () => {
         try {
             await axios.post(`http://localhost:8080/api/member/send-email?email=${formData.email}`);
             setIsEmailSent(true);
-            alert("인증 코드가 발송되었습니다.");
+            setTimer(20);
+            setShowSentModal(true);
+            setTimeout(() => setShowSentModal(false), 3000);
         } catch (error) {
             // 409(중복)이거나, 500(서버에러-중복데이터때문)일 때 모달 띄우기
             if (error.response?.status === 409 || error.response?.status === 500) {
@@ -172,7 +194,7 @@ const Signup = () => {
         
         if (response.data) {
             setIsEmailVerified(true);
-            alert("인증에 성공했습니다.");
+            // alert("인증에 성공했습니다.");
         } else {
             alert("인증 번호가 일치하지 않습니다.");
         }
@@ -183,6 +205,40 @@ const Signup = () => {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 font-sans py-12 px-4">
+
+            {showSentModal && (
+                <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[300] w-full max-w-sm px-6 animate-in fade-in zoom-in slide-in-from-top-10 duration-500">
+                    <div className="bg-white/80 backdrop-blur-xl border border-blue-100 p-5 rounded-[2.5rem] shadow-[0_20px_50px_rgba(8,126,255,0.15)] flex items-center gap-5">
+                        <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-3xl flex items-center justify-center shadow-lg shadow-blue-200 shrink-0 animate-bounce">
+                            <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        
+                        <div className="text-left">
+                            <h4 className="text-gray-900 font-black text-lg leading-tight">메일 발송 완료!</h4>
+                            <p className="text-gray-500 text-xs font-bold mt-0.5 italic">인증번호가 도착했습니다.</p>
+                        </div>
+
+                        <div className="ml-auto pr-2">
+                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-ping"></div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showWelcomeModal && (
+                <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[200] w-full max-w-sm px-4">
+                    <div className="bg-white border-2 border-blue-500 p-8 rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.1)] flex flex-col items-center text-center animate-in fade-in slide-in-from-top-10">
+                        <h3 className="text-xl font-black text-gray-900 mb-2">가입을 축하합니다!</h3>
+                        <p className="text-gray-600 font-medium text-sm leading-relaxed">
+                            이제 CareerTalk의 모든 기능을 이용하실 수 있습니다!<br/>
+                            <span className="text-blue-500 text-xs mt-2 block">3초 후 로그인 페이지로 이동합니다.</span>
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {showDuplicateModal && (
                 <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[100] animate-bounce">
                     <div className="bg-red-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border-2 border-red-400">
@@ -254,10 +310,16 @@ const Signup = () => {
                             <button 
                                 type="button"
                                 onClick={sendVerificationEmail}
-                                disabled={isEmailVerified || emailError || !formData.email}
-                                className="px-6 py-3 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition text-sm font-semibold whitespace-nowrap disabled:bg-gray-400"
+                                disabled={isEmailVerified || emailError || !formData.email || timer > 0}
+                                className={`w-[110px] flex justify-center items-center py-3 rounded-lg transition text-sm font-bold whitespace-nowrap shadow-sm
+                                    ${isEmailVerified 
+                                        ? 'bg-green-500 text-white cursor-default' 
+                                        : 'bg-gray-800 text-white hover:bg-gray-700 disabled:bg-gray-300 disabled:text-gray-500'}`}
                             >
-                                {isEmailSent ? "재발송" : "인증 요청"}
+                                {isEmailVerified 
+                                    ? "인증 완료" 
+                                    : (timer > 0 ? `${timer}초` : (isEmailSent ? "재발송" : "인증 요청"))
+                                }
                             </button>
                         </div>
                         {emailError && <p className="text-red-500 text-xs mt-1.5 ml-1">올바른 이메일 형식이 아닙니다.</p>}
