@@ -1282,25 +1282,26 @@ export default function Home() {
     const params = new URLSearchParams(location.search);
     const isLoginSuccess = params.get('loginSuccess');
 
-    // ⭐ 2. 성공 파라미터가 있고, 아직 처리된 적이 없을 때만 실행
     if (isLoginSuccess === 'true' && !isProcessed.current) {
-      
-      // 3. 즉시 자물쇠를 잠금 (두 번째 실행이 들어와도 여기서 차단됨)
       isProcessed.current = true;
 
+      const token = params.get('token');
+      const loginId = params.get('loginId');
+      
+      if (token) {
+        localStorage.setItem('token', token);
+      }
+
       const userData = {
+        loginId: loginId,
         email: params.get('email'),
         nickname: params.get('nickname'),
         targetJob: params.get('targetJob'),
       };
 
-      // 4. 데이터 저장
       localStorage.setItem('user', JSON.stringify(userData));
 
-      // 5. 주소창 미리 깨끗하게 청소
       window.history.replaceState({}, document.title, window.location.pathname);
-
-      // 6. 메인으로 이동하며 새로고침
       window.location.href = '/'; 
     }
   }, [location]);
