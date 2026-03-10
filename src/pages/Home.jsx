@@ -6,6 +6,7 @@ import PortfolioUploadModal from "../components/portfolio/PortfolioUploadModal";
 import CIAnalysis from "./ClAnalysis";
 import logo from "../img/logo.png";
 import Resume from "./Resume";
+import ChatBot from "../components/chatbot/ChatBot";
 
 // ===== Icons (SVG) =====
 const Icons = {
@@ -609,7 +610,7 @@ const Navigation = ({ onStart }) => {
                 {/* <div className="px-3 py-2 text-primary-600 font-bold border-b border-gray-100">
                   {user.nickname}님 환영합니다
                 </div> */}
-                <button 
+                <button
                   onClick={handleLogout}
                   className="w-full text-left px-3 py-2 text-red-500 hover:bg-red-50 rounded-md"
                 >
@@ -1315,6 +1316,9 @@ export default function Home() {
 
   return (
     <>
+      <div>
+        <ChatBot />
+      </div>
       <Navigation onStart={goInterview} />
       <Hero onStart={goInterview} />
 
