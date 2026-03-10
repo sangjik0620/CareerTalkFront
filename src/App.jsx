@@ -13,10 +13,15 @@ import Signup from "./pages/Signup";
 import MyPage from "./pages/MyPage";
 import SocialSignup from "./pages/SocialSignup";
 import Evaluation from "./pages/Evaluation";
-import CIAnalysis from "./pages/ClAnalysis";
 import CIAnalysisResult from "./pages/CIAnalysisResult";
 import Resume from "./pages/Resume";
 import RsResume from "./pages/RsResume";
+
+// 결제
+import PaymentPage from "./pages/payment/PaymentPage";
+import PaymentSuccess from "./pages/payment/PaymentSuccess";
+import PaymentCancel from "./pages/payment/PaymentCancel";
+import PaymentFail from "./pages/payment/PaymentFail";
 
 // 토큰 만료 시 자동 로그아웃
 axios.interceptors.response.use(
@@ -114,6 +119,12 @@ function App() {
 
           {/* 마이페이지 라우트 */}
           <Route path="/mypage" element={<MyPage />} />
+
+          {/* 결제 라우트 */}
+          <Route path="/payment" element={<PaymentPage />} />
+          <Route path="/payment/success" element={<PaymentSuccess />} />
+          <Route path="/payment/cancel" element={<PaymentCancel />} />
+          <Route path="/payment/fail" element={<PaymentFail />} />
         </Routes>
       </BrowserRouter>
     </>
