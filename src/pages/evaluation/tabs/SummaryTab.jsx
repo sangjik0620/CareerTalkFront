@@ -92,6 +92,22 @@ export default function SummaryTab({ data }) {
         : "-",
     tone: "neutral",
   },
+  {
+    label: "직무적합",
+    value:
+      typeof summary?.jobFitIndex === "number"
+        ? `${summary.jobFitIndex}`
+        : "-",
+    tone: "brand",
+  },
+  {
+    label: "자신감",
+    value:
+      typeof summary?.confidenceIndex === "number"
+        ? `${summary.confidenceIndex}`
+        : "-",
+    tone: "brand",
+  },
 ];
 
   const indexes = [
@@ -115,6 +131,7 @@ export default function SummaryTab({ data }) {
           <div className="interview-info summaryInfoCompact">
             <span>📅 {info?.date ?? "—"}</span>
             <span>⏱️ {info?.duration ?? "—"}</span>
+            <span>💼 {info?.position ?? "—"}</span>
           </div>
         </div>
         <div className="summaryTopRight">
