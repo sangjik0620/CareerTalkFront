@@ -1,6 +1,6 @@
 import React from "react";
 import EmptyBlock from "../components/EmptyBlock";
-import { getScoreColor, hasItems, safeJson } from "../utils/evalUtils";
+import { getScoreColor, safeJson } from "../utils/evalUtils";
 
 const DOC_META = {
   RESUME: { label: "이력서", emoji: "📝" },
@@ -8,9 +8,10 @@ const DOC_META = {
   PORTFOLIO: { label: "포트폴리오", emoji: "💼" },
 };
 
-function parseSummary(text = "") {
-  const strengthPart = text.split("보완점:")[0] || "";
-  const weaknessPart = text.split("보완점:")[1] || "";
+function parseSummary(text) {
+  const safeText = typeof text === "string" ? text : "";
+
+  const [strengthPart, weaknessPart = ""] = safeText.split("보완점:");
 
   const strength = strengthPart.replace("장점:", "").trim();
   const weakness = weaknessPart.trim();
@@ -20,6 +21,7 @@ function parseSummary(text = "") {
 
 function DocScoreCard({ docKey, analysisEntity }) {
   const { label, emoji } = DOC_META[docKey] ?? { label: docKey, emoji: "📄" };
+
   if (!analysisEntity) {
     return (
       <div className="doc-score-card">
@@ -32,7 +34,9 @@ function DocScoreCard({ docKey, analysisEntity }) {
       </div>
     );
   }
+
   const score = analysisEntity?.overallScore ?? 0;
+
   return (
     <div className="doc-score-card">
       <div className="doc-type">
@@ -47,6 +51,7 @@ function DocScoreCard({ docKey, analysisEntity }) {
 
 function DocDetailCard({ docKey, analysisEntity }) {
   const { label, emoji } = DOC_META[docKey] ?? { label: docKey, emoji: "📄" };
+
   if (!analysisEntity) {
     return (
       <div className="doc-detail-card">
@@ -60,6 +65,7 @@ function DocDetailCard({ docKey, analysisEntity }) {
     scoreObj?.keywords || scoreObj?.topKeywords || scoreObj?.keyWords || [];
 
   const { strength, weakness } = parseSummary(analysisEntity?.summaryDetail);
+
   return (
     <div className="doc-detail-card pdf-doc">
       <h3>
@@ -75,7 +81,6 @@ function DocDetailCard({ docKey, analysisEntity }) {
 
       {analysisEntity?.summaryDetail && (
         <div className="analysis-section">
-
           {strength && (
             <div style={{ marginBottom: "10px" }}>
               <strong>장점</strong>
@@ -89,6 +94,19 @@ function DocDetailCard({ docKey, analysisEntity }) {
               <div style={{ whiteSpace: "pre-wrap" }}>{weakness}</div>
             </div>
           )}
+        </div>
+      )}
+
+      {keywords.length > 0 && (
+        <div className="analysis-section">
+          <h4>핵심 키워드</h4>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+            {keywords.map((keyword, idx) => (
+              <span key={idx} className="keyword-chip">
+                {keyword}
+              </span>
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -109,6 +127,7 @@ export default function DocumentTab({ docLoading, docErr, docAnalysisMap }) {
       </div>
     );
   }
+
   if (docErr) {
     return (
       <div className="tab-content">
