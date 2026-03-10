@@ -1,900 +1,718 @@
-import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState, useCallback } from "react";
+import { getProducts, getQuota, readyKakaoPay } from "../../lib/api/paymentApi";
 
-import PortfolioUploadModal from "../../components/portfolio/PortfolioUploadModal";
-import ClAnalysis from "../ClAnalysis";
-import Resume from "../Resume";
-import logo from "../../img/logo.png";
-import DeviceTestModal from "../interview/DeviceTestModal";
-
-import { api } from "../../lib/api";
-
-// ─────────────────────────────────────────────
-const FILE_META = {
-  resume: {
-    label: "이력서",
-    desc: "경력 및 학력 기반 질문",
-    icon: "📄",
-    gradient: "from-blue-500 to-indigo-500",
-    lightBg: "from-blue-50 to-indigo-50",
-    borderColor: "border-blue-200",
-    ringColor: "ring-blue-400",
-    badgeColor: "bg-blue-100 text-blue-600 border-blue-200",
-    emptyIcon: "📋",
-    emptyMsg: "아직 분석된 이력서가 없어요",
-    emptyHint: "이력서를 업로드하고 AI 분석을 받아보세요",
-    analyzeLabel: "이력서 분석하기",
-    emptyColor: "blue",
-    dotColor: "bg-blue-400",
-    emptyBorder: "border-blue-200",
-    emptyBg: "bg-blue-50/60",
-    emptyText: "text-blue-600",
-    emptyIconBg: "bg-blue-100",
-    emptyBtnBg: "bg-blue-500 hover:bg-blue-600",
-  },
-  coverLetter: {
-    label: "자기소개서",
-    desc: "동기 및 역량 기반 질문",
-    icon: "✍️",
-    gradient: "from-violet-500 to-purple-500",
-    lightBg: "from-violet-50 to-purple-50",
-    borderColor: "border-violet-200",
-    ringColor: "ring-violet-400",
-    badgeColor: "bg-violet-100 text-violet-600 border-violet-200",
-    emptyIcon: "📝",
-    emptyMsg: "아직 분석된 자기소개서가 없어요",
-    emptyHint: "자기소개서를 업로드하고 AI 분석을 받아보세요",
-    analyzeLabel: "자기소개서 분석하기",
-    emptyColor: "purple",
-    dotColor: "bg-violet-400",
-    emptyBorder: "border-violet-200",
-    emptyBg: "bg-violet-50/60",
-    emptyText: "text-violet-600",
-    emptyIconBg: "bg-violet-100",
-    emptyBtnBg: "bg-violet-500 hover:bg-violet-600",
-  },
-  portfolio: {
-    label: "포트폴리오",
-    desc: "프로젝트 경험 기반 질문",
-    icon: "💼",
-    gradient: "from-emerald-500 to-teal-500",
-    lightBg: "from-emerald-50 to-teal-50",
-    borderColor: "border-emerald-200",
-    ringColor: "ring-emerald-400",
-    badgeColor: "bg-emerald-100 text-emerald-600 border-emerald-200",
-    emptyIcon: "🗂️",
-    emptyMsg: "아직 분석된 포트폴리오가 없어요",
-    emptyHint: "포트폴리오를 업로드하고 AI 분석을 받아보세요",
-    analyzeLabel: "포트폴리오 분석하기",
-    emptyColor: "teal",
-    dotColor: "bg-emerald-400",
-    emptyBorder: "border-emerald-200",
-    emptyBg: "bg-emerald-50/60",
-    emptyText: "text-emerald-600",
-    emptyIconBg: "bg-emerald-100",
-    emptyBtnBg: "bg-emerald-500 hover:bg-emerald-600",
-  },
+// ── 아이콘 ───────────────────────────────────────────────────
+const Icons = {
+  Sparkles: (cls = "w-4 h-4") => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={cls}>
+      <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+    </svg>
+  ),
+  Mic: (cls = "w-4 h-4") => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={cls}>
+      <path d="M8.25 4.5a3.75 3.75 0 117.5 0v8.25a3.75 3.75 0 11-7.5 0V4.5z" />
+      <path d="M6 10.5a.75.75 0 01.75.75v1.5a5.25 5.25 0 1010.5 0v-1.5a.75.75 0 011.5 0v1.5a6.751 6.751 0 01-6 6.709v2.291h3a.75.75 0 010 1.5h-7.5a.75.75 0 010-1.5h3v-2.291a6.751 6.751 0 01-6-6.709v-1.5A.75.75 0 016 10.5z" />
+    </svg>
+  ),
+  Check: (cls = "w-4 h-4") => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={cls}>
+      <path
+        fillRule="evenodd"
+        d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z"
+        clipRule="evenodd"
+      />
+    </svg>
+  ),
+  Close: (cls = "w-5 h-5") => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={cls}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  ),
+  Arrow: (cls = "w-5 h-5") => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={cls}>
+      <path
+        fillRule="evenodd"
+        d="M12.97 3.97a.75.75 0 011.06 0l7.5 7.5a.75.75 0 010 1.06l-7.5 7.5a.75.75 0 11-1.06-1.06l6.22-6.22H3a.75.75 0 010-1.5h16.19l-6.22-6.22a.75.75 0 010-1.06z"
+        clipRule="evenodd"
+      />
+    </svg>
+  ),
+  Shield: (cls = "w-3.5 h-3.5") => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={cls}>
+      <path
+        fillRule="evenodd"
+        d="M12.516 2.17a.75.75 0 00-1.032 0 11.209 11.209 0 01-7.877 3.08.75.75 0 00-.722.515A12.74 12.74 0 002.25 9.75c0 5.942 4.064 10.933 9.563 12.348a.749.749 0 00.374 0c5.499-1.415 9.563-6.406 9.563-12.348 0-1.39-.223-2.73-.635-3.985a.75.75 0 00-.722-.516l-.143.001c-2.996 0-5.717-1.17-7.734-3.08z"
+        clipRule="evenodd"
+      />
+    </svg>
+  ),
+  Lock: (cls = "w-4 h-4") => (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={cls}>
+      <path
+        fillRule="evenodd"
+        d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3c0-2.9-2.35-5.25-5.25-5.25zm3.75 8.25v-3a3.75 3.75 0 10-7.5 0v3h7.5z"
+        clipRule="evenodd"
+      />
+    </svg>
+  ),
 };
 
-// ─────────────────────────────────────────────
-const fetchUserAnalyses = async () => {
-  const res = await api.get("/api/analysis/my");
-  return res.data;
-};
-
-// ─────────────────────────────────────────────
-// 배경 그라디언트
-// ─────────────────────────────────────────────
-const BackgroundMesh = () => (
-  <div className="fixed inset-0 pointer-events-none overflow-hidden">
-    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_#dbeafe_0%,_transparent_50%)]" />
-    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_#ede9fe_0%,_transparent_50%)]" />
-    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_center,_#d1fae5_0%,_transparent_60%)]" />
-  </div>
+const KakaoIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
+    <path d="M12 3C7.03 3 3 6.36 3 10.5c0 2.64 1.68 4.96 4.22 6.32l-.9 3.32a.3.3 0 00.44.34l3.84-2.54c.45.06.92.06 1.4.06 4.97 0 9-3.36 9-7.5S16.97 3 12 3z" />
+  </svg>
 );
 
-// ─────────────────────────────────────────────
-// 점수 뱃지
-// ─────────────────────────────────────────────
-const ScoreBadge = ({ score }) => {
-  const color =
-    score >= 90
-      ? "bg-emerald-100 text-emerald-700 border-emerald-300"
-      : score >= 75
-      ? "bg-blue-100 text-blue-700 border-blue-300"
-      : "bg-amber-100 text-amber-700 border-amber-300";
+// ════════════════════════════════════════════════════════════
+export default function PaymentPage() {
+  const [quota, setQuota] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [payingCode, setPayingCode] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
-  return (
-    <span
-      className={`shrink-0 inline-flex items-center justify-center text-xs font-bold px-2 py-0.5 rounded-full border ${color}`}
-    >
-      {score}점
-    </span>
-  );
-};
+  const [paymentStep, setPaymentStep] = useState("confirm"); // confirm | kakao
+  const [kakaoRedirectUrl, setKakaoRedirectUrl] = useState("");
+  const [paymentError, setPaymentError] = useState("");
 
-// ─────────────────────────────────────────────
-// 빈 상태 (카드 내부)
-// ─────────────────────────────────────────────
-function CardEmptyState({ meta, onClickAnalyze }) {
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [quotaData, productData] = await Promise.all([getQuota(), getProducts()]);
+        setQuota(quotaData);
+        setProducts(productData);
+      } catch (e) {
+        console.error("결제 페이지 로드 실패", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleOpenModal = useCallback((product) => {
+    setSelectedProduct(product);
+    setPaymentStep("confirm");
+    setKakaoRedirectUrl("");
+    setPaymentError("");
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setSelectedProduct(null);
+    setPaymentStep("confirm");
+    setKakaoRedirectUrl("");
+    setPaymentError("");
+    setPayingCode("");
+  }, []);
+
+  const handleBackToConfirm = useCallback(() => {
+    setPaymentStep("confirm");
+    setPaymentError("");
+  }, []);
+
+  const handlePay = async (productCode) => {
+    try {
+      setPayingCode(productCode);
+      setPaymentError("");
+
+      const data = await readyKakaoPay(productCode);
+
+      if (!data?.redirectUrl) {
+        throw new Error("카카오페이 redirectUrl이 없습니다.");
+      }
+
+      setKakaoRedirectUrl(data.redirectUrl);
+      setPaymentStep("kakao");
+    } catch (e) {
+      console.error("결제 요청 실패", e);
+      setPaymentError("결제창을 불러오지 못했습니다. 다시 시도해주세요.");
+      setPaymentStep("kakao");
+    } finally {
+      setPayingCode("");
+    }
+  };
+
+  if (loading) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ background: "linear-gradient(135deg, #f0f2ff 0%, #e8ecff 100%)" }}
+      >
+        <div className="flex flex-col items-center gap-4">
+          <div
+            className="w-12 h-12 rounded-full border-4 animate-spin"
+            style={{ borderColor: "#4F6EF7 transparent #4F6EF7 #4F6EF7" }}
+          />
+          <p className="text-sm font-medium" style={{ color: "#6B7DB3" }}>
+            이용권 정보를 불러오는 중...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
-      className={`rounded-2xl border-2 border-dashed ${meta.emptyBorder} ${meta.emptyBg} p-6 text-center h-full flex flex-col items-center justify-center`}
+      className="min-h-screen relative overflow-hidden"
+      style={{ background: "linear-gradient(135deg, #f0f2ff 0%, #eaf0ff 50%, #f5f0ff 100%)" }}
     >
-      <div className="relative inline-flex items-center justify-center mb-3">
-        <div
-          className={`w-14 h-14 ${meta.emptyIconBg} rounded-2xl flex items-center justify-center animate-empty-float`}
-        >
-          <span className="text-2xl">{meta.emptyIcon}</span>
+      <div
+        className="absolute top-[-120px] right-[-100px] w-[500px] h-[500px] rounded-full pointer-events-none"
+        style={{ background: "radial-gradient(circle, rgba(99,120,247,0.12) 0%, transparent 70%)" }}
+      />
+      <div
+        className="absolute bottom-[-80px] left-[-80px] w-[400px] h-[400px] rounded-full pointer-events-none"
+        style={{ background: "radial-gradient(circle, rgba(139,100,247,0.10) 0%, transparent 70%)" }}
+      />
+
+      <div className="relative z-10 max-w-5xl mx-auto px-6 py-14">
+        <div className="text-center mb-14">
+          <div
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-6"
+            style={{
+              background: "linear-gradient(90deg, rgba(99,120,247,0.12), rgba(139,100,247,0.12))",
+              color: "#4F6EF7",
+              border: "1px solid rgba(99,120,247,0.2)",
+            }}
+          >
+            <span>✦</span> CareerTalk 이용권
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-extrabold leading-tight mb-4" style={{ color: "#1a1d3a" }}>
+            커리어 성장을 위한
+            <br />
+            <span
+              style={{
+                background: "linear-gradient(90deg, #4F6EF7, #7B61FF)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              최적의 플랜
+            </span>
+            을 선택하세요
+          </h1>
+          <p className="text-base" style={{ color: "#6B7DB3" }}>
+            AI 이력서 분석부터 실전 모의면접까지, 합격을 앞당기는 모든 도구
+          </p>
         </div>
-        <span
-          className={`absolute -top-1 -right-1 w-2.5 h-2.5 ${meta.dotColor} rounded-full animate-ping opacity-75`}
-        />
-        <span
-          className={`absolute -top-1 -right-1 w-2.5 h-2.5 ${meta.dotColor} rounded-full`}
-        />
+
+        {quota && (
+          <section className="mb-14">
+            <SectionTitle icon={Icons.Check()} label="현재 보유 이용권" />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <QuotaCard title="무료 분석" value={quota.freeAnalysisRemaining} icon={Icons.Sparkles()} type="free" />
+              <QuotaCard title="무료 면접" value={quota.freeMockRemaining} icon={Icons.Mic()} type="free" />
+              <QuotaCard title="유료 분석" value={quota.paidAnalysisRemaining} icon={Icons.Sparkles()} type="paid" />
+              <QuotaCard title="유료 면접" value={quota.paidMockRemaining} icon={Icons.Mic()} type="paid" />
+            </div>
+          </section>
+        )}
+
+        <section>
+          <SectionTitle icon={Icons.Lock()} label="이용권 구매" />
+          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+            {products.map((product, idx) => (
+              <ProductCard
+                key={product.productCode}
+                product={product}
+                onSelect={handleOpenModal}
+                highlight={idx === 1}
+              />
+            ))}
+          </div>
+        </section>
+
+        <div
+          className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4 text-xs"
+          style={{ color: "#9BA8C8" }}
+        >
+          <span className="flex items-center gap-1.5">{Icons.Shield()} SSL 암호화 결제</span>
+          <span className="hidden sm:block">·</span>
+          <span>결제 후 즉시 이용권 지급</span>
+          <span className="hidden sm:block">·</span>
+          <span>카카오페이 안전 결제 지원</span>
+        </div>
       </div>
-      <p className={`font-bold text-sm mb-1 ${meta.emptyText}`}>{meta.emptyMsg}</p>
-      <p className="text-gray-400 text-xs mb-4 leading-relaxed">{meta.emptyHint}</p>
-      <button
-        type="button"
-        onClick={onClickAnalyze}
-        className={`inline-flex items-center gap-1.5 ${meta.emptyBtnBg} text-white text-xs font-bold px-4 py-2 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg active:scale-95`}
+
+      {selectedProduct && (
+        <CompareModal
+          product={selectedProduct}
+          quota={quota}
+          paying={payingCode === selectedProduct.productCode}
+          onConfirm={() => handlePay(selectedProduct.productCode)}
+          onClose={handleCloseModal}
+          step={paymentStep}
+          redirectUrl={kakaoRedirectUrl}
+          paymentError={paymentError}
+          onBack={handleBackToConfirm}
+        />
+      )}
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════
+function CompareModal({
+  product,
+  quota,
+  paying,
+  onConfirm,
+  onClose,
+  step,
+  redirectUrl,
+  paymentError,
+  onBack,
+}) {
+  const after = quota
+    ? {
+        paidAnalysis: (quota.paidAnalysisRemaining ?? 0) + product.analysisCreditCount,
+        paidMock: (quota.paidMockRemaining ?? 0) + product.mockCreditCount,
+      }
+    : null;
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center px-4"
+      style={{ background: "rgba(15,17,40,0.45)", backdropFilter: "blur(6px)" }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl"
+        style={{
+          background: "white",
+          border: "1px solid rgba(99,120,247,0.12)",
+          animation: "modalIn 0.22s cubic-bezier(0.34,1.56,0.64,1)",
+        }}
       >
-        ✨ {meta.analyzeLabel} →
+        <div
+          className="px-7 pt-7 pb-5 flex items-start justify-between"
+          style={{ borderBottom: "1px solid rgba(99,120,247,0.08)" }}
+        >
+          <div>
+            <span
+              className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full mb-3"
+              style={{
+                background: "rgba(99,120,247,0.08)",
+                color: "#4F6EF7",
+              }}
+            >
+              ✦ {step === "confirm" ? "이용권 구매 확인" : "카카오페이 결제"}
+            </span>
+
+            <h2 className="text-xl font-extrabold" style={{ color: "#1a1d3a" }}>
+              {step === "confirm" ? product.productName : "QR 결제 진행"}
+            </h2>
+
+            <p className="text-sm mt-0.5" style={{ color: "#6B7DB3" }}>
+              {step === "confirm"
+                ? product.description
+                : "휴대폰으로 QR을 스캔하거나 새 창에서 결제를 진행하세요."}
+            </p>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="ml-4 mt-1 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition hover:bg-gray-100"
+            style={{ color: "#9BA8C8" }}
+          >
+            {Icons.Close()}
+          </button>
+        </div>
+
+        {step === "confirm" ? (
+          <>
+            {after && (
+              <div className="px-7 py-5">
+                <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: "#9BA8C8" }}>
+                  구매 후 이용권 변화
+                </p>
+
+                <div className="space-y-3">
+                  <CompareRow
+                    icon={Icons.Sparkles("w-3.5 h-3.5")}
+                    label="유료 분석권"
+                    before={quota.paidAnalysisRemaining ?? 0}
+                    added={product.analysisCreditCount}
+                    after={after.paidAnalysis}
+                  />
+                  <CompareRow
+                    icon={Icons.Mic("w-3.5 h-3.5")}
+                    label="유료 면접권"
+                    before={quota.paidMockRemaining ?? 0}
+                    added={product.mockCreditCount}
+                    after={after.paidMock}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="mx-7" style={{ height: 1, background: "rgba(99,120,247,0.08)" }} />
+
+            <div className="px-7 py-5 flex items-center justify-between">
+              <span className="text-sm font-medium" style={{ color: "#6B7DB3" }}>
+                최종 결제 금액
+              </span>
+              <span className="text-2xl font-extrabold" style={{ color: "#1a1d3a" }}>
+                {product.price.toLocaleString()}
+                <span className="text-base font-semibold ml-1" style={{ color: "#9BA8C8" }}>원</span>
+              </span>
+            </div>
+
+            <div className="px-7 pb-7 flex flex-col gap-3">
+              <button
+                onClick={onConfirm}
+                disabled={paying}
+                className="w-full py-4 rounded-2xl font-bold text-[15px] flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+                style={{
+                  background: "#FFE812",
+                  color: "#1a1d3a",
+                  boxShadow: "0 4px 20px rgba(255,232,18,0.35)",
+                }}
+              >
+                {paying ? (
+                  <>
+                    <span
+                      className="w-4 h-4 border-2 rounded-full animate-spin"
+                      style={{ borderColor: "#1a1d3a transparent #1a1d3a #1a1d3a" }}
+                    />
+                    결제 연결 중...
+                  </>
+                ) : (
+                  <>
+                    <KakaoIcon />
+                    카카오페이로 결제하기
+                    <span className="ml-1">{Icons.Arrow("w-4 h-4")}</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={onClose}
+                className="w-full py-3.5 rounded-2xl font-semibold text-sm transition-all hover:bg-gray-50 active:scale-95"
+                style={{
+                  border: "1.5px solid rgba(99,120,247,0.2)",
+                  color: "#6B7DB3",
+                }}
+              >
+                다시 선택하기
+              </button>
+
+              <p className="text-center text-xs flex items-center justify-center gap-1.5 mt-1" style={{ color: "#C2CADF" }}>
+                {Icons.Shield()} 카카오페이 SSL 암호화 보안 결제
+              </p>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="px-7 py-6">
+              {paymentError ? (
+                <div
+                  className="rounded-2xl p-4 text-sm font-medium"
+                  style={{
+                    background: "rgba(255, 99, 99, 0.08)",
+                    color: "#d14343",
+                    border: "1px solid rgba(255, 99, 99, 0.18)",
+                  }}
+                >
+                  {paymentError}
+                </div>
+              ) : (
+                <>
+                  <div
+                    className="rounded-2xl overflow-hidden"
+                    style={{
+                      border: "1px solid rgba(99,120,247,0.12)",
+                      background: "#f8faff",
+                    }}
+                  >
+                    <iframe
+                      src={redirectUrl}
+                      title="카카오페이 결제"
+                      className="w-full"
+                      style={{ height: "620px", border: "none" }}
+                    />
+                  </div>
+
+                  <p className="text-xs text-center mt-4" style={{ color: "#9BA8C8" }}>
+                    QR 화면이 보이지 않으면 아래 버튼으로 새 창에서 열어주세요.
+                  </p>
+                </>
+              )}
+            </div>
+
+            <div className="px-7 pb-7 flex flex-col gap-3">
+              {!!redirectUrl && (
+                <a
+                  href={redirectUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="w-full py-4 rounded-2xl font-bold text-[15px] flex items-center justify-center gap-2 transition-all active:scale-95"
+                  style={{
+                    background: "#FFE812",
+                    color: "#1a1d3a",
+                    boxShadow: "0 4px 20px rgba(255,232,18,0.35)",
+                  }}
+                >
+                  <KakaoIcon />
+                  새 창에서 카카오페이 열기
+                </a>
+              )}
+
+              <button
+                onClick={onBack}
+                className="w-full py-3.5 rounded-2xl font-semibold text-sm transition-all hover:bg-gray-50 active:scale-95"
+                style={{
+                  border: "1.5px solid rgba(99,120,247,0.2)",
+                  color: "#6B7DB3",
+                }}
+              >
+                이전으로 돌아가기
+              </button>
+
+              <p className="text-center text-xs flex items-center justify-center gap-1.5 mt-1" style={{ color: "#C2CADF" }}>
+                {Icons.Shield()} 카카오페이 SSL 암호화 보안 결제
+              </p>
+            </div>
+          </>
+        )}
+
+        <style>{`
+          @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.92) translateY(12px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+          }
+        `}</style>
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════
+function CompareRow({ icon, label, before, added, after }) {
+  return (
+    <div
+      className="flex items-center gap-3 rounded-2xl px-4 py-3.5"
+      style={{ background: "rgba(99,120,247,0.04)", border: "1px solid rgba(99,120,247,0.08)" }}
+    >
+      <div
+        className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0"
+        style={{ background: "rgba(99,120,247,0.1)", color: "#4F6EF7" }}
+      >
+        {icon}
+      </div>
+
+      <span className="text-sm font-medium flex-1" style={{ color: "#4B5672" }}>
+        {label}
+      </span>
+
+      <div className="text-center min-w-[36px]">
+        <p className="text-[11px] font-medium mb-0.5" style={{ color: "#C2CADF" }}>현재</p>
+        <p className="text-base font-bold" style={{ color: "#6B7DB3" }}>{before}</p>
+      </div>
+
+      <div className="flex flex-col items-center gap-0.5 px-1">
+        <span
+          className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+          style={{ background: "rgba(99,120,247,0.12)", color: "#4F6EF7" }}
+        >
+          +{added}
+        </span>
+        <svg viewBox="0 0 20 10" className="w-6" fill="none">
+          <path
+            d="M0 5h16M12 1l4 4-4 4"
+            stroke="#4F6EF7"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
+
+      <div
+        className="text-center min-w-[44px] rounded-xl px-2 py-1.5"
+        style={{ background: "linear-gradient(135deg, #4F6EF7, #7B61FF)" }}
+      >
+        <p className="text-[10px] font-semibold mb-0.5 text-white/70">구매 후</p>
+        <p className="text-base font-extrabold text-white">{after}</p>
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════
+function ProductCard({ product, onSelect, highlight }) {
+  return (
+    <div
+      className="relative rounded-3xl p-6 flex flex-col justify-between transition-all duration-200 hover:-translate-y-1 cursor-pointer"
+      style={
+        highlight
+          ? {
+              background: "linear-gradient(145deg, #4F6EF7 0%, #7B61FF 100%)",
+              boxShadow: "0 20px 60px rgba(99,120,247,0.35)",
+            }
+          : {
+              background: "white",
+              border: "1px solid rgba(99,120,247,0.12)",
+              boxShadow: "0 4px 24px rgba(99,120,247,0.08)",
+            }
+      }
+    >
+      {highlight && (
+        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+          <span
+            className="inline-flex items-center gap-1 px-4 py-1 rounded-full text-xs font-bold shadow-md"
+            style={{ background: "#FFE812", color: "#1a1d3a" }}
+          >
+            ✦ 인기 플랜
+          </span>
+        </div>
+      )}
+
+      <div className="mb-5 mt-2">
+        <h3 className="text-xl font-extrabold mb-1.5" style={{ color: highlight ? "white" : "#1a1d3a" }}>
+          {product.productName}
+        </h3>
+        <p
+          className="text-sm leading-relaxed"
+          style={{ color: highlight ? "rgba(255,255,255,0.72)" : "#6B7DB3" }}
+        >
+          {product.description}
+        </p>
+      </div>
+
+      <div
+        className="my-4"
+        style={{
+          height: 1,
+          background: highlight ? "rgba(255,255,255,0.15)" : "rgba(99,120,247,0.08)",
+        }}
+      />
+
+      <ul className="space-y-2.5 mb-6">
+        <FeatureItem
+          icon={
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+              <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+            </svg>
+          }
+          label={`AI 이력서 분석 ${product.analysisCreditCount}회`}
+          highlight={highlight}
+        />
+        <FeatureItem
+          icon={
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+              <path d="M8.25 4.5a3.75 3.75 0 117.5 0v8.25a3.75 3.75 0 11-7.5 0V4.5z" />
+              <path d="M6 10.5a.75.75 0 01.75.75v1.5a5.25 5.25 0 1010.5 0v-1.5a.75.75 0 011.5 0v1.5a6.751 6.751 0 01-6 6.709v2.291h3a.75.75 0 010 1.5h-7.5a.75.75 0 010-1.5h3v-2.291a6.751 6.751 0 01-6-6.709v-1.5A.75.75 0 016 10.5z" />
+            </svg>
+          }
+          label={`모의면접 ${product.mockCreditCount}회`}
+          highlight={highlight}
+        />
+      </ul>
+
+      <div className="mb-5">
+        <span
+          className="text-[13px] font-medium"
+          style={{ color: highlight ? "rgba(255,255,255,0.6)" : "#9BA8C8" }}
+        >
+          총 금액
+        </span>
+        <div className="flex items-end gap-1 mt-0.5">
+          <span className="text-3xl font-extrabold" style={{ color: highlight ? "white" : "#1a1d3a" }}>
+            {product.price.toLocaleString()}
+          </span>
+          <span
+            className="text-base font-semibold mb-0.5"
+            style={{ color: highlight ? "rgba(255,255,255,0.6)" : "#9BA8C8" }}
+          >
+            원
+          </span>
+        </div>
+      </div>
+
+      <button
+        onClick={() => onSelect(product)}
+        className="w-full py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all active:scale-95"
+        style={{
+          background: "#FFE812",
+          color: "#1a1d3a",
+          boxShadow: highlight
+            ? "0 4px 20px rgba(255,232,18,0.4)"
+            : "0 2px 12px rgba(255,232,18,0.25)",
+        }}
+      >
+        <KakaoIcon />
+        이 플랜 선택하기
       </button>
     </div>
   );
 }
 
-// ─────────────────────────────────────────────
-// 전체 빈 상태 배너
-// ─────────────────────────────────────────────
-function GlobalEmptyBanner() {
-  const steps = [
-    { icon: "📤", label: "문서 업로드", desc: "이력서·자소서·포폴" },
-    { icon: "🤖", label: "AI 분석", desc: "강점·약점 파악" },
-    { icon: "🎤", label: "면접 시작", desc: "맞춤형 질문 생성" },
-  ];
-
+// ── 공통 컴포넌트 ─────────────────────────────────────────────
+function SectionTitle({ icon, label }) {
   return (
-    <div className="mb-10 relative overflow-hidden rounded-3xl border-2 border-dashed border-blue-200 bg-white/60 backdrop-blur-sm p-10 text-center shadow-xl">
-      <div className="absolute -top-12 -left-12 w-48 h-48 bg-blue-200/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-purple-200/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="relative inline-flex items-center justify-center mb-6">
-        <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center shadow-2xl border border-blue-100 animate-empty-float">
-          <span className="text-4xl">🗃️</span>
-        </div>
-        <div className="absolute -top-2 -right-2 w-7 h-7 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full flex items-center justify-center shadow-md animate-bounce-subtle">
-          <span className="text-white text-xs font-bold">!</span>
-        </div>
-      </div>
-      <h3 className="text-2xl font-bold text-gray-900 mb-2">아직 분석된 자료가 없어요</h3>
-      <p className="text-gray-500 mb-8 text-sm leading-relaxed max-w-sm mx-auto">
-        면접을 시작하려면 먼저 문서를 분석해야 해요. AI가 분석 후 이 화면에서 선택할 수 있습니다.
-      </p>
-      <div className="flex items-center justify-center gap-3 flex-wrap">
-        {steps.map((s, i) => (
-          <div key={s.label} className="flex items-center gap-3">
-            <div className="flex flex-col items-center">
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-md border border-gray-100 mb-1">
-                <span className="text-xl">{s.icon}</span>
-              </div>
-              <span className="text-xs font-bold text-gray-700">{s.label}</span>
-              <span className="text-[10px] text-gray-400">{s.desc}</span>
-            </div>
-            {i < steps.length - 1 && <span className="text-gray-300 text-lg mb-4">→</span>}
-          </div>
-        ))}
-      </div>
+    <div className="flex items-center gap-2 mb-5">
+      <span style={{ color: "#4F6EF7" }}>{icon}</span>
+      <h2 className="text-base font-bold" style={{ color: "#1a1d3a" }}>{label}</h2>
     </div>
   );
 }
 
-// ─────────────────────────────────────────────
-// 분석 아이템 카드
-// ─────────────────────────────────────────────
-function AnalysisItemCard({ item, isSelected, onSelect, meta }) {
+function QuotaCard({ title, value, icon, type }) {
+  const isPaid = type === "paid";
+
   return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={[
-        "w-full text-left p-4 rounded-2xl border-2 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5",
-        isSelected
-          ? `border-transparent bg-gradient-to-br ${meta.gradient} shadow-lg ring-2 ring-offset-2 ${meta.ringColor}`
-          : "border-gray-200 bg-white hover:border-gray-300",
-      ].join(" ")}
+    <div
+      className="rounded-2xl p-4 flex flex-col gap-2"
+      style={{
+        background: "white",
+        border: "1px solid rgba(99,120,247,0.1)",
+        boxShadow: "0 2px 16px rgba(99,120,247,0.06)",
+      }}
     >
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <span className={`font-bold text-sm leading-tight ${isSelected ? "text-white" : "text-gray-900"}`}>
-          {item.title}
-        </span>
-        <ScoreBadge score={item.score} />
-      </div>
-
-      <p className={`text-xs truncate mb-2 ${isSelected ? "text-white/75" : "text-gray-400"}`}>
-        📎 {item.fileName}
-      </p>
-
-      {/* <div className="flex flex-wrap gap-1 mb-2">
-        {(item.keywords || []).map((kw) => (
-          <span
-            key={kw}
-            className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-              isSelected ? "bg-white/25 text-white" : "bg-gray-100 text-gray-600"
-            }`}
-          >
-            {kw}
-          </span>
-        ))}
-      </div> */}
-
-      <p className={`text-xs ${isSelected ? "text-white/65" : "text-gray-400"}`}>
-        🕐 분석일: {item.analyzedAt}
-      </p>
-
-      {isSelected && (
-        <div className="mt-2 flex items-center gap-1 text-white text-xs font-bold">
-          <span className="w-4 h-4 bg-white/30 rounded-full flex items-center justify-center text-[10px]">
-            ✓
-          </span>
-          선택됨
-        </div>
-      )}
-    </button>
-  );
-}
-
-// ─────────────────────────────────────────────
-// 카테고리 카드
-// ─────────────────────────────────────────────
-function AnalysisCategoryCard({
-  fileKey,
-  meta,
-  items,
-  selectedId,
-  onSelect,
-  isLoading,
-  index,
-  onOpenAnalyze,
-}) {
-  const hasItems = items && items.length > 0;
-
-  return (
-    <div className="animate-fade-in-up" style={{ animationDelay: `${index * 0.12}s`, opacity: 0 }}>
       <div
-        className={[
-          "group relative bg-white/80 backdrop-blur-md rounded-3xl p-6 shadow-lg border transition-all duration-500",
-          "hover:-translate-y-1.5 hover:shadow-2xl hover:bg-white/95",
-          "h-[270px] flex flex-col",
-          selectedId
-            ? `border-transparent ring-2 ring-offset-2 ${meta.ringColor}`
-            : hasItems
-            ? "border-gray-200/80 hover:border-gray-300"
-            : "border-gray-100",
-        ].join(" ")}
+        className="w-7 h-7 rounded-lg flex items-center justify-center"
+        style={{
+          background: isPaid
+            ? "linear-gradient(135deg, rgba(99,120,247,0.15), rgba(123,97,255,0.15))"
+            : "rgba(99,120,247,0.07)",
+          color: isPaid ? "#4F6EF7" : "#9BA8C8",
+        }}
       >
-        {selectedId && (
-          <div
-            className={`absolute top-4 right-4 w-7 h-7 bg-gradient-to-br ${meta.gradient} rounded-full flex items-center justify-center text-white font-bold shadow-lg text-xs`}
-          >
-            ✓
-          </div>
-        )}
-
-        <div className="flex items-center gap-3 mb-5">
-          <div
-            className={[
-              "w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-500",
-              "group-hover:scale-110 group-hover:rotate-3",
-              selectedId
-                ? `bg-gradient-to-br ${meta.gradient} shadow-md`
-                : hasItems
-                ? `bg-gradient-to-br ${meta.lightBg}`
-                : "bg-gray-100",
-            ].join(" ")}
-          >
-            <span className={`text-2xl ${!hasItems && !isLoading ? "grayscale opacity-40" : ""}`}>
-              {meta.icon}
-            </span>
-          </div>
-
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className={`text-lg font-bold ${hasItems ? "text-gray-900" : "text-gray-400"}`}>
-                {meta.label}
-              </h3>
-              {!isLoading && (
-                <span
-                  className={`text-xs font-bold px-2 py-0.5 rounded-full border ${
-                    hasItems ? meta.badgeColor : "bg-gray-100 text-gray-400 border-gray-200"
-                  }`}
-                >
-                  {hasItems ? `${items.length}개` : "없음"}
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-gray-400 mt-0.5">{meta.desc}</p>
-          </div>
-        </div>
-
-        <div className="border-t border-gray-100 mb-4" />
-
-        {isLoading ? (
-          <div className="space-y-3 flex-1">
-            {[1, 2].map((i) => (
-              <div key={i} className="h-24 rounded-2xl bg-gray-100/80 animate-pulse" />
-            ))}
-          </div>
-        ) : !hasItems ? (
-          <CardEmptyState meta={meta} onClickAnalyze={() => onOpenAnalyze(fileKey)} />
-        ) : (
-          <div className="space-y-3 max-h-72 overflow-y-auto pr-1 custom-scroll">
-            {items.map((item) => (
-              <AnalysisItemCard
-                key={item.id}
-                item={item}
-                isSelected={selectedId === item.id}
-                onSelect={() => onSelect(selectedId === item.id ? null : item.id)}
-                meta={meta}
-              />
-            ))}
-          </div>
-        )}
+        {icon}
       </div>
+      <p className="text-xs font-medium" style={{ color: "#9BA8C8" }}>{title}</p>
+      <p className="text-2xl font-extrabold" style={{ color: "#1a1d3a" }}>
+        {value}
+        <span className="text-sm font-semibold ml-0.5" style={{ color: "#9BA8C8" }}>회</span>
+      </p>
     </div>
   );
 }
 
-// ─────────────────────────────────────────────
-// 예상 소요 시간 카드
-// ─────────────────────────────────────────────
-function EstimatedTimeCard({ questionCount }) {
-  const count = parseInt(questionCount, 10);
-  const minutes = count * 2;
-  const segments = [
-    { label: "답변 시간", min: Math.round(minutes * 1.0), color: "bg-indigo-400", icon: "🎤" },
-    { label: "피드백 분석", min: Math.round(minutes * 0.3), color: "bg-violet-400", icon: "📊" },
-  ];
-  const total = segments.reduce((s, x) => s + x.min, 0);
-
+function FeatureItem({ icon, label, highlight }) {
   return (
-    <div className="flex-1 bg-white/70 backdrop-blur-sm rounded-2xl p-5 border border-gray-200/80 shadow-sm hover:shadow-md transition-all duration-300">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center text-sm shadow-sm">
-          ⏱️
-        </div>
-        <div>
-          <p className="text-sm font-bold text-gray-800">예상 소요 시간</p>
-          <p className="text-xs text-gray-400">총 약 {total}분</p>
-        </div>
-      </div>
-
-      <div className="flex rounded-full overflow-hidden h-3 mb-4 gap-0.5">
-        {segments.map((seg) => (
-          <div
-            key={seg.label}
-            className={`${seg.color} transition-all duration-500`}
-            style={{ width: `${(seg.min / total) * 100}%` }}
-          />
-        ))}
-      </div>
-
-      <div className="space-y-2">
-        {segments.map((seg) => (
-          <div key={seg.label} className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="text-sm">{seg.icon}</span>
-              <span className="text-xs text-gray-600">{seg.label}</span>
-            </div>
-            <span className="text-xs font-bold text-gray-700">약 {seg.min}분</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────
-// 시작 전 체크리스트 카드
-// ─────────────────────────────────────────────
-const CHECKLIST_ITEMS = [
-  { id: "mic", icon: "🎙️", text: "마이크 상태를 확인했어요" },
-  { id: "quiet", icon: "🔇", text: "조용한 환경이 준비됐어요" },
-];
-
-function PreChecklistCard() {
-  const [checked, setChecked] = useState({});
-  const toggle = (id) => setChecked((p) => ({ ...p, [id]: !p[id] }));
-  const doneCount = Object.values(checked).filter(Boolean).length;
-  const allDone = doneCount === CHECKLIST_ITEMS.length;
-
-  return (
-    <div className="flex-1 bg-white/70 backdrop-blur-sm rounded-2xl p-5 border border-gray-200/80 shadow-sm hover:shadow-md transition-all duration-300">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center text-sm shadow-sm">
-            ✅
-          </div>
-          <div>
-            <p className="text-sm font-bold text-gray-800">시작 전 체크리스트</p>
-            <p className="text-xs text-gray-400">
-              {doneCount}/{CHECKLIST_ITEMS.length} 완료
-            </p>
-          </div>
-        </div>
-        {allDone && (
-          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-600 border border-emerald-200 animate-bounce-subtle">
-            준비 완료! 🎉
-          </span>
-        )}
-      </div>
-
-      <div className="h-1.5 bg-gray-100 rounded-full mb-4 overflow-hidden">
-        <div
-          className="h-full bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full transition-all duration-500"
-          style={{ width: `${(doneCount / CHECKLIST_ITEMS.length) * 100}%` }}
-        />
-      </div>
-
-      <div className="space-y-2">
-        {CHECKLIST_ITEMS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => toggle(item.id)}
-            className={[
-              "w-full flex items-center gap-3 p-2.5 rounded-xl border transition-all duration-200",
-              "hover:scale-[1.01] active:scale-[0.99] text-left",
-              checked[item.id]
-                ? "bg-emerald-50 border-emerald-200"
-                : "bg-gray-50/80 border-gray-200/60 hover:border-gray-300",
-            ].join(" ")}
-          >
-            <span
-              className={[
-                "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-300",
-                checked[item.id]
-                  ? "bg-emerald-500 border-emerald-500 text-white text-[10px]"
-                  : "border-gray-300 bg-white",
-              ].join(" ")}
-            >
-              {checked[item.id] && "✓"}
-            </span>
-            <span className="text-sm">{item.icon}</span>
-            <span
-              className={`text-xs font-medium flex-1 ${
-                checked[item.id] ? "text-emerald-700 line-through" : "text-gray-600"
-              }`}
-            >
-              {item.text}
-            </span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────
-// 메인 페이지
-// ─────────────────────────────────────────────
-export default function InterviewSelect() {
-  const navigate = useNavigate();
-
-  const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false);
-  const [isCoverLetterModalOpen, setIsCoverLetterModalOpen] = useState(false);
-  const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
-
-  const openAnalyzeModal = (fileKey) => {
-    if (fileKey === "resume") setIsResumeModalOpen(true);
-    if (fileKey === "coverLetter") setIsCoverLetterModalOpen(true);
-    if (fileKey === "portfolio") setIsPortfolioModalOpen(true);
-  };
-
-  const [analyses, setAnalyses] = useState({
-    resume: [],
-    coverLetter: [],
-    portfolio: [],
-  });
-  const [isLoading, setIsLoading] = useState(true);
-  const [fetchError, setFetchError] = useState(null);
-  const [selectedIds, setSelectedIds] = useState({
-    resume: null,
-    coverLetter: null,
-    portfolio: null,
-  });
-  const [settings, setSettings] = useState({ questionCount: "5" });
-  const [isDeviceTestOpen, setIsDeviceTestOpen] = useState(false);
-
-  useEffect(() => {
-    setIsLoading(true);
-    fetchUserAnalyses()
-      .then((data) => {
-        setAnalyses({
-          resume: Array.isArray(data?.resume) ? data.resume : [],
-          coverLetter: Array.isArray(data?.coverLetter) ? data.coverLetter : [],
-          portfolio: Array.isArray(data?.portfolio) ? data.portfolio : [],
-        });
-        setFetchError(null);
-      })
-      .catch(() => setFetchError("분석 결과를 불러오는 데 실패했습니다."))
-      .finally(() => setIsLoading(false));
-  }, []);
-
-  const isAllEmpty = useMemo(
-    () => !isLoading && Object.values(analyses).every((l) => l.length === 0),
-    [analyses, isLoading]
-  );
-
-  const hasSelection = useMemo(
-    () => Object.values(selectedIds).some((id) => id !== null),
-    [selectedIds]
-  );
-
-  const selectedSummary = useMemo(() => {
-    return Object.entries(selectedIds)
-      .filter(([, id]) => id !== null)
-      .map(([key, id]) => {
-        const item = analyses[key]?.find((a) => a.id === id);
-        return item ? { key, label: FILE_META[key].label, ...item } : null;
-      })
-      .filter(Boolean);
-  }, [selectedIds, analyses]);
-
-  const handleSelect = (key, id) => {
-    setSelectedIds((p) => ({ ...p, [key]: id }));
-  };
-
-  const buildFinalQuestions = (expectedQuestions, questionCount) => {
-  const count = Number(questionCount || 5);
-
-  const introQuestion = "자기소개를 간단히 해주시겠습니까?";
-  const motivationQuestion = "우리 회사에 지원한 동기는 무엇인가요?";
-  const finalQuestion = "3년 후 자신의 모습을 어떻게 그리고 계신가요?";
-
-  const fallbackQuestions = [
-    "자신의 강점과 약점을 말씀해주세요.",
-    "가장 기억에 남는 프로젝트 경험을 설명해주세요.",
-    "팀에서 갈등이 발생했을 때 어떻게 해결하셨나요?",
-    "실패했던 경험과 그로부터 배운 점을 말씀해주세요.",
-    "이 직무에서 가장 중요하다고 생각하는 역량은 무엇인가요?",
-    "최근에 배운 새로운 기술이나 지식이 있나요?",
-    "마지막으로 하고 싶은 말씀이 있으신가요?",
-  ];
-
-  const fixedFront = count === 10
-    ? [introQuestion, motivationQuestion]
-    : [introQuestion];
-
-  const cleanedExpected = (expectedQuestions || [])
-    .map((q) => String(q || "").trim())
-    .filter(Boolean)
-    .filter(
-      (q) =>
-        q !== introQuestion &&
-        q !== motivationQuestion &&
-        q !== finalQuestion
-    );
-
-  const result = [...fixedFront];
-
-  for (const q of cleanedExpected) {
-    if (result.length >= count - 1) break; // 마지막 1칸은 finalQuestion 용
-    if (!result.includes(q)) result.push(q);
-  }
-
-  for (const q of fallbackQuestions) {
-    if (result.length >= count - 1) break;
-    if (!result.includes(q)) result.push(q);
-  }
-
-  // 마지막 질문 고정
-  if (!result.includes(finalQuestion)) {
-    result.push(finalQuestion);
-  }
-
-  return result.slice(0, count);
-};
-
-  const buildSelectedTargetsAndQuestions = () => {
-    const config = [
-      { key: "resume", targetType: "RESUME" },
-      { key: "coverLetter", targetType: "ESSAY" },
-      { key: "portfolio", targetType: "PORTFOLIO" },
-    ];
-
-    const targets = [];
-    const questionSet = new Set();
-
-    config.forEach(({ key, targetType }) => {
-      const selectedAnalysisId = selectedIds[key];
-      if (!selectedAnalysisId) return;
-
-      const selectedItem = analyses[key]?.find((item) => item.id === selectedAnalysisId);
-      if (!selectedItem) return;
-
-      targets.push({
-        targetType,
-        targetId: selectedItem.targetId,
-        analysisId: selectedItem.analysisId,
-      });
-
-      (selectedItem.expectedQuestions || []).forEach((q) => {
-        const trimmed = String(q || "").trim();
-        if (trimmed) questionSet.add(trimmed);
-      });
-    });
-
-    return {
-      targets,
-      questions: Array.from(questionSet),
-    };
-  };
-
-  const startInterview = () => {
-  const { targets, questions } = buildSelectedTargetsAndQuestions();
-
-  const finalQuestions = buildFinalQuestions(
-    questions,
-    Number(settings.questionCount || 5)
-  );
-
-  localStorage.setItem(
-    "interviewData",
-    JSON.stringify({
-      selectedAnalyses: selectedIds,
-      selectedTargets: targets,
-      settings,
-      questions: finalQuestions,
-    })
-  );
-
-  setIsDeviceTestOpen(true);
-};
-
-  const handleDeviceTestConfirm = () => {
-    setIsDeviceTestOpen(false);
-    navigate("/interview/session");
-  };
-
-  return (
-    <div className="min-h-screen relative">
-      <BackgroundMesh />
-
-      <nav className="fixed w-full z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/60 shadow-sm">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="flex justify-between items-center h-16">
-            <img src={logo} alt="CareerTalk" className="h-36 w-auto object-contain" />
-            <button
-              onClick={() => navigate("/")}
-              className="flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 font-medium transition-colors duration-200 px-4 py-2 rounded-xl hover:bg-blue-50"
-            >
-              ← 메인으로 돌아가기
-            </button>
-          </div>
-        </div>
-      </nav>
-
-      <div className="relative z-10 max-w-6xl mx-auto px-6 pt-28 pb-24">
-        <div className="text-center mb-14">
-          <div className="inline-flex items-center gap-2 mb-5 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full border border-blue-200 shadow-sm animate-slide-in-down">
-            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-            <span className="text-blue-700 text-sm font-semibold">AI 모의 면접 준비</span>
-          </div>
-
-          <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-5 leading-tight tracking-tight animate-slide-in-up">
-            분석된 자료를{" "}
-            <span className="relative">
-              <span className="bg-gradient-to-r from-blue-600 via-indigo-500 to-violet-600 bg-clip-text text-transparent">
-                선택
-              </span>
-              <span className="absolute -bottom-1 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-indigo-500 to-violet-600 rounded-full opacity-30" />
-            </span>
-            해주세요
-          </h1>
-
-          <p className="text-lg text-gray-500 animate-slide-in-up animation-delay-300">
-            이전에 분석한 자료 중 최소 1개를 선택하면 AI가 맞춤형 질문을 생성합니다
-          </p>
-        </div>
-
-        {fetchError && (
-          <div className="mb-8 flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-2xl text-sm font-semibold">
-            <span>⚠️</span> {fetchError}
-          </div>
-        )}
-
-        {isAllEmpty && <GlobalEmptyBanner />}
-
-        <div className="grid md:grid-cols-3 gap-5 mb-8">
-          {Object.keys(FILE_META).map((key, idx) => (
-            <AnalysisCategoryCard
-              key={key}
-              fileKey={key}
-              meta={FILE_META[key]}
-              items={analyses[key]}
-              selectedId={selectedIds[key]}
-              onSelect={(id) => handleSelect(key, id)}
-              isLoading={isLoading}
-              index={idx}
-              onOpenAnalyze={openAnalyzeModal}
-            />
-          ))}
-        </div>
-
-        {selectedSummary.length > 0 && (
-          <div className="bg-white/80 backdrop-blur-sm border border-blue-200/80 rounded-3xl p-6 mb-8 shadow-lg animate-slide-in-up">
-            <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-base">
-              <span className="inline-flex items-center justify-center w-6 h-6 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full text-white text-xs">
-                ✓
-              </span>
-              선택된 분석 자료
-            </h4>
-            <div className="flex gap-4 flex-wrap">
-              {selectedSummary.map((item) => (
-                <div
-                  key={`${item.key}-${item.id}`}
-                  className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3 shadow-sm border border-gray-100 flex-1 min-w-[160px]"
-                >
-                  <span className="text-2xl">{FILE_META[item.key].icon}</span>
-                  <div className="min-w-0">
-                    <p className="text-xs text-gray-400 font-medium">{item.label}</p>
-                    <p className="text-sm font-bold text-gray-900 truncate">{item.title}</p>
-                    <ScoreBadge score={item.score} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="bg-white/80 backdrop-blur-md rounded-3xl p-7 shadow-lg border border-gray-200/80 mb-8">
-          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-            <span className="inline-flex items-center justify-center w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl text-white text-base shadow-sm">
-              ⚙️
-            </span>
-            면접 설정
-          </h3>
-
-          <div className="flex flex-col md:flex-row gap-5">
-            <div className="flex-1 bg-gradient-to-br from-blue-50/80 to-indigo-50/80 rounded-2xl p-5 border border-blue-100/80">
-              <p className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
-                <span className="text-blue-500">📊</span> 질문 개수
-              </p>
-              <div className="flex gap-3">
-                {[
-                  { value: "5", label: "5개", sub: "약 10분", icon: "⚡" },
-                  { value: "10", label: "10개", sub: "약 20분", icon: "🎯" },
-                ].map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setSettings((p) => ({ ...p, questionCount: opt.value }))}
-                    className={[
-                      "flex-1 flex flex-col items-center gap-1 py-4 rounded-2xl border-2 font-bold transition-all duration-300",
-                      "hover:scale-105 hover:shadow-md active:scale-95",
-                      settings.questionCount === opt.value
-                        ? "border-blue-500 bg-gradient-to-br from-blue-500 to-indigo-500 text-white shadow-lg"
-                        : "border-gray-200 bg-white/90 text-gray-700 hover:border-blue-200",
-                    ].join(" ")}
-                  >
-                    <span className="text-xl">{opt.icon}</span>
-                    <span className="text-lg font-extrabold">{opt.label}</span>
-                    <span
-                      className={`text-xs ${
-                        settings.questionCount === opt.value ? "text-white/75" : "text-gray-400"
-                      }`}
-                    >
-                      {opt.sub}
-                    </span>
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs text-gray-400 mt-3 text-center">
-                선택한 개수만큼 AI가 맞춤형 질문을 생성합니다
-              </p>
-            </div>
-
-            <EstimatedTimeCard questionCount={settings.questionCount} />
-            <PreChecklistCard />
-          </div>
-        </div>
-
-        <div className="flex flex-col items-center gap-4">
-          {!hasSelection ? (
-            <div className="inline-flex items-center gap-2 bg-red-50 border border-red-200 text-red-500 px-5 py-2.5 rounded-full text-sm font-semibold">
-              <span>⚠️</span> 최소 1개 이상의 분석 자료를 선택해주세요
-            </div>
-          ) : (
-            <p className="text-sm text-gray-500 flex items-center gap-2">
-              <span className="text-emerald-500 font-bold">✓</span>
-              준비 완료! 면접을 시작할 수 있습니다
-            </p>
-          )}
-
-          <button
-            onClick={startInterview}
-            disabled={!hasSelection}
-            className={[
-              "group relative px-14 py-4 rounded-full font-bold text-base shadow-xl transition-all duration-500",
-              "bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white",
-              "hover:shadow-2xl hover:scale-105 active:scale-100",
-              "disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none",
-              "overflow-hidden",
-            ].join(" ")}
-          >
-            <span className="relative z-10 flex items-center gap-3">
-              <span className="text-xl">🎤</span>
-              면접 시작하기
-              <span className="transform group-hover:translate-x-1.5 transition-transform duration-300 text-lg">
-                →
-              </span>
-            </span>
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-700 via-indigo-700 to-violet-700 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-            <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12" />
-          </button>
-
-          <p className="text-xs text-gray-400">면접 결과는 자동으로 저장됩니다</p>
-        </div>
-      </div>
-
-      <Resume
-        isOpen={isResumeModalOpen}
-        onClose={() => setIsResumeModalOpen(false)}
-        onAnalyzeSuccess={() => setIsResumeModalOpen(false)}
-      />
-      <ClAnalysis
-        isOpen={isCoverLetterModalOpen}
-        onClose={() => setIsCoverLetterModalOpen(false)}
-      />
-      <PortfolioUploadModal
-        isOpen={isPortfolioModalOpen}
-        onClose={() => setIsPortfolioModalOpen(false)}
-      />
-
-      <DeviceTestModal
-        isOpen={isDeviceTestOpen}
-        onClose={() => setIsDeviceTestOpen(false)}
-        onConfirm={handleDeviceTestConfirm}
-      />
-
-      <style>{`
-        @keyframes bounce-subtle {
-          0%,100% { transform: translateY(0); }
-          50% { transform: translateY(-5px); }
-        }
-        @keyframes empty-float {
-          0%,100% { transform: translateY(0) rotate(0deg); }
-          30% { transform: translateY(-7px) rotate(-2deg); }
-          70% { transform: translateY(-3px) rotate(2deg); }
-        }
-        @keyframes slideInDown {
-          from { opacity:0; transform:translateY(-24px); }
-          to { opacity:1; transform:translateY(0); }
-        }
-        @keyframes slideInUp {
-          from { opacity:0; transform:translateY(24px); }
-          to { opacity:1; transform:translateY(0); }
-        }
-        @keyframes fadeInUp {
-          from { opacity:0; transform:translateY(16px); }
-          to { opacity:1; transform:translateY(0); }
-        }
-
-        .animate-bounce-subtle { animation: bounce-subtle 2s ease-in-out infinite; }
-        .animate-empty-float { animation: empty-float 3.5s ease-in-out infinite; }
-        .animate-slide-in-down { animation: slideInDown 0.8s ease-out forwards; }
-        .animate-slide-in-up { animation: slideInUp 0.8s ease-out forwards; }
-        .animate-fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
-        .animation-delay-300 { animation-delay: 0.3s; opacity: 0; }
-
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-      `}</style>
-    </div>
+    <li className="flex items-center gap-2.5 text-sm">
+      <span
+        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+        style={{
+          background: highlight ? "rgba(255,255,255,0.2)" : "rgba(99,120,247,0.1)",
+          color: highlight ? "white" : "#4F6EF7",
+        }}
+      >
+        {icon}
+      </span>
+      <span style={{ color: highlight ? "rgba(255,255,255,0.88)" : "#4B5672" }}>{label}</span>
+    </li>
   );
 }

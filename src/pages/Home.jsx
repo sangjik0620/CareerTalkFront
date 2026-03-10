@@ -1237,26 +1237,6 @@ const Footer = () => (
         <p className="text-gray-600 text-sm">
           © 2026 CareerTalk. All rights reserved.
         </p>
-        <div className="flex gap-6 mt-4 md:mt-0">
-          <a
-            href="#"
-            className="text-gray-600 hover:text-blue-600 transition text-sm"
-          >
-            이용약관
-          </a>
-          <a
-            href="#"
-            className="text-gray-600 hover:text-blue-600 transition text-sm"
-          >
-            개인정보처리방침
-          </a>
-          <a
-            href="#"
-            className="text-gray-600 hover:text-blue-600 transition text-sm"
-          >
-            쿠키 정책
-          </a>
-        </div>
       </div>
     </div>
   </footer>
