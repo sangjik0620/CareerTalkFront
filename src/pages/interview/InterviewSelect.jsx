@@ -103,8 +103,11 @@ const ScoreBadge = ({ score }) => {
       : score >= 75
       ? "bg-blue-100 text-blue-700 border-blue-300"
       : "bg-amber-100 text-amber-700 border-amber-300";
+
   return (
-    <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${color}`}>
+    <span
+      className={`shrink-0 inline-flex items-center justify-center text-xs font-bold px-2 py-0.5 rounded-full border ${color}`}
+    >
       {score}점
     </span>
   );
@@ -115,13 +118,21 @@ const ScoreBadge = ({ score }) => {
 // ─────────────────────────────────────────────
 function CardEmptyState({ meta, onClickAnalyze }) {
   return (
-    <div className={`rounded-2xl border-2 border-dashed ${meta.emptyBorder} ${meta.emptyBg} p-6 text-center`}>
+    <div
+      className={`rounded-2xl border-2 border-dashed ${meta.emptyBorder} ${meta.emptyBg} p-6 text-center h-full flex flex-col items-center justify-center`}
+    >
       <div className="relative inline-flex items-center justify-center mb-3">
-        <div className={`w-14 h-14 ${meta.emptyIconBg} rounded-2xl flex items-center justify-center animate-empty-float`}>
+        <div
+          className={`w-14 h-14 ${meta.emptyIconBg} rounded-2xl flex items-center justify-center animate-empty-float`}
+        >
           <span className="text-2xl">{meta.emptyIcon}</span>
         </div>
-        <span className={`absolute -top-1 -right-1 w-2.5 h-2.5 ${meta.dotColor} rounded-full animate-ping opacity-75`} />
-        <span className={`absolute -top-1 -right-1 w-2.5 h-2.5 ${meta.dotColor} rounded-full`} />
+        <span
+          className={`absolute -top-1 -right-1 w-2.5 h-2.5 ${meta.dotColor} rounded-full animate-ping opacity-75`}
+        />
+        <span
+          className={`absolute -top-1 -right-1 w-2.5 h-2.5 ${meta.dotColor} rounded-full`}
+        />
       </div>
       <p className={`font-bold text-sm mb-1 ${meta.emptyText}`}>{meta.emptyMsg}</p>
       <p className="text-gray-400 text-xs mb-4 leading-relaxed">{meta.emptyHint}</p>
@@ -139,12 +150,13 @@ function CardEmptyState({ meta, onClickAnalyze }) {
 // ─────────────────────────────────────────────
 // 전체 빈 상태 배너
 // ─────────────────────────────────────────────
-function GlobalEmptyBanner({ onNavigate }) {
+function GlobalEmptyBanner() {
   const steps = [
     { icon: "📤", label: "문서 업로드", desc: "이력서·자소서·포폴" },
-    { icon: "🤖", label: "AI 분석",    desc: "강점·약점 파악"    },
-    { icon: "🎤", label: "면접 시작",  desc: "맞춤형 질문 생성"  },
+    { icon: "🤖", label: "AI 분석", desc: "강점·약점 파악" },
+    { icon: "🎤", label: "면접 시작", desc: "맞춤형 질문 생성" },
   ];
+
   return (
     <div className="mb-10 relative overflow-hidden rounded-3xl border-2 border-dashed border-blue-200 bg-white/60 backdrop-blur-sm p-10 text-center shadow-xl">
       <div className="absolute -top-12 -left-12 w-48 h-48 bg-blue-200/20 rounded-full blur-3xl pointer-events-none" />
@@ -200,11 +212,13 @@ function AnalysisItemCard({ item, isSelected, onSelect, meta }) {
         </span>
         <ScoreBadge score={item.score} />
       </div>
+
       <p className={`text-xs truncate mb-2 ${isSelected ? "text-white/75" : "text-gray-400"}`}>
         📎 {item.fileName}
       </p>
-      <div className="flex flex-wrap gap-1 mb-2">
-        {item.keywords.map((kw) => (
+
+      {/* <div className="flex flex-wrap gap-1 mb-2">
+        {(item.keywords || []).map((kw) => (
           <span
             key={kw}
             className={`text-xs px-2 py-0.5 rounded-full font-medium ${
@@ -214,13 +228,17 @@ function AnalysisItemCard({ item, isSelected, onSelect, meta }) {
             {kw}
           </span>
         ))}
-      </div>
+      </div> */}
+
       <p className={`text-xs ${isSelected ? "text-white/65" : "text-gray-400"}`}>
         🕐 분석일: {item.analyzedAt}
       </p>
+
       {isSelected && (
         <div className="mt-2 flex items-center gap-1 text-white text-xs font-bold">
-          <span className="w-4 h-4 bg-white/30 rounded-full flex items-center justify-center text-[10px]">✓</span>
+          <span className="w-4 h-4 bg-white/30 rounded-full flex items-center justify-center text-[10px]">
+            ✓
+          </span>
           선택됨
         </div>
       )}
@@ -231,17 +249,25 @@ function AnalysisItemCard({ item, isSelected, onSelect, meta }) {
 // ─────────────────────────────────────────────
 // 카테고리 카드
 // ─────────────────────────────────────────────
-function AnalysisCategoryCard({ fileKey, meta, items, selectedId, onSelect, isLoading, index, onOpenAnalyze }) {
+function AnalysisCategoryCard({
+  fileKey,
+  meta,
+  items,
+  selectedId,
+  onSelect,
+  isLoading,
+  index,
+  onOpenAnalyze,
+}) {
   const hasItems = items && items.length > 0;
+
   return (
-    <div
-      className="animate-fade-in-up"
-      style={{ animationDelay: `${index * 0.12}s`, opacity: 0 }}
-    >
+    <div className="animate-fade-in-up" style={{ animationDelay: `${index * 0.12}s`, opacity: 0 }}>
       <div
         className={[
           "group relative bg-white/80 backdrop-blur-md rounded-3xl p-6 shadow-lg border transition-all duration-500",
           "hover:-translate-y-1.5 hover:shadow-2xl hover:bg-white/95",
+          "h-[270px] flex flex-col",
           selectedId
             ? `border-transparent ring-2 ring-offset-2 ${meta.ringColor}`
             : hasItems
@@ -250,12 +276,13 @@ function AnalysisCategoryCard({ fileKey, meta, items, selectedId, onSelect, isLo
         ].join(" ")}
       >
         {selectedId && (
-          <div className={`absolute top-4 right-4 w-7 h-7 bg-gradient-to-br ${meta.gradient} rounded-full flex items-center justify-center text-white font-bold shadow-lg text-xs`}>
+          <div
+            className={`absolute top-4 right-4 w-7 h-7 bg-gradient-to-br ${meta.gradient} rounded-full flex items-center justify-center text-white font-bold shadow-lg text-xs`}
+          >
             ✓
           </div>
         )}
 
-        {/* 헤더 */}
         <div className="flex items-center gap-3 mb-5">
           <div
             className={[
@@ -272,15 +299,18 @@ function AnalysisCategoryCard({ fileKey, meta, items, selectedId, onSelect, isLo
               {meta.icon}
             </span>
           </div>
+
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className={`text-lg font-bold ${hasItems ? "text-gray-900" : "text-gray-400"}`}>
                 {meta.label}
               </h3>
               {!isLoading && (
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-full border ${
-                  hasItems ? meta.badgeColor : "bg-gray-100 text-gray-400 border-gray-200"
-                }`}>
+                <span
+                  className={`text-xs font-bold px-2 py-0.5 rounded-full border ${
+                    hasItems ? meta.badgeColor : "bg-gray-100 text-gray-400 border-gray-200"
+                  }`}
+                >
                   {hasItems ? `${items.length}개` : "없음"}
                 </span>
               )}
@@ -292,7 +322,7 @@ function AnalysisCategoryCard({ fileKey, meta, items, selectedId, onSelect, isLo
         <div className="border-t border-gray-100 mb-4" />
 
         {isLoading ? (
-          <div className="space-y-3">
+          <div className="space-y-3 flex-1">
             {[1, 2].map((i) => (
               <div key={i} className="h-24 rounded-2xl bg-gray-100/80 animate-pulse" />
             ))}
@@ -318,14 +348,14 @@ function AnalysisCategoryCard({ fileKey, meta, items, selectedId, onSelect, isLo
 }
 
 // ─────────────────────────────────────────────
-// ✅ 예상 소요 시간 카드
+// 예상 소요 시간 카드
 // ─────────────────────────────────────────────
 function EstimatedTimeCard({ questionCount }) {
   const count = parseInt(questionCount, 10);
   const minutes = count * 2;
   const segments = [
-    { label: "답변 시간",    min: Math.round(minutes * 1.0), color: "bg-indigo-400", icon: "🎤" },
-    { label: "피드백 분석",  min: Math.round(minutes * 0.3), color: "bg-violet-400", icon: "📊" },
+    { label: "답변 시간", min: Math.round(minutes * 1.0), color: "bg-indigo-400", icon: "🎤" },
+    { label: "피드백 분석", min: Math.round(minutes * 0.3), color: "bg-violet-400", icon: "📊" },
   ];
   const total = segments.reduce((s, x) => s + x.min, 0);
 
@@ -341,7 +371,6 @@ function EstimatedTimeCard({ questionCount }) {
         </div>
       </div>
 
-      {/* 프로그레스 바 */}
       <div className="flex rounded-full overflow-hidden h-3 mb-4 gap-0.5">
         {segments.map((seg) => (
           <div
@@ -368,11 +397,11 @@ function EstimatedTimeCard({ questionCount }) {
 }
 
 // ─────────────────────────────────────────────
-// ✅ 시작 전 체크리스트 카드
+// 시작 전 체크리스트 카드
 // ─────────────────────────────────────────────
 const CHECKLIST_ITEMS = [
-  { id: "mic",    icon: "🎙️", text: "마이크 상태를 확인했어요"       },
-  { id: "quiet",  icon: "🔇", text: "조용한 환경이 준비됐어요"         }
+  { id: "mic", icon: "🎙️", text: "마이크 상태를 확인했어요" },
+  { id: "quiet", icon: "🔇", text: "조용한 환경이 준비됐어요" },
 ];
 
 function PreChecklistCard() {
@@ -390,7 +419,9 @@ function PreChecklistCard() {
           </div>
           <div>
             <p className="text-sm font-bold text-gray-800">시작 전 체크리스트</p>
-            <p className="text-xs text-gray-400">{doneCount}/{CHECKLIST_ITEMS.length} 완료</p>
+            <p className="text-xs text-gray-400">
+              {doneCount}/{CHECKLIST_ITEMS.length} 완료
+            </p>
           </div>
         </div>
         {allDone && (
@@ -400,7 +431,6 @@ function PreChecklistCard() {
         )}
       </div>
 
-      {/* 미니 프로그레스 */}
       <div className="h-1.5 bg-gray-100 rounded-full mb-4 overflow-hidden">
         <div
           className="h-full bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full transition-all duration-500"
@@ -422,16 +452,22 @@ function PreChecklistCard() {
                 : "bg-gray-50/80 border-gray-200/60 hover:border-gray-300",
             ].join(" ")}
           >
-            <span className={[
-              "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-300",
-              checked[item.id]
-                ? "bg-emerald-500 border-emerald-500 text-white text-[10px]"
-                : "border-gray-300 bg-white",
-            ].join(" ")}>
+            <span
+              className={[
+                "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-300",
+                checked[item.id]
+                  ? "bg-emerald-500 border-emerald-500 text-white text-[10px]"
+                  : "border-gray-300 bg-white",
+              ].join(" ")}
+            >
               {checked[item.id] && "✓"}
             </span>
             <span className="text-sm">{item.icon}</span>
-            <span className={`text-xs font-medium flex-1 ${checked[item.id] ? "text-emerald-700 line-through" : "text-gray-600"}`}>
+            <span
+              className={`text-xs font-medium flex-1 ${
+                checked[item.id] ? "text-emerald-700 line-through" : "text-gray-600"
+              }`}
+            >
               {item.text}
             </span>
           </button>
@@ -446,27 +482,43 @@ function PreChecklistCard() {
 // ─────────────────────────────────────────────
 export default function InterviewSelect() {
   const navigate = useNavigate();
+
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false);
   const [isCoverLetterModalOpen, setIsCoverLetterModalOpen] = useState(false);
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
 
   const openAnalyzeModal = (fileKey) => {
-    if (fileKey === "resume")      setIsResumeModalOpen(true);
+    if (fileKey === "resume") setIsResumeModalOpen(true);
     if (fileKey === "coverLetter") setIsCoverLetterModalOpen(true);
-    if (fileKey === "portfolio")   setIsPortfolioModalOpen(true);
+    if (fileKey === "portfolio") setIsPortfolioModalOpen(true);
   };
 
-  const [analyses, setAnalyses] = useState({ resume: [], coverLetter: [], portfolio: [] });
-  const [isLoading, setIsLoading]   = useState(true);
+  const [analyses, setAnalyses] = useState({
+    resume: [],
+    coverLetter: [],
+    portfolio: [],
+  });
+  const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
-  const [selectedIds, setSelectedIds] = useState({ resume: null, coverLetter: null, portfolio: null });
+  const [selectedIds, setSelectedIds] = useState({
+    resume: null,
+    coverLetter: null,
+    portfolio: null,
+  });
   const [settings, setSettings] = useState({ questionCount: "5" });
   const [isDeviceTestOpen, setIsDeviceTestOpen] = useState(false);
 
   useEffect(() => {
     setIsLoading(true);
     fetchUserAnalyses()
-      .then((data) => { setAnalyses(data); setFetchError(null); })
+      .then((data) => {
+        setAnalyses({
+          resume: Array.isArray(data?.resume) ? data.resume : [],
+          coverLetter: Array.isArray(data?.coverLetter) ? data.coverLetter : [],
+          portfolio: Array.isArray(data?.portfolio) ? data.portfolio : [],
+        });
+        setFetchError(null);
+      })
       .catch(() => setFetchError("분석 결과를 불러오는 데 실패했습니다."))
       .finally(() => setIsLoading(false));
   }, []);
@@ -475,10 +527,12 @@ export default function InterviewSelect() {
     () => !isLoading && Object.values(analyses).every((l) => l.length === 0),
     [analyses, isLoading]
   );
+
   const hasSelection = useMemo(
     () => Object.values(selectedIds).some((id) => id !== null),
     [selectedIds]
   );
+
   const selectedSummary = useMemo(() => {
     return Object.entries(selectedIds)
       .filter(([, id]) => id !== null)
@@ -489,37 +543,103 @@ export default function InterviewSelect() {
       .filter(Boolean);
   }, [selectedIds, analyses]);
 
-  const handleSelect = (key, id) => setSelectedIds((p) => ({ ...p, [key]: id }));
+  const handleSelect = (key, id) => {
+    setSelectedIds((p) => ({ ...p, [key]: id }));
+  };
 
-  const buildSelectedTargets = () => {
-  const targets = [];
+  const buildFinalQuestions = (expectedQuestions, questionCount) => {
+  const count = Number(questionCount || 5);
 
-  const mapping = [
-    { key: "resume", targetType: "RESUME" },
-    { key: "coverLetter", targetType: "ESSAY" },
-    { key: "portfolio", targetType: "PORTFOLIO" },
+  const introQuestion = "자기소개를 간단히 해주시겠습니까?";
+  const motivationQuestion = "우리 회사에 지원한 동기는 무엇인가요?";
+  const finalQuestion = "3년 후 자신의 모습을 어떻게 그리고 계신가요?";
+
+  const fallbackQuestions = [
+    "자신의 강점과 약점을 말씀해주세요.",
+    "가장 기억에 남는 프로젝트 경험을 설명해주세요.",
+    "팀에서 갈등이 발생했을 때 어떻게 해결하셨나요?",
+    "실패했던 경험과 그로부터 배운 점을 말씀해주세요.",
+    "이 직무에서 가장 중요하다고 생각하는 역량은 무엇인가요?",
+    "최근에 배운 새로운 기술이나 지식이 있나요?",
+    "마지막으로 하고 싶은 말씀이 있으신가요?",
   ];
 
-  mapping.forEach(({ key, targetType }) => {
-    const selectedAnalysisId = selectedIds[key];
-    if (!selectedAnalysisId) return;
+  const fixedFront = count === 10
+    ? [introQuestion, motivationQuestion]
+    : [introQuestion];
 
-    const selectedItem = analyses[key].find((item) => item.id === selectedAnalysisId);
-    if (!selectedItem) return;
+  const cleanedExpected = (expectedQuestions || [])
+    .map((q) => String(q || "").trim())
+    .filter(Boolean)
+    .filter(
+      (q) =>
+        q !== introQuestion &&
+        q !== motivationQuestion &&
+        q !== finalQuestion
+    );
 
-    targets.push({
-      targetType,
-      targetId: selectedItem.targetId,
-      analysisId: selectedItem.analysisId,
-    });
-  });
+  const result = [...fixedFront];
 
-  return targets;
+  for (const q of cleanedExpected) {
+    if (result.length >= count - 1) break; // 마지막 1칸은 finalQuestion 용
+    if (!result.includes(q)) result.push(q);
+  }
+
+  for (const q of fallbackQuestions) {
+    if (result.length >= count - 1) break;
+    if (!result.includes(q)) result.push(q);
+  }
+
+  // 마지막 질문 고정
+  if (!result.includes(finalQuestion)) {
+    result.push(finalQuestion);
+  }
+
+  return result.slice(0, count);
 };
 
-  // ✅ 교체: 바로 이동 대신 기기 테스트 모달 먼저 열기
-const startInterview = () => {
-  const targets = buildSelectedTargets();
+  const buildSelectedTargetsAndQuestions = () => {
+    const config = [
+      { key: "resume", targetType: "RESUME" },
+      { key: "coverLetter", targetType: "ESSAY" },
+      { key: "portfolio", targetType: "PORTFOLIO" },
+    ];
+
+    const targets = [];
+    const questionSet = new Set();
+
+    config.forEach(({ key, targetType }) => {
+      const selectedAnalysisId = selectedIds[key];
+      if (!selectedAnalysisId) return;
+
+      const selectedItem = analyses[key]?.find((item) => item.id === selectedAnalysisId);
+      if (!selectedItem) return;
+
+      targets.push({
+        targetType,
+        targetId: selectedItem.targetId,
+        analysisId: selectedItem.analysisId,
+      });
+
+      (selectedItem.expectedQuestions || []).forEach((q) => {
+        const trimmed = String(q || "").trim();
+        if (trimmed) questionSet.add(trimmed);
+      });
+    });
+
+    return {
+      targets,
+      questions: Array.from(questionSet),
+    };
+  };
+
+  const startInterview = () => {
+  const { targets, questions } = buildSelectedTargetsAndQuestions();
+
+  const finalQuestions = buildFinalQuestions(
+    questions,
+    Number(settings.questionCount || 5)
+  );
 
   localStorage.setItem(
     "interviewData",
@@ -527,23 +647,22 @@ const startInterview = () => {
       selectedAnalyses: selectedIds,
       selectedTargets: targets,
       settings,
+      questions: finalQuestions,
     })
   );
 
   setIsDeviceTestOpen(true);
 };
 
-// 기기 테스트 통과 후 실제 이동
-const handleDeviceTestConfirm = () => {
-  setIsDeviceTestOpen(false);
-  navigate("/interview/session");
-};
+  const handleDeviceTestConfirm = () => {
+    setIsDeviceTestOpen(false);
+    navigate("/interview/session");
+  };
 
   return (
     <div className="min-h-screen relative">
       <BackgroundMesh />
 
-      {/* ── 헤더 ── */}
       <nav className="fixed w-full z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/60 shadow-sm">
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex justify-between items-center h-16">
@@ -558,10 +677,7 @@ const handleDeviceTestConfirm = () => {
         </div>
       </nav>
 
-      {/* ── 메인 ── */}
       <div className="relative z-10 max-w-6xl mx-auto px-6 pt-28 pb-24">
-
-        {/* ── 타이틀 ── */}
         <div className="text-center mb-14">
           <div className="inline-flex items-center gap-2 mb-5 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full border border-blue-200 shadow-sm animate-slide-in-down">
             <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
@@ -584,17 +700,14 @@ const handleDeviceTestConfirm = () => {
           </p>
         </div>
 
-        {/* ── 에러 ── */}
         {fetchError && (
           <div className="mb-8 flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-2xl text-sm font-semibold">
             <span>⚠️</span> {fetchError}
           </div>
         )}
 
-        {/* ── 전체 빈 상태 ── */}
-        {isAllEmpty && <GlobalEmptyBanner onNavigate={() => openAnalyzeModal("resume")} />}
+        {isAllEmpty && <GlobalEmptyBanner />}
 
-        {/* ── 카테고리 카드 ── */}
         <div className="grid md:grid-cols-3 gap-5 mb-8">
           {Object.keys(FILE_META).map((key, idx) => (
             <AnalysisCategoryCard
@@ -611,16 +724,20 @@ const handleDeviceTestConfirm = () => {
           ))}
         </div>
 
-        {/* ── 선택 요약 ── */}
         {selectedSummary.length > 0 && (
           <div className="bg-white/80 backdrop-blur-sm border border-blue-200/80 rounded-3xl p-6 mb-8 shadow-lg animate-slide-in-up">
             <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2 text-base">
-              <span className="inline-flex items-center justify-center w-6 h-6 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full text-white text-xs">✓</span>
+              <span className="inline-flex items-center justify-center w-6 h-6 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full text-white text-xs">
+                ✓
+              </span>
               선택된 분석 자료
             </h4>
             <div className="flex gap-4 flex-wrap">
               {selectedSummary.map((item) => (
-                <div key={item.key} className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3 shadow-sm border border-gray-100 flex-1 min-w-[160px]">
+                <div
+                  key={`${item.key}-${item.id}`}
+                  className="flex items-center gap-3 bg-white rounded-2xl px-4 py-3 shadow-sm border border-gray-100 flex-1 min-w-[160px]"
+                >
                   <span className="text-2xl">{FILE_META[item.key].icon}</span>
                   <div className="min-w-0">
                     <p className="text-xs text-gray-400 font-medium">{item.label}</p>
@@ -633,7 +750,6 @@ const handleDeviceTestConfirm = () => {
           </div>
         )}
 
-        {/* ── 면접 설정 ── */}
         <div className="bg-white/80 backdrop-blur-md rounded-3xl p-7 shadow-lg border border-gray-200/80 mb-8">
           <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">
             <span className="inline-flex items-center justify-center w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl text-white text-base shadow-sm">
@@ -643,15 +759,13 @@ const handleDeviceTestConfirm = () => {
           </h3>
 
           <div className="flex flex-col md:flex-row gap-5">
-
-            {/* 질문 개수 */}
             <div className="flex-1 bg-gradient-to-br from-blue-50/80 to-indigo-50/80 rounded-2xl p-5 border border-blue-100/80">
               <p className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
                 <span className="text-blue-500">📊</span> 질문 개수
               </p>
               <div className="flex gap-3">
                 {[
-                  { value: "5",  label: "5개",  sub: "약 10분", icon: "⚡" },
+                  { value: "5", label: "5개", sub: "약 10분", icon: "⚡" },
                   { value: "10", label: "10개", sub: "약 20분", icon: "🎯" },
                 ].map((opt) => (
                   <button
@@ -668,7 +782,11 @@ const handleDeviceTestConfirm = () => {
                   >
                     <span className="text-xl">{opt.icon}</span>
                     <span className="text-lg font-extrabold">{opt.label}</span>
-                    <span className={`text-xs ${settings.questionCount === opt.value ? "text-white/75" : "text-gray-400"}`}>
+                    <span
+                      className={`text-xs ${
+                        settings.questionCount === opt.value ? "text-white/75" : "text-gray-400"
+                      }`}
+                    >
                       {opt.sub}
                     </span>
                   </button>
@@ -679,15 +797,11 @@ const handleDeviceTestConfirm = () => {
               </p>
             </div>
 
-            {/* ✅ 예상 소요 시간 카드 */}
             <EstimatedTimeCard questionCount={settings.questionCount} />
-
-            {/* ✅ 시작 전 체크리스트 카드 */}
             <PreChecklistCard />
           </div>
         </div>
 
-        {/* ── 시작 버튼 ── */}
         <div className="flex flex-col items-center gap-4">
           {!hasSelection ? (
             <div className="inline-flex items-center gap-2 bg-red-50 border border-red-200 text-red-500 px-5 py-2.5 rounded-full text-sm font-semibold">
@@ -714,9 +828,10 @@ const handleDeviceTestConfirm = () => {
             <span className="relative z-10 flex items-center gap-3">
               <span className="text-xl">🎤</span>
               면접 시작하기
-              <span className="transform group-hover:translate-x-1.5 transition-transform duration-300 text-lg">→</span>
+              <span className="transform group-hover:translate-x-1.5 transition-transform duration-300 text-lg">
+                →
+              </span>
             </span>
-            {/* hover shimmer */}
             <div className="absolute inset-0 bg-gradient-to-r from-blue-700 via-indigo-700 to-violet-700 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12" />
           </button>
@@ -725,50 +840,60 @@ const handleDeviceTestConfirm = () => {
         </div>
       </div>
 
-      {/* ── 모달 ── */}
-      <Resume isOpen={isResumeModalOpen} onClose={() => setIsResumeModalOpen(false)} onAnalyzeSuccess={() => setIsResumeModalOpen(false)} />
-      <ClAnalysis isOpen={isCoverLetterModalOpen} onClose={() => setIsCoverLetterModalOpen(false)} />
-      <PortfolioUploadModal isOpen={isPortfolioModalOpen} onClose={() => setIsPortfolioModalOpen(false)} />
-      {/* 👇 기기 테스트 모달 추가 */}
-<DeviceTestModal
-  isOpen={isDeviceTestOpen}
-  onClose={() => setIsDeviceTestOpen(false)}
-  onConfirm={handleDeviceTestConfirm}
-/>
+      <Resume
+        isOpen={isResumeModalOpen}
+        onClose={() => setIsResumeModalOpen(false)}
+        onAnalyzeSuccess={() => setIsResumeModalOpen(false)}
+      />
+      <ClAnalysis
+        isOpen={isCoverLetterModalOpen}
+        onClose={() => setIsCoverLetterModalOpen(false)}
+      />
+      <PortfolioUploadModal
+        isOpen={isPortfolioModalOpen}
+        onClose={() => setIsPortfolioModalOpen(false)}
+      />
+
+      <DeviceTestModal
+        isOpen={isDeviceTestOpen}
+        onClose={() => setIsDeviceTestOpen(false)}
+        onConfirm={handleDeviceTestConfirm}
+      />
 
       <style>{`
         @keyframes bounce-subtle {
           0%,100% { transform: translateY(0); }
-          50%      { transform: translateY(-5px); }
+          50% { transform: translateY(-5px); }
         }
         @keyframes empty-float {
           0%,100% { transform: translateY(0) rotate(0deg); }
-          30%     { transform: translateY(-7px) rotate(-2deg); }
-          70%     { transform: translateY(-3px) rotate(2deg); }
+          30% { transform: translateY(-7px) rotate(-2deg); }
+          70% { transform: translateY(-3px) rotate(2deg); }
         }
         @keyframes slideInDown {
           from { opacity:0; transform:translateY(-24px); }
-          to   { opacity:1; transform:translateY(0); }
+          to { opacity:1; transform:translateY(0); }
         }
         @keyframes slideInUp {
           from { opacity:0; transform:translateY(24px); }
-          to   { opacity:1; transform:translateY(0); }
+          to { opacity:1; transform:translateY(0); }
         }
         @keyframes fadeInUp {
           from { opacity:0; transform:translateY(16px); }
-          to   { opacity:1; transform:translateY(0); }
+          to { opacity:1; transform:translateY(0); }
         }
-        .animate-bounce-subtle { animation: bounce-subtle 2s ease-in-out infinite; }
-        .animate-empty-float   { animation: empty-float 3.5s ease-in-out infinite; }
-        .animate-slide-in-down { animation: slideInDown 0.8s ease-out forwards; }
-        .animate-slide-in-up   { animation: slideInUp  0.8s ease-out forwards; }
-        .animate-fade-in-up    { animation: fadeInUp   0.6s ease-out forwards; }
-        .animation-delay-300   { animation-delay:0.3s; opacity:0; }
 
-        .custom-scroll::-webkit-scrollbar       { width:4px; }
-        .custom-scroll::-webkit-scrollbar-track { background:transparent; }
-        .custom-scroll::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:99px; }
-        .custom-scroll::-webkit-scrollbar-thumb:hover { background:#94a3b8; }
+        .animate-bounce-subtle { animation: bounce-subtle 2s ease-in-out infinite; }
+        .animate-empty-float { animation: empty-float 3.5s ease-in-out infinite; }
+        .animate-slide-in-down { animation: slideInDown 0.8s ease-out forwards; }
+        .animate-slide-in-up { animation: slideInUp 0.8s ease-out forwards; }
+        .animate-fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
+        .animation-delay-300 { animation-delay: 0.3s; opacity: 0; }
+
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
       `}</style>
     </div>
   );
