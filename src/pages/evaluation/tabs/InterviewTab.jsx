@@ -70,7 +70,8 @@ const iconBadge = (bg, color = "#fff") => ({
    메인 컴포넌트
 ───────────────────────────────────────────── */
 export default function InterviewTab({ data, turns = [] }) {
-  const ia = data?.interviewAnalysis;
+  const evaluation = data?.evaluation;
+  const ia = evaluation?.interviewAnalysis;
 
   if (!ia) {
     return (

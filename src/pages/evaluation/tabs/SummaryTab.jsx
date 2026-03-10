@@ -9,8 +9,9 @@ import {
 } from "../utils/evalUtils";
 
 export default function SummaryTab({ data }) {
-  const summary = data?.summary;
-  const info = data?.interviewInfo;
+  const evaluation = data?.evaluation;
+  const summary = evaluation?.summary;
+  const info = evaluation?.interviewInfo;
 
   if (!summary || !info) {
     return (
@@ -91,22 +92,6 @@ export default function SummaryTab({ data }) {
         ? `${summary.sentimentScore}%`
         : "-",
     tone: "neutral",
-  },
-  {
-    label: "직무적합",
-    value:
-      typeof summary?.jobFitIndex === "number"
-        ? `${summary.jobFitIndex}`
-        : "-",
-    tone: "brand",
-  },
-  {
-    label: "자신감",
-    value:
-      typeof summary?.confidenceIndex === "number"
-        ? `${summary.confidenceIndex}`
-        : "-",
-    tone: "brand",
   },
 ];
 

@@ -156,20 +156,20 @@ const Evaluation = ({ evaluationData }) => {
 
   // pdf 다운로드 함수
   const handleExportPdf = useReactToPrint({
-  contentRef: reportPrintRef, // ✅ 핵심 (ref 자체 전달)
-  documentTitle: `면접평가리포트_${sessionId ?? "no-session"}`,
-  onPrintError: (err) => console.error("[print] error:", err),
+    contentRef: reportPrintRef, // ✅ 핵심 (ref 자체 전달)
+    documentTitle: `면접평가리포트_${sessionId ?? "no-session"}`,
+    onPrintError: (err) => console.error("[print] error:", err),
 
-  // ✅ 인쇄 iframe 로딩 완료 후 호출 (디버그에도 유용)
-  // onAfterPrint: () => console.log("[print] done"),
-  // onPrintError: (err) => console.error("[print] error:", err),
+    // ✅ 인쇄 iframe 로딩 완료 후 호출 (디버그에도 유용)
+    // onAfterPrint: () => console.log("[print] done"),
+    // onPrintError: (err) => console.error("[print] error:", err),
 
-  // ✅ 프린트 전에 렌더 안정화(차트/폰트 반영)
-  onBeforePrint: async () => {
-    // console.log("[print] beforePrint, ref:", reportPrintRef.current);
-    await new Promise((r) => setTimeout(r, 50));
-  },
-});
+    // ✅ 프린트 전에 렌더 안정화(차트/폰트 반영)
+    onBeforePrint: async () => {
+      // console.log("[print] beforePrint, ref:", reportPrintRef.current);
+      await new Promise((r) => setTimeout(r, 50));
+    },
+  });
 
   useEffect(() => {
     setDocAnalysisMap({});
@@ -281,7 +281,7 @@ const Evaluation = ({ evaluationData }) => {
       .getResult(sessionId)
       .then((res) => {
         if (!alive) return;
-        setData(res?.evaluation ?? null);
+        setData(res ?? null);
         setTurns(res?.turns ?? []);
         setPhase("SHOW_RESULT");
       })
@@ -377,10 +377,13 @@ const Evaluation = ({ evaluationData }) => {
         <div className="evaluation-header">
           <h1>면접 평가 결과</h1>
           <div className="header-actions">
-            <button className="export-btn" onClick={() => {
-    console.log("handleExportPdf type:", typeof handleExportPdf);
-    handleExportPdf?.();
-  }}>
+            <button
+              className="export-btn"
+              onClick={() => {
+                console.log("handleExportPdf type:", typeof handleExportPdf);
+                handleExportPdf?.();
+              }}
+            >
               <Icon.Export />
               PDF 내보내기
             </button>
@@ -424,18 +427,18 @@ const Evaluation = ({ evaluationData }) => {
         </div>
         {/* --- Print/PDF 전용 리포트 DOM (화면에서는 숨김) --- */}
         <div className="evaluation-container screen-only">
-        <div className="print-root" aria-hidden="true">
-          <div ref={reportPrintRef}>
-            <EvaluationReport
-              data={data}
-              turns={turns}
-              docLoading={docLoading}
-              docErr={docErr}
-              docAnalysisMap={docAnalysisMap}
-              sessionId={sessionId}
-            />
+          <div className="print-root" aria-hidden="true">
+            <div ref={reportPrintRef}>
+              <EvaluationReport
+                data={data}
+                turns={turns}
+                docLoading={docLoading}
+                docErr={docErr}
+                docAnalysisMap={docAnalysisMap}
+                sessionId={sessionId}
+              />
+            </div>
           </div>
-        </div>
         </div>
       </div>
     </>
