@@ -2081,9 +2081,14 @@
     }
   }
 }
+
+.screen-only {
+  display: none !important;
+}
+
 @media print {
   .screen-only {
-    display: none !important;
+    display: block !important;
   }
 
   .print-root {
