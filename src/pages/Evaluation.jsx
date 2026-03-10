@@ -3,8 +3,6 @@ import "../css/Evaluation.css";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { interviewApi } from "../lib/api/interviewApi";
 import EvaluationReport from "./evaluation/EvaluationReport";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 import { useReactToPrint } from "react-to-print";
 
 import SummaryTab from "./evaluation/tabs/SummaryTab";
@@ -137,8 +135,6 @@ const Evaluation = ({ evaluationData }) => {
   const [docAnalysisMap, setDocAnalysisMap] = useState({});
 
   const doneTimerRef = useRef(null);
-
-  const pdfRef = useRef(null);
   const reportPrintRef = useRef(null);
 
   const location = useLocation();
@@ -160,11 +156,7 @@ const Evaluation = ({ evaluationData }) => {
     documentTitle: `면접평가리포트_${sessionId ?? "no-session"}`,
     onPrintError: (err) => console.error("[print] error:", err),
 
-    // ✅ 인쇄 iframe 로딩 완료 후 호출 (디버그에도 유용)
-    // onAfterPrint: () => console.log("[print] done"),
-    // onPrintError: (err) => console.error("[print] error:", err),
-
-    // ✅ 프린트 전에 렌더 안정화(차트/폰트 반영)
+    // 프린트 전에 렌더 안정화(차트/폰트 반영)
     onBeforePrint: async () => {
       // console.log("[print] beforePrint, ref:", reportPrintRef.current);
       await new Promise((r) => setTimeout(r, 50));
@@ -341,7 +333,6 @@ const Evaluation = ({ evaluationData }) => {
     return () => {
       alive = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, sessionId, data]);
 
   /* ── Guards ── */

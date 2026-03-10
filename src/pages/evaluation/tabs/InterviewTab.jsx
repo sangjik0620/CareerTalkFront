@@ -916,8 +916,6 @@ export default function InterviewTab({ data, turns = [] }) {
                         {/* 강점 */}
                         {feedbackStrength && (
                           <FeedbackBlock
-                            emoji="💪"
-                            label="강점"
                             text={feedbackStrength}
                             color={{
                               bg: "#F0FDF4",
@@ -927,39 +925,6 @@ export default function InterviewTab({ data, turns = [] }) {
                             }}
                           />
                         )}
-
-                        {/* 보완점 */}
-                        {feedbackWeakness && (
-                          <FeedbackBlock
-                            emoji="🔧"
-                            label="보완점"
-                            text={feedbackWeakness}
-                            color={{
-                              bg: "#FFF1F2",
-                              border: "#FECDD3",
-                              label: "#9F1239",
-                              text: "#BE123C",
-                            }}
-                          />
-                        )}
-
-                        {/* 상세 피드백 (강점/보완점 없을 때) */}
-                        {fullFeedback &&
-                          !feedbackStrength &&
-                          !feedbackWeakness && (
-                            <FeedbackBlock
-                              emoji="📄"
-                              label="상세 피드백"
-                              text={fullFeedback}
-                              color={{
-                                bg: "#EFF6FF",
-                                border: "#BFDBFE",
-                                label: "#1E40AF",
-                                text: "#1D4ED8",
-                              }}
-                            />
-                          )}
-
                         {/* 키워드 */}
                         {keywords.length > 0 && (
                           <div style={{ marginTop: 12 }}>
