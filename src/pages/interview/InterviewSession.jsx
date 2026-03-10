@@ -1,4 +1,3 @@
-// src/pages/InterviewSession.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../lib/api";
@@ -28,7 +27,6 @@ function revokeUrlSafely(url) {
   } catch {}
 }
 
-// 메인과 동일한 결: 라이트 + 파스텔 오브
 const LightGradientOrbs = () => {
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -67,7 +65,6 @@ export default function InterviewSession() {
     }
   }, []);
 
-  // 기존 호환 + 신규 구조 둘 다 지원
   const selectedTargets = useMemo(() => {
     if (Array.isArray(interviewData?.selectedTargets)) return interviewData.selectedTargets;
     if (Array.isArray(interviewData?.targets)) return interviewData.targets;
@@ -77,8 +74,12 @@ export default function InterviewSession() {
   const totalCount = Number(interviewData?.settings?.questionCount ?? 10);
 
   const questions = useMemo(() => {
-    if (Array.isArray(interviewData?.questions) && interviewData.questions.length > 0) {
-      return interviewData.questions;
+    const savedQuestions = Array.isArray(interviewData?.questions)
+      ? interviewData.questions.map((q) => String(q || "").trim()).filter(Boolean)
+      : [];
+
+    if (savedQuestions.length > 0) {
+      return savedQuestions;
     }
 
     const arr = [];
@@ -151,7 +152,6 @@ export default function InterviewSession() {
 
       recordings.forEach((r) => revokeUrlSafely(r?.url));
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -159,7 +159,6 @@ export default function InterviewSession() {
     setTranscript("답변 버튼을 눌러 녹음해주세요...");
     setListeningStatus("녹음 대기 중");
     if (currentQuestion) speakQuestion(currentQuestion);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex]);
 
   function speakQuestion(text) {
@@ -386,7 +385,6 @@ export default function InterviewSession() {
     fd.append("durationSec", String(seconds));
     fd.append("questionCount", String(questions.length));
 
-    // 핵심 수정: InterviewSelect에서 저장한 선택 분석 문서 정보 전달
     if (selectedTargets.length > 0) {
       fd.append("targetsJson", JSON.stringify(selectedTargets));
     }
