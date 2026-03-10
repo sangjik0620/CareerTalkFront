@@ -1,16 +1,60 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "../../css/ChatBot.css";
+import chatbotIcon from "../../img/chaticon2.png";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
 
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
+  const [scrollOffset, setScrollOffset] = useState(0);
   const [messages, setMessages] = useState([
-    { type: "bot", text: "안녕하세요. Carrer궁금한 점을 입력해주세요." },
+    { type: "bot", text: "안녕하세요. CarrerTalk 궁금한 점을 입력해주세요." },
   ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const chatAreaRef = useRef(null);
+
+  useEffect(() => {
+    // 채팅 받을때마다 화면 이펙트
+    if (chatAreaRef.current) {
+      chatAreaRef.current.scrollTop = chatAreaRef.current.scrollHeight;
+    }
+  }, [messages, loading]);
+
+  useEffect(() => {
+    //화면스크롤시 챗봇 아이콘 이펙트
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+    let animationFrame;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const diff = currentScrollY - lastScrollY;
+      lastScrollY = currentScrollY;
+
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const limited = Math.max(-12, Math.min(12, diff * 0.6));
+          setScrollOffset(limited);
+          ticking = false;
+        });
+        ticking = true;
+      }
+
+      clearTimeout(animationFrame);
+      animationFrame = setTimeout(() => {
+        setScrollOffset(0);
+      }, 120);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      clearTimeout(animationFrame);
+    };
+  }, []);
 
   const handleSend = async () => {
     const trimmed = input.trim();
@@ -74,7 +118,7 @@ export default function ChatBot() {
             </button>
           </div>
 
-          <div className="chatbot-chat-area">
+          <div className="chatbot-chat-area" ref={chatAreaRef}>
             {messages.map((msg, index) => (
               <div
                 key={index}
@@ -89,9 +133,7 @@ export default function ChatBot() {
             ))}
 
             {loading && (
-              <div className="chatbot-message chatbot-bot-message">
-                답변 생성 중...
-              </div>
+              <div className="chatbot-message chatbot-bot-message">...</div>
             )}
           </div>
 
@@ -121,8 +163,9 @@ export default function ChatBot() {
       <button
         className="chatbot-floating-button"
         onClick={() => setIsOpen(!isOpen)}
+        style={{ transform: `translateY(${scrollOffset}px)` }}
       >
-        챗
+        <img src={chatbotIcon} alt="챗봇" className="chatbot-floating-icon" />
       </button>
     </>
   );
