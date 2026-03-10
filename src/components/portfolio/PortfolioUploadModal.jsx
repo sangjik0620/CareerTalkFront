@@ -162,8 +162,9 @@ const PortfolioUploadModal = ({ isOpen, onClose }) => {
               AI 포트폴리오 분석 진행 중
             </h3>
             <p className="text-sm text-gray-500 text-center leading-relaxed">
-              업로드된 데이터를 기반으로 직무 역량을 평가하고 있습니다.
-              <br />약 1~2분 정도 소요될 수 있습니다.
+              업로드된 데이터를 기반으로 직무 역량을 분석하고 있습니다.
+              <br />
+              파일 용량과 페이지 수에 따라 시간이 조금 더 소요될 수 있습니다.
             </p>
           </div>
         ) : viewStep === "confirm" ? (
