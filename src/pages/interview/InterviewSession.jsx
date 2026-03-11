@@ -431,7 +431,7 @@ export default function InterviewSession() {
         return;
       }
 
-      navigate(`/interview/result?sessionId=${sessionId}`, {
+      navigate(`/interview/result/${sessionId}`, {
         state: { uploadResult: data },
       });
     } catch (err) {

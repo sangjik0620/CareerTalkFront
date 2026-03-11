@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "../css/Evaluation.css";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { interviewApi } from "../lib/api/interviewApi";
 import EvaluationReport from "./evaluation/EvaluationReport";
 import { useReactToPrint } from "react-to-print";
@@ -120,6 +120,17 @@ const TABS = [
   { id: "competency", label: "역량", IconComp: Icon.Competency },
 ];
 
+function hasResultPayload(res) {
+  return (
+    !!res &&
+    (Array.isArray(res?.turns) ||
+      !!res?.summary ||
+      !!res?.interviewAnalysis ||
+      !!res?.comparison ||
+      !!res?.competencyAnalysis)
+  );
+}
+
 const Evaluation = ({ evaluationData }) => {
   const [activeTab, setActiveTab] = useState("summary");
 
@@ -138,27 +149,22 @@ const Evaluation = ({ evaluationData }) => {
   const reportPrintRef = useRef(null);
 
   const location = useLocation();
-  const [searchParams] = useSearchParams();
 
   const [turns, setTurns] = useState([]);
   const navigate = useNavigate();
 
-  // 1) sessionId 확보
+  const { sessionId: paramSessionId } = useParams();
+
   const sessionId = useMemo(() => {
     const fromState = location?.state?.uploadResult?.sessionId;
-    const fromQuery = searchParams.get("sessionId");
-    return fromState ?? (fromQuery ? Number(fromQuery) : null);
-  }, [location?.state, searchParams]);
+    return fromState ?? (paramSessionId ? Number(paramSessionId) : null);
+  }, [location?.state, paramSessionId]);
 
-  // pdf 다운로드 함수
   const handleExportPdf = useReactToPrint({
-    contentRef: reportPrintRef, // ✅ 핵심 (ref 자체 전달)
+    contentRef: reportPrintRef,
     documentTitle: `면접평가리포트_${sessionId ?? "no-session"}`,
     onPrintError: (err) => console.error("[print] error:", err),
-
-    // 프린트 전에 렌더 안정화(차트/폰트 반영)
     onBeforePrint: async () => {
-      // console.log("[print] beforePrint, ref:", reportPrintRef.current);
       await new Promise((r) => setTimeout(r, 50));
     },
   });
@@ -174,13 +180,31 @@ const Evaluation = ({ evaluationData }) => {
     const analysisIds = (targets || [])
       .map((t) => t.analysisId)
       .filter(Boolean);
+
     if (!analysisIds.length) return {};
+
     const analyses = await interviewApi.getAnalysesByIds(analysisIds);
     const map = {};
+
     (analyses || []).forEach((a) => {
       map[a.targetType] = a;
     });
+
     return map;
+  };
+
+  const loadDocumentAnalyses = async (sid, aliveRef) => {
+    try {
+      const map = await fetchDocAnalysesMap(sid);
+      if (!aliveRef.current) return;
+      setDocAnalysisMap(map);
+    } catch (e) {
+      if (!aliveRef.current) return;
+      setDocErr("문서 분석 데이터를 불러오지 못했습니다.");
+      setDocAnalysisMap({});
+    } finally {
+      if (aliveRef.current) setDocLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -193,9 +217,9 @@ const Evaluation = ({ evaluationData }) => {
       if (doneTimerRef.current) window.clearTimeout(doneTimerRef.current);
     };
 
-    const applyResultData = (res) => {
-      setData(res ?? null);
-      setTurns(res?.turns ?? []);
+    const applyResultData = (payload) => {
+      setData(payload ?? null);
+      setTurns(payload?.turns ?? []);
       setPhase("SHOW_RESULT");
     };
 
@@ -203,22 +227,12 @@ const Evaluation = ({ evaluationData }) => {
       const res = await interviewApi.getResult(sessionId);
       if (!alive) return { done: false };
 
-      // getResult가 결과 객체를 바로 주는 경우
-      const hasResultPayload =
-        !!res &&
-        (Array.isArray(res?.turns) ||
-          !!res?.summary ||
-          !!res?.interviewAnalysis ||
-          !!res?.comparison ||
-          !!res?.competencyAnalysis);
-
-      if (hasResultPayload) {
+      if (hasResultPayload(res)) {
         applyResultData(res);
         setLoading(false);
         return { done: true };
       }
 
-      // getResult가 axios response 형태를 주는 경우까지 방어
       if (res?.status === 200 && res?.data) {
         applyResultData(res.data);
         setLoading(false);
@@ -228,19 +242,20 @@ const Evaluation = ({ evaluationData }) => {
       return { done: false, raw: res };
     };
 
+    const continuePolling = () => {
+      setPhase("ANALYZING");
+      setLoading(true);
+      pollTimer = window.setTimeout(pollResultUntilDone, 1200);
+    };
+
     const pollResultUntilDone = async () => {
       try {
         const resultState = await tryFetchResult();
         if (!alive) return;
 
-        if (resultState.done) {
-          return;
-        }
+        if (resultState.done) return;
 
-        setPhase("ANALYZING");
-        setLoading(true);
-
-        pollTimer = window.setTimeout(pollResultUntilDone, 1200);
+        continuePolling();
       } catch (e) {
         if (!alive) return;
 
@@ -248,11 +263,7 @@ const Evaluation = ({ evaluationData }) => {
         const message =
           e?.response?.data?.message || e?.message || "결과 조회 실패";
 
-        // 202 / 404 류는 아직 결과 준비 전으로 보고 계속 진행
         if (status === 202 || status === 404) {
-          setPhase("ANALYZING");
-          setLoading(true);
-
           if (!analyzeRequested) {
             analyzeRequested = true;
             try {
@@ -269,7 +280,7 @@ const Evaluation = ({ evaluationData }) => {
             }
           }
 
-          pollTimer = window.setTimeout(pollResultUntilDone, 1200);
+          continuePolling();
           return;
         }
 
@@ -283,6 +294,7 @@ const Evaluation = ({ evaluationData }) => {
         setErr("");
         setLoading(true);
         setAnalysisStatus("PENDING");
+        setPhase("BOOTSTRAP");
 
         if (evaluationData) {
           applyResultData(evaluationData);
@@ -316,19 +328,13 @@ const Evaluation = ({ evaluationData }) => {
 
   useEffect(() => {
     if (!sessionId || !data) return;
-    if (Object.keys(docAnalysisMap || {}).length > 0) return;
-    let alive = true;
-    (async () => {
-      try {
-        const map = await fetchDocAnalysesMap(sessionId);
-        if (!alive) return;
-        setDocAnalysisMap(map);
-      } catch (e) {
-        console.error("document prefetch failed:", e);
-      }
-    })();
+    if (Object.keys(docAnalysisMap).length > 0) return;
+
+    const aliveRef = { current: true };
+    loadDocumentAnalyses(sessionId, aliveRef);
+
     return () => {
-      alive = false;
+      aliveRef.current = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, data]);
@@ -336,40 +342,29 @@ const Evaluation = ({ evaluationData }) => {
   useEffect(() => {
     if (activeTab !== "document") return;
     if (!sessionId || !data) return;
-    if (Object.keys(docAnalysisMap || {}).length > 0) return;
-    let alive = true;
+    if (Object.keys(docAnalysisMap).length > 0) return;
+
+    const aliveRef = { current: true };
+
     setDocLoading(true);
     setDocErr("");
-    (async () => {
-      try {
-        const map = await fetchDocAnalysesMap(sessionId);
-        if (!alive) return;
-        setDocAnalysisMap(map);
-      } catch (e) {
-        if (!alive) return;
-        setDocErr("문서 분석 데이터를 불러오지 못했습니다.");
-        setDocAnalysisMap({});
-      } finally {
-        if (alive) setDocLoading(false);
-      }
-    })();
+    loadDocumentAnalyses(sessionId, aliveRef);
+
     return () => {
-      alive = false;
+      aliveRef.current = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, sessionId, data]);
 
   /* ── Guards ── */
-  // 결과 조회 시작 직후(BOOTSTRAP/FETCH_RESULT)에는 화면을 비워두고 기다림
   if (loading && !data && phase !== "ANALYZING") {
     return null;
   }
 
-  // 실제 분석 진행 중일 때만 로딩 UI 표시
   if (loading && phase === "ANALYZING") {
     return <EvaluationLoading analysisStatus={analysisStatus} />;
   }
 
-  // 에러 발생
   if (err) {
     return (
       <div
@@ -385,7 +380,6 @@ const Evaluation = ({ evaluationData }) => {
     );
   }
 
-  // 결과가 없는 경우
   if (!data) {
     return (
       <div
@@ -404,7 +398,6 @@ const Evaluation = ({ evaluationData }) => {
   return (
     <>
       <div className="evaluation-container">
-        {/* ── Header ── */}
         <div className="evaluation-header">
           <h1>면접 평가 결과</h1>
           <div className="header-actions">
@@ -424,7 +417,6 @@ const Evaluation = ({ evaluationData }) => {
           </div>
         </div>
 
-        {/* ── Tab Nav ── */}
         <div className="tabs">
           {TABS.map(({ id, label, IconComp }) => (
             <button
@@ -440,7 +432,6 @@ const Evaluation = ({ evaluationData }) => {
           ))}
         </div>
 
-        {/* ── Content ── */}
         <div className="tab-content-wrapper">
           {activeTab === "summary" && <SummaryTab data={data} />}
           {activeTab === "document" && (
@@ -456,7 +447,7 @@ const Evaluation = ({ evaluationData }) => {
           {activeTab === "comparison" && <ComparisonTab data={data} />}
           {activeTab === "competency" && <CompetencyTab data={data} />}
         </div>
-        {/* --- Print/PDF 전용 리포트 DOM (화면에서는 숨김) --- */}
+
         <div className="evaluation-container screen-only">
           <div className="print-root" aria-hidden="true">
             <div ref={reportPrintRef}>
