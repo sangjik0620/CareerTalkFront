@@ -24,8 +24,8 @@ const Login = () => {
                 password: formData.password
             });
             
-            localStorage.setItem('token', response.data.accessToken);
-            localStorage.setItem('user', JSON.stringify(response.data.user));
+            sessionStorage.setItem('token', response.data.accessToken);
+            sessionStorage.setItem('user', JSON.stringify(response.data.user));
 
             window.location.href = "/";
 

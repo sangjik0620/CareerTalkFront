@@ -4,55 +4,90 @@ import axios from "axios";
 import { getQuota } from "../lib/api/paymentApi";
 
 const MyPage = () => {
-  const navigate = useNavigate();
+    const navigate = useNavigate();
 
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [editMode, setEditMode] = useState(false);
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [editMode, setEditMode] = useState(false);
 
-  const [quota, setQuota] = useState(null);
+    const [quota, setQuota] = useState(null);
 
-  const [originalData, setOriginalData] = useState({
-    name: "",
-    nickname: "",
-    email: "",
-    targetJob: "",
-  });
-  const [formData, setFormData] = useState({
-    name: "",
-    nickname: "",
-    email: "",
-    targetJob: "",
-  });
+    const [originalData, setOriginalData] = useState({ name: '', nickname: '', email: '', targetJob: '' });
+    const [formData, setFormData] = useState({ name: '', nickname: '', email: '', targetJob: '' });
 
-  const [isNicknameVerified, setIsNicknameVerified] = useState(true);
-  const [nicknameMsg, setNicknameMsg] = useState("");
+    const [isNicknameVerified, setIsNicknameVerified] = useState(true);
+    const [nicknameMsg, setNicknameMsg] = useState('');
 
-  const [showModal, setShowModal] = useState(false);
-  const [showAlert, setShowAlert] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
+    const [showModal, setShowModal] = useState(false);
+    const [showAlert, setShowAlert] = useState(false);
+    const [errorMsg, setErrorMsg] = useState('');
 
-  const [mainTab, setMainTab] = useState("analysis");
-  const [subTab, setSubTab] = useState("이력서");
+    const [mainTab, setMainTab] = useState('analysis');
+    const [subTab, setSubTab] = useState('이력서');
 
-  const [analysesData, setAnalysesData] = useState({
-    이력서: [],
-    자기소개서: [],
-    포트폴리오: [],
-  });
-  const [interviewsData, setInterviewsData] = useState([]);
+    const [analysesData, setAnalysesData] = useState({
+        '이력서': [],
+        '자기소개서': [],
+        '포트폴리오': []
+    });
+    const [interviewsData, setInterviewsData] = useState([]);
 
-  useEffect(() => {
-    const fetchAllMyData = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setLoading(false);
-        return;
-      }
+    useEffect(() => {
+        const fetchAllMyData = async () => {
+            const token = sessionStorage.getItem('token');
+            if (!token) {
+                setLoading(false);
+                return;
+            }
 
-      try {
-        const config = {
-          headers: { Authorization: `Bearer ${token}` },
+            try {
+                const config = {
+                    headers: { Authorization: `Bearer ${token}` }
+                };
+
+                const [userRes, analysisRes, interviewRes, quotaRes] = await Promise.all([
+                    axios.get('http://localhost:8080/api/member/me', config),
+                    axios.get('http://localhost:8080/api/analysis/my', config).catch(() => ({ data: null })),
+                    axios.get('http://localhost:8080/api/interview/my', config).catch(() => ({ data: null })),
+                    getQuota().catch(() => null)
+                ]);
+
+                // 유저 정보 세팅
+                setUser(userRes.data);
+                setFormData(userRes.data);
+                setOriginalData(userRes.data);
+
+                // 분석 데이터 세팅
+                if (analysisRes.data) {
+                    setAnalysesData({
+                        '이력서': analysisRes.data.resume || [],
+                        '자기소개서': analysisRes.data.coverLetter || [],
+                        '포트폴리오': analysisRes.data.portfolio || []
+                    });
+                }
+
+                // 면접 데이터 세팅
+                if (interviewRes.data) {
+                    setInterviewsData(interviewRes.data);
+                }
+
+                // 이용권 데이터 세팅
+                if (quotaRes) {
+                    setQuota(quotaRes);
+                } else {
+                    setQuota({
+                        freeAnalysisRemaining: 0,
+                        freeMockRemaining: 0,
+                        paidAnalysisRemaining: 0,
+                        paidMockRemaining: 0,
+                    });
+                }
+
+            } catch (error) {
+                console.error("마이페이지 데이터 로드 실패", error);
+            } finally {
+                setLoading(false);
+            }
         };
 
         const [userRes, analysisRes, interviewRes, quotaRes] =
@@ -86,16 +121,24 @@ const MyPage = () => {
           setInterviewsData(interviewRes.data);
         }
 
-        // 이용권 데이터 세팅
-        if (quotaRes) {
-          setQuota(quotaRes);
-        } else {
-          setQuota({
-            freeAnalysisRemaining: 0,
-            freeMockRemaining: 0,
-            paidAnalysisRemaining: 0,
-            paidMockRemaining: 0,
-          });
+        try {
+            const token = sessionStorage.getItem('token');
+            await axios.post('http://localhost:8080/api/member/update', formData, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            setUser(formData);
+            setOriginalData(formData);
+            setEditMode(false);
+            setErrorMsg('');
+            
+            const currentUserStr = sessionStorage.getItem('user');
+            if (currentUserStr) {
+                const currentUser = JSON.parse(currentUserStr);
+                sessionStorage.setItem('user', JSON.stringify({ ...currentUser, ...formData }));
+            }
+        } catch (error) {
+            setErrorMsg(error.response?.data || "수정 중 오류가 발생했습니다.");
         }
       } catch (error) {
         console.error("마이페이지 데이터 로드 실패", error);
@@ -104,149 +147,16 @@ const MyPage = () => {
       }
     };
 
-    fetchAllMyData();
-  }, []);
+    const handleWithdrawal = async () => {
+        try {
+            const token = sessionStorage.getItem('token');
+            await axios.delete(`http://localhost:8080/api/member/delete/me`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-
-    if (name === "nickname") {
-      if (value === originalData.nickname) {
-        setIsNicknameVerified(true);
-        setNicknameMsg("");
-      } else {
-        setIsNicknameVerified(false);
-        setNicknameMsg("");
-      }
-    }
-  };
-
-  const handleNicknameCheck = async () => {
-    if (!formData.nickname.trim()) {
-      setNicknameMsg("닉네임을 입력해주세요.");
-      return;
-    }
-    try {
-      const response = await axios.get(
-        `http://localhost:8080/api/member/check-nickname?nickname=${formData.nickname}`,
-      );
-      if (response.data === true) {
-        setNicknameMsg("이미 사용 중인 닉네임입니다.");
-        setIsNicknameVerified(false);
-      } else {
-        setNicknameMsg("사용 가능한 닉네임입니다.");
-        setIsNicknameVerified(true);
-      }
-    } catch (error) {
-      alert("중복 확인 중 오류가 발생했습니다.");
-    }
-  };
-
-  const handleUpdate = async () => {
-    if (!isNicknameVerified) {
-      setErrorMsg("닉네임 중복확인을 완료해주세요.");
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem("token");
-      await axios.post("http://localhost:8080/api/member/update", formData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      setUser(formData);
-      setOriginalData(formData);
-      setEditMode(false);
-      setErrorMsg("");
-
-      const currentUserStr = localStorage.getItem("user");
-      if (currentUserStr) {
-        const currentUser = JSON.parse(currentUserStr);
-        localStorage.setItem(
-          "user",
-          JSON.stringify({ ...currentUser, ...formData }),
-        );
-      }
-    } catch (error) {
-      setErrorMsg(error.response?.data || "수정 중 오류가 발생했습니다.");
-    }
-  };
-
-  const handleWithdrawal = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      await axios.delete(`http://localhost:8080/api/member/delete/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      setShowModal(false);
-      setShowAlert(true);
-      localStorage.clear();
-
-      setTimeout(() => {
-        window.location.href = "/";
-      }, 4000);
-    } catch (error) {
-      console.error("탈퇴 실패:", error);
-      alert(
-        "탈퇴 처리 중 오류가 발생했습니다: " +
-          (error.response?.data || "서버 에러"),
-      );
-    }
-  };
-
-  const handleResultClick = (id, category) => {
-    if (category === "analysis") {
-      if (subTab === "이력서") {
-        navigate(`/resume/result/${id}`);
-      } else if (subTab === "자기소개서") {
-        navigate(`/analysis/result/${id}`);
-      } else if (subTab === "포트폴리오") {
-        navigate(`/portfolio/result/${id}`);
-      }
-    } else if (category === "interview") {
-      navigate(`/interview/result`);
-    }
-  };
-
-  if (loading)
-    return (
-      <div className="text-center mt-20">데이터를 불러오는 중입니다...</div>
-    );
-  if (!user)
-    return (
-      <div className="text-center mt-20">로그인이 필요한 페이지입니다.</div>
-    );
-
-  return (
-    <div className="min-h-screen bg-gray-50 pt-28 pb-12 px-4 font-sans">
-      <Link
-        to="/"
-        className="absolute top-8 left-8 flex items-center gap-2 text-gray-400 hover:text-gray-900 font-semibold group"
-      >
-        <span className="text-xl group-hover:-translate-x-1 transition-transform">
-          ←
-        </span>
-        <span>홈으로 이동</span>
-      </Link>
-
-      <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-sm border border-gray-100 p-12">
-        <div className="flex justify-between items-center mb-12">
-          <h2 className="text-3xl font-semibold text-gray-900 text-center flex-1 ml-10">
-            마이페이지
-          </h2>
-          <button
-            onClick={() => {
-              if (editMode) handleUpdate();
-              else setEditMode(true);
-            }}
-            disabled={editMode && !isNicknameVerified}
-            className={`px-5 py-2 rounded-xl font-bold transition-all ${!editMode ? "bg-gray-100 text-gray-600 hover:bg-gray-200" : isNicknameVerified ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-300 text-gray-500 cursor-not-allowed"}`}
-          >
-            {editMode ? "변경사항 저장" : "정보 수정"}
-          </button>
-        </div>
+            setShowModal(false);
+            setShowAlert(true);
+            sessionStorage.clear();
 
         {errorMsg && (
           <div className="mb-6 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm font-semibold">

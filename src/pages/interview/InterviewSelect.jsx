@@ -695,7 +695,7 @@ export default function InterviewSelect() {
       Number(settings.questionCount || 5),
     );
 
-    localStorage.setItem(
+    sessionStorage.setItem(
       "interviewData",
       JSON.stringify({
         selectedAnalyses: selectedIds,
