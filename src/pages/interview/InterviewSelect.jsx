@@ -8,6 +8,7 @@ import logo from "../../img/logo.png";
 import DeviceTestModal from "../interview/DeviceTestModal";
 
 import { api } from "../../lib/api";
+import { getQuota } from "../../lib/api/paymentApi";
 
 // ─────────────────────────────────────────────
 const FILE_META = {
@@ -216,19 +217,6 @@ function AnalysisItemCard({ item, isSelected, onSelect, meta }) {
       <p className={`text-xs truncate mb-2 ${isSelected ? "text-white/75" : "text-gray-400"}`}>
         📎 {item.fileName}
       </p>
-
-      {/* <div className="flex flex-wrap gap-1 mb-2">
-        {(item.keywords || []).map((kw) => (
-          <span
-            key={kw}
-            className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-              isSelected ? "bg-white/25 text-white" : "bg-gray-100 text-gray-600"
-            }`}
-          >
-            {kw}
-          </span>
-        ))}
-      </div> */}
 
       <p className={`text-xs ${isSelected ? "text-white/65" : "text-gray-400"}`}>
         🕐 분석일: {item.analyzedAt}
@@ -487,12 +475,6 @@ export default function InterviewSelect() {
   const [isCoverLetterModalOpen, setIsCoverLetterModalOpen] = useState(false);
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
 
-  const openAnalyzeModal = (fileKey) => {
-    if (fileKey === "resume") setIsResumeModalOpen(true);
-    if (fileKey === "coverLetter") setIsCoverLetterModalOpen(true);
-    if (fileKey === "portfolio") setIsPortfolioModalOpen(true);
-  };
-
   const [analyses, setAnalyses] = useState({
     resume: [],
     coverLetter: [],
@@ -500,13 +482,24 @@ export default function InterviewSelect() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState(null);
+
+  const [quota, setQuota] = useState(null);
+  const [quotaLoading, setQuotaLoading] = useState(true);
+
   const [selectedIds, setSelectedIds] = useState({
     resume: null,
     coverLetter: null,
     portfolio: null,
   });
+
   const [settings, setSettings] = useState({ questionCount: "5" });
   const [isDeviceTestOpen, setIsDeviceTestOpen] = useState(false);
+
+  const openAnalyzeModal = (fileKey) => {
+    if (fileKey === "resume") setIsResumeModalOpen(true);
+    if (fileKey === "coverLetter") setIsCoverLetterModalOpen(true);
+    if (fileKey === "portfolio") setIsPortfolioModalOpen(true);
+  };
 
   useEffect(() => {
     setIsLoading(true);
@@ -521,6 +514,22 @@ export default function InterviewSelect() {
       })
       .catch(() => setFetchError("분석 결과를 불러오는 데 실패했습니다."))
       .finally(() => setIsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    const fetchQuotaInfo = async () => {
+      try {
+        const data = await getQuota();
+        setQuota(data);
+      } catch (e) {
+        console.error("quota 조회 실패:", e);
+        setQuota(null);
+      } finally {
+        setQuotaLoading(false);
+      }
+    };
+
+    fetchQuotaInfo();
   }, []);
 
   const isAllEmpty = useMemo(
@@ -543,60 +552,61 @@ export default function InterviewSelect() {
       .filter(Boolean);
   }, [selectedIds, analyses]);
 
+  const remainingMockCount =
+    (quota?.freeMockRemaining || 0) + (quota?.paidMockRemaining || 0);
+
   const handleSelect = (key, id) => {
     setSelectedIds((p) => ({ ...p, [key]: id }));
   };
 
   const buildFinalQuestions = (expectedQuestions, questionCount) => {
-  const count = Number(questionCount || 5);
+    const count = Number(questionCount || 5);
 
-  const introQuestion = "자기소개를 간단히 해주시겠습니까?";
-  const motivationQuestion = "우리 회사에 지원한 동기는 무엇인가요?";
-  const finalQuestion = "3년 후 자신의 모습을 어떻게 그리고 계신가요?";
+    const introQuestion = "자기소개를 간단히 해주시겠습니까?";
+    const motivationQuestion = "우리 회사에 지원한 동기는 무엇인가요?";
+    const finalQuestion = "3년 후 자신의 모습을 어떻게 그리고 계신가요?";
 
-  const fallbackQuestions = [
-    "자신의 강점과 약점을 말씀해주세요.",
-    "가장 기억에 남는 프로젝트 경험을 설명해주세요.",
-    "팀에서 갈등이 발생했을 때 어떻게 해결하셨나요?",
-    "실패했던 경험과 그로부터 배운 점을 말씀해주세요.",
-    "이 직무에서 가장 중요하다고 생각하는 역량은 무엇인가요?",
-    "최근에 배운 새로운 기술이나 지식이 있나요?",
-    "마지막으로 하고 싶은 말씀이 있으신가요?",
-  ];
+    const fallbackQuestions = [
+      "자신의 강점과 약점을 말씀해주세요.",
+      "가장 기억에 남는 프로젝트 경험을 설명해주세요.",
+      "팀에서 갈등이 발생했을 때 어떻게 해결하셨나요?",
+      "실패했던 경험과 그로부터 배운 점을 말씀해주세요.",
+      "이 직무에서 가장 중요하다고 생각하는 역량은 무엇인가요?",
+      "최근에 배운 새로운 기술이나 지식이 있나요?",
+      "마지막으로 하고 싶은 말씀이 있으신가요?",
+    ];
 
-  const fixedFront = count === 10
-    ? [introQuestion, motivationQuestion]
-    : [introQuestion];
+    const fixedFront =
+      count === 10 ? [introQuestion, motivationQuestion] : [introQuestion];
 
-  const cleanedExpected = (expectedQuestions || [])
-    .map((q) => String(q || "").trim())
-    .filter(Boolean)
-    .filter(
-      (q) =>
-        q !== introQuestion &&
-        q !== motivationQuestion &&
-        q !== finalQuestion
-    );
+    const cleanedExpected = (expectedQuestions || [])
+      .map((q) => String(q || "").trim())
+      .filter(Boolean)
+      .filter(
+        (q) =>
+          q !== introQuestion &&
+          q !== motivationQuestion &&
+          q !== finalQuestion
+      );
 
-  const result = [...fixedFront];
+    const result = [...fixedFront];
 
-  for (const q of cleanedExpected) {
-    if (result.length >= count - 1) break; // 마지막 1칸은 finalQuestion 용
-    if (!result.includes(q)) result.push(q);
-  }
+    for (const q of cleanedExpected) {
+      if (result.length >= count - 1) break;
+      if (!result.includes(q)) result.push(q);
+    }
 
-  for (const q of fallbackQuestions) {
-    if (result.length >= count - 1) break;
-    if (!result.includes(q)) result.push(q);
-  }
+    for (const q of fallbackQuestions) {
+      if (result.length >= count - 1) break;
+      if (!result.includes(q)) result.push(q);
+    }
 
-  // 마지막 질문 고정
-  if (!result.includes(finalQuestion)) {
-    result.push(finalQuestion);
-  }
+    if (!result.includes(finalQuestion)) {
+      result.push(finalQuestion);
+    }
 
-  return result.slice(0, count);
-};
+    return result.slice(0, count);
+  };
 
   const buildSelectedTargetsAndQuestions = () => {
     const config = [
@@ -634,27 +644,47 @@ export default function InterviewSelect() {
   };
 
   const startInterview = () => {
-  const { targets, questions } = buildSelectedTargetsAndQuestions();
+    if (!hasSelection) return;
 
-  const finalQuestions = buildFinalQuestions(
-    questions,
-    Number(settings.questionCount || 5)
-  );
+    if (!quotaLoading && remainingMockCount <= 0) {
+      const moveToPayment = window.confirm(
+        "모의면접 무료 이용 횟수를 모두 사용했습니다.\n추가 이용을 위해 결제 페이지로 이동하시겠어요?"
+      );
 
-  localStorage.setItem(
-    "interviewData",
-    JSON.stringify({
-      selectedAnalyses: selectedIds,
-      selectedTargets: targets,
-      settings,
-      questions: finalQuestions,
-    })
-  );
+      if (moveToPayment) {
+        navigate("/payment");
+      }
+      return;
+    }
 
-  setIsDeviceTestOpen(true);
-};
+    const { targets, questions } = buildSelectedTargetsAndQuestions();
+
+    const finalQuestions = buildFinalQuestions(
+      questions,
+      Number(settings.questionCount || 5)
+    );
+
+    localStorage.setItem(
+      "interviewData",
+      JSON.stringify({
+        selectedAnalyses: selectedIds,
+        selectedTargets: targets,
+        settings,
+        questions: finalQuestions,
+      })
+    );
+
+    setIsDeviceTestOpen(true);
+  };
 
   const handleDeviceTestConfirm = () => {
+    if (!quotaLoading && remainingMockCount <= 0) {
+      alert("모의면접 이용권이 없습니다.");
+      setIsDeviceTestOpen(false);
+      navigate("/payment");
+      return;
+    }
+
     setIsDeviceTestOpen(false);
     navigate("/interview/session");
   };
@@ -703,6 +733,45 @@ export default function InterviewSelect() {
         {fetchError && (
           <div className="mb-8 flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-2xl text-sm font-semibold">
             <span>⚠️</span> {fetchError}
+          </div>
+        )}
+
+        {!quotaLoading && quota && (
+          <div className="bg-white/80 backdrop-blur-sm border border-amber-200 rounded-3xl p-5 mb-8 shadow-sm">
+            <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+              <span className="text-lg">🎟️</span>
+              이용 가능 횟수
+            </h4>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-blue-50 border border-blue-200 rounded-2xl px-4 py-3">
+                <p className="text-xs text-blue-600 font-semibold">무료 분석</p>
+                <p className="text-lg font-bold text-gray-900">
+                  {quota.freeAnalysisRemaining}회
+                </p>
+              </div>
+
+              <div className="bg-violet-50 border border-violet-200 rounded-2xl px-4 py-3">
+                <p className="text-xs text-violet-600 font-semibold">무료 면접</p>
+                <p className="text-lg font-bold text-gray-900">
+                  {quota.freeMockRemaining}회
+                </p>
+              </div>
+
+              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-3">
+                <p className="text-xs text-emerald-600 font-semibold">유료 분석</p>
+                <p className="text-lg font-bold text-gray-900">
+                  {quota.paidAnalysisRemaining}회
+                </p>
+              </div>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
+                <p className="text-xs text-amber-600 font-semibold">유료 면접</p>
+                <p className="text-lg font-bold text-gray-900">
+                  {quota.paidMockRemaining}회
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
@@ -836,7 +905,15 @@ export default function InterviewSelect() {
             <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12" />
           </button>
 
-          <p className="text-xs text-gray-400">면접 결과는 자동으로 저장됩니다</p>
+          <p className="text-xs text-gray-400 text-center">
+            면접 결과는 자동으로 저장됩니다
+            {!quotaLoading && quota && (
+              <>
+                <br />
+                남은 면접 가능 횟수: {remainingMockCount}회
+              </>
+            )}
+          </p>
         </div>
       </div>
 

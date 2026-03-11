@@ -8,10 +8,10 @@ const MyPage = () => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [editMode, setEditMode] = useState(false);
-    
+
     const [originalData, setOriginalData] = useState({ name: '', nickname: '', email: '', targetJob: '' });
     const [formData, setFormData] = useState({ name: '', nickname: '', email: '', targetJob: '' });
-    
+
     const [isNicknameVerified, setIsNicknameVerified] = useState(true);
     const [nicknameMsg, setNicknameMsg] = useState('');
 
@@ -74,7 +74,7 @@ const MyPage = () => {
             } catch (error) {
                 console.error("마이페이지 데이터 로드 실패", error);
             } finally {
-                setLoading(false); 
+                setLoading(false);
             }
         };
         
@@ -123,11 +123,11 @@ const MyPage = () => {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.post('http://localhost:8080/api/member/update', formData, {
+            await axios.post('http://localhost:8080/api/member/update', formData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            
-            setUser(formData); 
+
+            setUser(formData);
             setOriginalData(formData);
             setEditMode(false);
             setErrorMsg('');
@@ -148,13 +148,13 @@ const MyPage = () => {
             await axios.delete(`http://localhost:8080/api/member/delete/me`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            
+
             setShowModal(false);
-            setShowAlert(true); 
-            localStorage.clear(); 
+            setShowAlert(true);
+            localStorage.clear();
 
             setTimeout(() => {
-                window.location.href = "/"; 
+                window.location.href = "/";
             }, 4000);
 
         } catch (error) {
@@ -193,22 +193,28 @@ const MyPage = () => {
             <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-sm border border-gray-100 p-12">
                 <div className="flex justify-between items-center mb-12">
                     <h2 className="text-3xl font-semibold text-gray-900 text-center flex-1 ml-10">마이페이지</h2>
-                    <button 
-                        onClick={() => { if(editMode) handleUpdate(); else setEditMode(true); }}
+                    <button
+                        onClick={() => { if (editMode) handleUpdate(); else setEditMode(true); }}
                         disabled={editMode && !isNicknameVerified}
                         className={`px-5 py-2 rounded-xl font-bold transition-all ${!editMode ? 'bg-gray-100 text-gray-600 hover:bg-gray-200' : (isNicknameVerified ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-gray-300 text-gray-500 cursor-not-allowed')}`}
                     >
                         {editMode ? "변경사항 저장" : "정보 수정"}
                     </button>
                 </div>
-                
+
+                {errorMsg && (
+                    <div className="mb-6 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm font-semibold">
+                        {errorMsg}
+                    </div>
+                )}
+
                 {/* 정보 입력 영역 */}
                 <div className="bg-gray-50 rounded-2xl p-10 mb-10 border border-gray-100 space-y-10">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                         <div>
                             <p className="text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest">이름</p>
-                            <input 
-                                type="text" name="name" value={formData.name} 
+                            <input
+                                type="text" name="name" value={formData.name}
                                 onChange={handleChange}
                                 disabled={!editMode}
                                 className={`w-full text-lg font-semibold bg-transparent border-b-2 py-1 transition-all outline-none ${editMode ? 'border-blue-500 text-gray-800' : 'border-transparent text-gray-800'}`}
@@ -217,14 +223,14 @@ const MyPage = () => {
                         <div>
                             <p className="text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest">닉네임</p>
                             <div className="flex items-center gap-3">
-                                <input 
-                                    type="text" name="nickname" value={formData.nickname} 
+                                <input
+                                    type="text" name="nickname" value={formData.nickname}
                                     onChange={handleChange}
                                     disabled={!editMode}
                                     className={`flex-1 text-lg font-semibold bg-transparent border-b-2 py-1 transition-all outline-none text-gray-800 ${editMode ? (isNicknameVerified ? 'border-green-500' : 'border-blue-500') : 'border-transparent'}`}
                                 />
                                 {editMode && (
-                                    <button 
+                                    <button
                                         onClick={handleNicknameCheck}
                                         disabled={isNicknameVerified}
                                         className={`whitespace-nowrap px-4 py-2 rounded-lg text-sm font-bold text-white transition-colors ${isNicknameVerified ? 'bg-gray-300 cursor-not-allowed' : 'bg-gray-800 hover:bg-gray-700 shadow-sm active:scale-95'}`}
@@ -240,6 +246,7 @@ const MyPage = () => {
                             )}
                         </div>
                     </div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mt-8">
                         <div className="flex flex-col">
                             <p className="h-5 flex items-end text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest whitespace-nowrap">
@@ -252,7 +259,7 @@ const MyPage = () => {
                                 className="w-full text-lg font-semibold bg-transparent text-gray-800 outline-none py-1 border-b-2 border-transparent cursor-not-allowed" 
                             />
                         </div>
-                        
+
                         <div className="flex flex-col">
                             <p className="h-5 flex items-end text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest whitespace-nowrap">
                                 목표 직무
@@ -266,23 +273,68 @@ const MyPage = () => {
                         </div>
                     </div>
                 </div>
-                
+
+                {/* 이용권 현황 카드 */}
+                <div className="mb-12">
+                    <div className="flex items-center justify-between mb-5">
+                        <h3 className="text-2xl font-semibold text-gray-900">이용권 현황</h3>
+                        <button
+                            onClick={() => navigate('/payment')}
+                            className="px-5 py-2.5 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-black font-bold transition-all shadow-sm active:scale-95"
+                        >
+                            이용권 구매하러 가기
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                        <QuotaCard
+                            title="무료 분석권"
+                            value={`${quota?.freeAnalysisRemaining ?? 0}회`}
+                            desc="회원 기본 제공"
+                            color="blue"
+                            icon="📄"
+                        />
+                        <QuotaCard
+                            title="무료 모의면접권"
+                            value={`${quota?.freeMockRemaining ?? 0}회`}
+                            desc="회원 기본 제공"
+                            color="purple"
+                            icon="🎤"
+                        />
+                        <QuotaCard
+                            title="유료 분석권"
+                            value={`${quota?.paidAnalysisRemaining ?? 0}회`}
+                            desc="구매 이용권"
+                            color="emerald"
+                            icon="💳"
+                        />
+                        <QuotaCard
+                            title="유료 모의면접권"
+                            value={`${quota?.paidMockRemaining ?? 0}회`}
+                            desc="구매 이용권"
+                            color="amber"
+                            icon="🚀"
+                        />
+                    </div>
+                </div>
+
+                {/* 분석결과 / 면접기록 */}
                 <div className="flex border-b-2 border-gray-100 mb-10 mt-12">
-                    <button 
+                    <button
                         onClick={() => setMainTab('analysis')}
-                        className={`flex-1 py-4 text-lg font-black flex items-center justify-center gap-2 transition-colors relative 
+                        className={`flex-1 py-4 text-lg font-black flex items-center justify-center gap-2 transition-colors relative
                             ${mainTab === 'analysis' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
                     >
-                        <span className="text-xl">분석 결과</span> 
+                        <span className="text-xl">분석 결과</span>
                         {mainTab === 'analysis' && <div className="absolute bottom-[-2px] left-0 w-full h-1 bg-blue-600 rounded-t-full"></div>}
                     </button>
-                    
-                    <button 
+
+                    <button
                         onClick={() => setMainTab('interview')}
-                        className={`flex-1 py-4 text-lg font-black flex items-center justify-center gap-2 transition-colors relative 
+                        className={`flex-1 py-4 text-lg font-black flex items-center justify-center gap-2 transition-colors relative
                             ${mainTab === 'interview' ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
                     >
-                        <span className="text-xl">면접 기록</span> 
+                        <span className="text-xl">면접 기록</span>
                         {mainTab === 'interview' && <div className="absolute bottom-[-2px] left-0 w-full h-1 bg-blue-600 rounded-t-full"></div>}
                     </button>
                 </div>
@@ -292,15 +344,15 @@ const MyPage = () => {
                     {mainTab === 'analysis' && (
                         <div className="animate-in fade-in duration-300">
                             <h3 className="text-2xl font-semibold text-gray-900 mb-6 text-left">분석 결과 조회</h3>
-                            
+
                             <div className="flex gap-3 mb-8">
                                 {['이력서', '자기소개서', '포트폴리오'].map((tab) => (
-                                    <button 
+                                    <button
                                         key={tab}
                                         onClick={() => setSubTab(tab)}
                                         className={`px-6 py-2.5 rounded-full font-bold text-sm transition-all
-                                            ${subTab === tab 
-                                                ? 'bg-blue-600 text-white shadow-md shadow-blue-200' 
+                                            ${subTab === tab
+                                                ? 'bg-blue-600 text-white shadow-md shadow-blue-200'
                                                 : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50'}`}
                                     >
                                         {tab}
@@ -344,7 +396,7 @@ const MyPage = () => {
                     {mainTab === 'interview' && (
                         <div className="animate-in fade-in duration-300">
                             <h3 className="text-2xl font-semibold text-gray-900 mb-6 text-left">면접 기록 조회</h3>
-                            
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {interviewsData && interviewsData.length > 0 ? (
                                     interviewsData.map((item) => (
@@ -384,7 +436,7 @@ const MyPage = () => {
                             <h3 className="text-red-800 font-bold text-lg mb-1">서비스 탈퇴</h3>
                             <p className="text-red-600/80 text-sm font-medium">탈퇴 시 모든 활동 데이터가 삭제됩니다.</p>
                         </div>
-                        <button 
+                        <button
                             onClick={() => setShowModal(true)}
                             className="bg-red-600 text-white px-8 py-3 rounded-xl hover:bg-red-700 transition-all font-bold shadow-lg shadow-red-200 active:scale-95"
                         >
@@ -397,7 +449,6 @@ const MyPage = () => {
             {showModal && (
                 <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center z-[100] px-4 animate-in fade-in duration-200">
                     <div className="bg-white rounded-3xl p-8 max-w-[400px] w-full shadow-2xl border border-gray-100">
-                        
                         <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mb-6">
                             <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -417,20 +468,19 @@ const MyPage = () => {
                         </div>
 
                         <div className="flex gap-3">
-                            <button 
-                                onClick={() => setShowModal(false)} 
+                            <button
+                                onClick={() => setShowModal(false)}
                                 className="flex-1 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors text-sm"
                             >
                                 취소
                             </button>
-                            <button 
-                                onClick={handleWithdrawal} 
+                            <button
+                                onClick={handleWithdrawal}
                                 className="flex-1 py-3.5 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 transition-colors text-sm shadow-sm"
                             >
                                 계정 삭제
                             </button>
                         </div>
-                        
                     </div>
                 </div>
             )}
@@ -446,5 +496,54 @@ const MyPage = () => {
         </div>
     );
 };
+
+function QuotaCard({ title, value, desc, color, icon }) {
+    const colorMap = {
+        blue: {
+            bg: 'bg-blue-50',
+            border: 'border-blue-100',
+            iconBg: 'bg-blue-100',
+            iconText: 'text-blue-600',
+            titleText: 'text-blue-700',
+        },
+        purple: {
+            bg: 'bg-purple-50',
+            border: 'border-purple-100',
+            iconBg: 'bg-purple-100',
+            iconText: 'text-purple-600',
+            titleText: 'text-purple-700',
+        },
+        emerald: {
+            bg: 'bg-emerald-50',
+            border: 'border-emerald-100',
+            iconBg: 'bg-emerald-100',
+            iconText: 'text-emerald-600',
+            titleText: 'text-emerald-700',
+        },
+        amber: {
+            bg: 'bg-amber-50',
+            border: 'border-amber-100',
+            iconBg: 'bg-amber-100',
+            iconText: 'text-amber-600',
+            titleText: 'text-amber-700',
+        },
+    };
+
+    const styles = colorMap[color] || colorMap.blue;
+
+    return (
+        <div className={`${styles.bg} ${styles.border} border rounded-2xl p-5 transition-all hover:shadow-md`}>
+            <div className="flex items-center justify-between mb-4">
+                <div className={`w-11 h-11 rounded-2xl flex items-center justify-center ${styles.iconBg}`}>
+                    <span className={`text-xl ${styles.iconText}`}>{icon}</span>
+                </div>
+            </div>
+
+            <p className={`text-sm font-bold mb-2 ${styles.titleText}`}>{title}</p>
+            <p className="text-3xl font-black text-gray-900">{value}</p>
+            <p className="text-xs text-gray-400 mt-2 font-medium">{desc}</p>
+        </div>
+    );
+}
 
 export default MyPage;

@@ -37,28 +37,6 @@ const PortfolioUploadModal = ({ isOpen, onClose }) => {
 
   const navigate = useNavigate();
 
-  // 💡 [추가된 로직] 모달 열릴 때 로그인 체크 및 상태 초기화
-  useEffect(() => {
-    if (isOpen) {
-      // 1. 로그인 상태 확인 (토큰 유무)
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("로그인이 필요한 서비스입니다. 로그인 페이지로 이동합니다.");
-        onClose();
-        navigate("/login");
-        return;
-      }
-
-      // 2. 초기화 로직
-      setSelectedFile(null);
-      setJobCategory("");
-      setDetailedPosition("");
-      setIsDragging(false);
-      setIsAnalyzing(false);
-      setViewStep("input");
-    }
-  }, [isOpen, navigate, onClose]);
-
   if (!isOpen) return null;
 
   const validateAndSetFile = (file) => {
@@ -94,7 +72,6 @@ const PortfolioUploadModal = ({ isOpen, onClose }) => {
     }
 
     try {
-      // 💡 [추가된 로직] 토큰을 헤더에 실어서 백엔드로 전송
       const token = localStorage.getItem("token");
 
       const response = await axios.post(
@@ -119,11 +96,22 @@ const PortfolioUploadModal = ({ isOpen, onClose }) => {
     } catch (error) {
       console.error("분석 실패:", error);
 
-      // 💡 [추가된 로직] 토큰 만료 에러(401) 처리
-      if (error.response?.status === 401) {
+      // 💡 [핵심 추가 로직] 여기서 403(이용권 부족) 에러를 잡아서 결제창으로 넘깁니다!
+      const status = error.response?.status;
+
+      if (status === 401) {
         alert("로그인 세션이 만료되었습니다. 다시 로그인해 주세요.");
         onClose();
         navigate("/login");
+      } else if (
+        status === 403 ||
+        error.response?.data?.message === "INSUFFICIENT_QUOTA"
+      ) {
+        //  백엔드에서 던진 403 에러를 감지하면 실행됨
+        alert("분석 이용권이 부족합니다. 이용권 구매 페이지로 이동합니다. ");
+        setIsAnalyzing(false);
+        onClose(); // 모달창 닫기
+        navigate("/payment");
       } else {
         alert("분석 중 에러가 발생했습니다.");
         setIsAnalyzing(false);

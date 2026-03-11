@@ -37,10 +37,26 @@ export default function ComparisonTab({ data }) {
   const topPercent =
     percentileRank == null ? null : Math.max(0, 100 - percentileRank);
 
+  const topPercentText =
+    topPercent == null
+      ? null
+      : topPercent > 0 && topPercent < 1
+        ? topPercent.toFixed(1)
+        : Math.round(topPercent).toString();
+
   const markerPercent =
     percentileRank != null ? clamp100(percentileRank) : clamp100(userScore);
 
-  const rawHistory = Array.isArray(comp?.scoreHistory) ? comp.scoreHistory : [];
+  console.log("comp.percentileRank =", comp?.percentileRank);
+  console.log("calculated topPercent =", topPercent);
+  console.log("comparison raw =", comp);
+
+  const rawHistory = Array.isArray(comp?.scoreHistory)
+    ? comp.scoreHistory.filter((item) => {
+        const score = Number(item?.score);
+        return Number.isFinite(score) && score > 0;
+      })
+    : [];
 
   const chartHistory =
     rawHistory.length > 0
@@ -92,7 +108,9 @@ export default function ComparisonTab({ data }) {
                 }
               >
                 <span className="distribution-user-badge">
-                  {topPercent == null ? `${userScore}점` : `상위 ${topPercent}%`}
+                  {topPercent == null
+                    ? `${userScore}점`
+                    : `상위 ${topPercentText}%`}
                 </span>
               </div>
             </div>
@@ -114,7 +132,8 @@ export default function ComparisonTab({ data }) {
               <span>백분위 데이터가 없어 현재 점수 기준으로만 표시합니다.</span>
             ) : (
               <span>
-                전체 지원자 중 <strong>상위 {topPercent}%</strong>에 위치합니다.
+                전체 지원자 중 <strong>상위 {topPercentText}%</strong>에
+                위치합니다.
               </span>
             )}
           </div>
@@ -261,7 +280,9 @@ export default function ComparisonTab({ data }) {
 
         <div className="history-meta">
           {hasHistory ? (
-            <span>이전 면접 기록과 현재 점수를 기준으로 성적 추이를 표시합니다.</span>
+            <span>
+              이전 면접 기록과 현재 점수를 기준으로 성적 추이를 표시합니다.
+            </span>
           ) : (
             <span>이전 기록이 없어 현재 점수만 표시합니다.</span>
           )}
@@ -308,7 +329,9 @@ export default function ComparisonTab({ data }) {
                             className="vertical-bar-fill average-bar"
                             style={{ height: `${average}%` }}
                           >
-                            <span className="vertical-bar-value">{average}</span>
+                            <span className="vertical-bar-value">
+                              {average}
+                            </span>
                           </div>
                         </div>
                         <div className="vertical-bar-label">평균</div>
@@ -320,7 +343,9 @@ export default function ComparisonTab({ data }) {
                             className="vertical-bar-fill previous-bar"
                             style={{ height: `${previous}%` }}
                           >
-                            <span className="vertical-bar-value">{previous}</span>
+                            <span className="vertical-bar-value">
+                              {previous}
+                            </span>
                           </div>
                         </div>
                         <div className="vertical-bar-label">이전</div>
