@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "../css/Evaluation.css";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { interviewApi } from "../lib/api/interviewApi";
 import EvaluationReport from "./evaluation/EvaluationReport";
 import { useReactToPrint } from "react-to-print";
@@ -149,16 +149,16 @@ const Evaluation = ({ evaluationData }) => {
   const reportPrintRef = useRef(null);
 
   const location = useLocation();
-  const [searchParams] = useSearchParams();
 
   const [turns, setTurns] = useState([]);
   const navigate = useNavigate();
 
+  const { sessionId: paramSessionId } = useParams();
+
   const sessionId = useMemo(() => {
     const fromState = location?.state?.uploadResult?.sessionId;
-    const fromQuery = searchParams.get("sessionId");
-    return fromState ?? (fromQuery ? Number(fromQuery) : null);
-  }, [location?.state, searchParams]);
+    return fromState ?? (paramSessionId ? Number(paramSessionId) : null);
+  }, [location?.state, paramSessionId]);
 
   const handleExportPdf = useReactToPrint({
     contentRef: reportPrintRef,

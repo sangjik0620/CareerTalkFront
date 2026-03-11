@@ -98,7 +98,7 @@ function App() {
           {/* 면접 관련 라우트 */}
           <Route path="/interview/select" element={<InterviewSelect />} />
           <Route path="/interview/session" element={<InterviewSession />} />
-          <Route path="/interview/result" element={<Evaluation />} />
+          <Route path="/interview/result/:sessionId" element={<Evaluation />} />
 
           {/* 포트폴리오 관련 라우트 */}
           <Route
