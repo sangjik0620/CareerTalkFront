@@ -1,6 +1,14 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import EmptyBlock from "../components/EmptyBlock";
 import { clamp100, getScoreColor, isPlainObject } from "../utils/evalUtils";
+import {
+  PolarAngleAxis,
+  PolarGrid,
+  Radar,
+  RadarChart,
+  ResponsiveContainer,
+  Tooltip,
+} from "recharts";
 
 /* ─────────────────────────────────────────────
    메인 컴포넌트
@@ -28,7 +36,13 @@ export default function InterviewTab({ data, turns = [] }) {
     );
   }
 
-  const voiceMetrics = ia?.voiceMetrics;
+  const voiceMetrics = useMemo(() => aggregateVoiceMetrics(turns), [turns]);
+  const radarData = useMemo(
+    () => buildVoiceRadarData(voiceMetrics),
+    [voiceMetrics],
+  );
+  // console.log("voiceMetrics =", voiceMetrics);
+  // console.log("radarData =", radarData);
   const stt = ia?.sttAnalysis;
   const keywordUsage = stt?.keywordUsage;
   const hasTurns = Array.isArray(turns) && turns.length > 0;
@@ -61,89 +75,121 @@ export default function InterviewTab({ data, turns = [] }) {
       {/* ═══════════════════════════════════════
           섹션 1 : 음성 분석
       ═══════════════════════════════════════ */}
-      {isPlainObject(voiceMetrics) || voiceCoaching.length > 0 ? (
-        <section className="interview-section interview-section--spaced">
-          <div className="interview-section__header">
-            <span className="interview-section__icon">🎤</span>
-            <span className="interview-section__title">음성 분석</span>
+      <section className="interview-section interview-section--spaced">
+        <div className="interview-section__header">
+          <span className="interview-section__icon">🎤</span>
+          <span className="interview-section__title">음성 분석</span>
+        </div>
+
+        <div className="interview-voice-layout">
+          <div className="interview-voice-panel">
+            <div className="interview-voice-panel__title">
+              <span style={{ fontSize: 15 }}>📡</span> Voice Metrics
+            </div>
+
+            {radarData.length > 0 ? (
+              <>
+                <div
+                  className="interview-voice-radar"
+                  onMouseDown={(e) => e.preventDefault()}
+                >
+                  <ResponsiveContainer width="100%" height={320} minWidth={0}>
+                    <RadarChart
+                      cx="50%"
+                      cy="50%"
+                      outerRadius="72%"
+                      data={radarData}
+                      tabIndex={-1}
+                    >
+                      <PolarGrid stroke="#CBD5E1" />
+                      <PolarAngleAxis
+                        dataKey="subject"
+                        tick={{
+                          fill: "#475569",
+                          fontSize: 12,
+                          fontWeight: 600,
+                        }}
+                      />
+                      <Tooltip content={<VoiceRadarTooltip />} />
+                      <Radar
+                        name="음성 지표"
+                        dataKey="score"
+                        stroke="#6366F1"
+                        fill="#6366F1"
+                        fillOpacity={0.25}
+                        isAnimationActive={false}
+                        dot={{
+                          r: 4,
+                          fill: "#6366F1",
+                          stroke: "#6366F1",
+                          strokeWidth: 0,
+                        }}
+                      />
+                    </RadarChart>
+                  </ResponsiveContainer>
+                </div>
+              </>
+            ) : (
+              <EmptyBlock
+                title="voiceMetrics 데이터가 없습니다"
+                desc="turn.voiceMetrics 집계 결과를 확인하세요."
+              />
+            )}
           </div>
 
-          {/* 음성 메트릭 바 */}
-          {isPlainObject(voiceMetrics) && (
-            <div className="interview-voice-metrics">
-              {Object.entries(voiceMetrics).map(([key, value]) => {
-                const labels = {
-                  clarity: "명확성",
-                  pace: "말하기 속도",
-                  volume: "음량",
-                  confidence: "자신감",
-                  fillerWords: "추임새 (개)",
-                };
-                const v = clamp100(value);
-                const color = getScoreColor(v);
-
-                return (
-                  <div key={key}>
-                    <div className="interview-voice-metric__row">
-                      <span className="interview-voice-metric__label">
-                        {labels[key] ?? key}
-                      </span>
-                      <span
-                        className="interview-voice-metric__value"
-                        style={{
-                          color,
-                          background: `${color}18`,
-                        }}
-                      >
-                        {v}
-                        {key !== "fillerWords" && "%"}
-                      </span>
-                    </div>
-
-                    {key !== "fillerWords" && (
-                      <div className="interview-voice-metric__track">
-                        <div
-                          className="interview-voice-metric__fill"
-                          style={{
-                            width: `${v}%`,
-                            background: `linear-gradient(90deg, ${color}cc, ${color})`,
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* 음성 코칭 */}
-          {voiceCoaching.length > 0 && (
+          <div className="interview-voice-panel">
             <div className="interview-voice-coaching">
               <div className="interview-voice-coaching__title">
                 <span style={{ fontSize: 15 }}>💡</span> 음성 코칭
               </div>
-              <div className="interview-voice-coaching__list">
-                {voiceCoaching.map((item, idx) => (
-                  <div key={idx} className="interview-voice-coaching__item">
-                    <span className="interview-voice-coaching__bullet">▸</span>
-                    <span>
-                      {typeof item === "string" ? item : JSON.stringify(item)}
-                    </span>
-                  </div>
-                ))}
-              </div>
+
+              {voiceCoaching.length > 0 ? (
+                <div className="interview-voice-coaching__list">
+                  {voiceCoaching.map((item, idx) => {
+                    const labelMap = {
+                      confidence: "자신감",
+                      fluency: "유창성",
+                      tremor: "목소리 안정성",
+                      speakingRate: "말속도",
+                      pauseRatio: "침묵 관리",
+                      pitch: "Pitch 안정성",
+                    };
+
+                    const label =
+                      typeof item === "object" && item?.metric
+                        ? labelMap[item.metric] || item.metric
+                        : null;
+
+                    const text =
+                      typeof item === "string"
+                        ? item
+                        : item?.message || JSON.stringify(item);
+
+                    return (
+                      <div key={idx} className="interview-voice-coaching__item">
+                        {label && (
+                          <span className="interview-voice-coaching__label">
+                            {label}
+                          </span>
+                        )}
+
+                        <span className="interview-voice-coaching__text">
+                          {text}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <EmptyBlock
+                  title="음성 코칭 데이터가 없습니다"
+                  desc="interviewAnalysis.voiceCoaching 값을 확인하세요."
+                />
+              )}
             </div>
-          )}
-        </section>
-      ) : (
-        <section className="interview-section interview-section--spaced">
-          <div className="interview-section__header">
-            <span className="interview-section__icon">🎤</span>
-            <span className="interview-section__title">음성 분석</span>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
       {/* ═══════════════════════════════════════
           섹션 2 : STT 분석
@@ -661,4 +707,162 @@ function flagCodeToKorean(code) {
     PY_METRIC_MISSING: "일부 음성 지표가 누락되었습니다.",
   };
   return map[code] || code;
+}
+
+function aggregateVoiceMetrics(turns = []) {
+  const list = (Array.isArray(turns) ? turns : [])
+    .map((t) => t?.voiceMetrics)
+    .filter((v) => isPlainObject(v));
+
+  if (!list.length) return null;
+
+  return {
+    confidenceScore: averageVoiceMetric(list, "confidenceScore"),
+    fluencyScore: averageVoiceMetric(list, "fluencyScore"),
+    tremorRiskScore: averageVoiceMetric(list, "tremorRiskScore"),
+    speakingRate: averageVoiceMetric(list, "speakingRate"),
+    pauseRatio: averageVoiceMetric(list, "pauseRatio", 3),
+    pitchStability: averageVoiceMetric(list, "pitchStability"),
+  };
+}
+
+function averageVoiceMetric(list, key, fixed = 0) {
+  const nums = list
+    .map((item) => Number(item?.[key]))
+    .filter((v) => Number.isFinite(v));
+
+  if (!nums.length) return null;
+
+  const avg = nums.reduce((a, b) => a + b, 0) / nums.length;
+  return fixed > 0 ? Number(avg.toFixed(fixed)) : Math.round(avg);
+}
+
+function buildVoiceRadarData(voiceMetrics) {
+  if (!isPlainObject(voiceMetrics)) return [];
+
+  const items = [
+    {
+      key: "confidenceScore",
+      subject: "자신감",
+      raw: Number(voiceMetrics.confidenceScore),
+      score: clamp100(Number(voiceMetrics.confidenceScore)),
+      display: `${clamp100(Number(voiceMetrics.confidenceScore))}점`,
+    },
+    {
+      key: "fluencyScore",
+      subject: "유창성",
+      raw: Number(voiceMetrics.fluencyScore),
+      score: clamp100(Number(voiceMetrics.fluencyScore)),
+      display: `${clamp100(Number(voiceMetrics.fluencyScore))}점`,
+    },
+    {
+      key: "tremorRiskScore",
+      subject: "안정감",
+      raw: Number(voiceMetrics.tremorRiskScore),
+      score: clamp100(100 - Number(voiceMetrics.tremorRiskScore)),
+      display: `${clamp100(100 - Number(voiceMetrics.tremorRiskScore))}점`,
+    },
+    {
+      key: "speakingRate",
+      subject: "말속도",
+      raw: Number(voiceMetrics.speakingRate),
+      score: normalizeSpeakingRate(Number(voiceMetrics.speakingRate)),
+      display: `${Math.round(Number(voiceMetrics.speakingRate))} WPM`,
+    },
+    {
+      key: "pauseRatio",
+      subject: "침묵관리",
+      raw: Number(voiceMetrics.pauseRatio),
+      score: normalizePauseRatio(Number(voiceMetrics.pauseRatio)),
+      display: `${Math.round(Number(voiceMetrics.pauseRatio) * 100)}%`,
+    },
+    {
+      key: "pitchStability",
+      subject: "Pitch 안정성",
+      raw: Number(voiceMetrics.pitchStability),
+      score: clamp100(Number(voiceMetrics.pitchStability)),
+      display: `${clamp100(Number(voiceMetrics.pitchStability))}점`,
+    },
+  ];
+
+  return items.filter(
+    (item) => Number.isFinite(item.raw) && Number.isFinite(item.score),
+  );
+}
+
+function normalizeSpeakingRate(value) {
+  if (!Number.isFinite(value)) return 0;
+
+  const idealMin = 120;
+  const idealMax = 170;
+  const hardMin = 80;
+  const hardMax = 210;
+
+  if (value >= idealMin && value <= idealMax) return 100;
+  if (value < hardMin || value > hardMax) return 20;
+
+  if (value < idealMin) {
+    const ratio = (value - hardMin) / (idealMin - hardMin);
+    return clamp100(Math.round(20 + ratio * 80));
+  }
+
+  const ratio = (hardMax - value) / (hardMax - idealMax);
+  return clamp100(Math.round(20 + ratio * 80));
+}
+
+function normalizePauseRatio(value) {
+  if (!Number.isFinite(value)) return 0;
+
+  const pct = value * 100;
+  if (pct <= 15) return 100;
+  if (pct >= 45) return 20;
+
+  const ratio = (45 - pct) / (45 - 15);
+  return clamp100(Math.round(20 + ratio * 80));
+}
+
+function VoiceRadarTooltip({ active, payload, label }) {
+  if (!active || !Array.isArray(payload) || payload.length === 0) return null;
+
+  const item = payload[0]?.payload;
+  if (!item) return null;
+
+  return (
+    <div
+      style={{
+        background: "#FFFFFF",
+        border: "1px solid #E2E8F0",
+        borderRadius: 12,
+        padding: "10px 12px",
+        boxShadow: "0 10px 24px rgba(15, 23, 42, 0.10)",
+        minWidth: 80,
+        textAlign: "center",
+      }}
+    >
+      <div
+        style={{
+          fontSize: 13,
+          fontWeight: 700,
+          color: "#000",
+          marginBottom: 4,
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          fontSize: 12,
+          color: "#555",
+          fontWeight: 500,
+          marginTop: 4,
+          // display: "flex",
+          justifyContent: "space-between",
+          gap: 12,
+          textAlign: "center",
+        }}
+      >
+        <span>{item.score}점</span>
+      </div>
+    </div>
+  );
 }

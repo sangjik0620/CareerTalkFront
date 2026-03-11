@@ -14,9 +14,9 @@ export default function ComparisonTab({ data }) {
   const comp = data?.comparison;
   const evaluation = data?.evaluation;
 
-  console.log("comparison tab data =", data);
-  console.log("comparison tab comp =", comp);
-  console.log("comparison tab overall =", evaluation?.summary?.overallScore);
+  // console.log("comparison tab data =", data);
+  // console.log("comparison tab comp =", comp);
+  // console.log("comparison tab overall =", evaluation?.summary?.overallScore);
 
   if (!comp) {
     return (
@@ -47,9 +47,9 @@ export default function ComparisonTab({ data }) {
   const markerPercent =
     percentileRank != null ? clamp100(percentileRank) : clamp100(userScore);
 
-  console.log("comp.percentileRank =", comp?.percentileRank);
-  console.log("calculated topPercent =", topPercent);
-  console.log("comparison raw =", comp);
+  // console.log("comp.percentileRank =", comp?.percentileRank);
+  // console.log("calculated topPercent =", topPercent);
+  // console.log("comparison raw =", comp);
 
   const rawHistory = Array.isArray(comp?.scoreHistory)
     ? comp.scoreHistory.filter((item) => {

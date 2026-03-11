@@ -131,6 +131,16 @@ function hasResultPayload(res) {
   );
 }
 
+function extractAnalysisStatus(res) {
+  return (
+    res?.analysisStatus ||
+    res?.status ||
+    res?.data?.analysisStatus ||
+    res?.data?.status ||
+    null
+  );
+}
+
 const Evaluation = ({ evaluationData }) => {
   const [activeTab, setActiveTab] = useState("summary");
 
@@ -227,16 +237,42 @@ const Evaluation = ({ evaluationData }) => {
       const res = await interviewApi.getResult(sessionId);
       if (!alive) return { done: false };
 
+      // 1) 이미 결과 payload가 있는 경우
       if (hasResultPayload(res)) {
         applyResultData(res);
         setLoading(false);
         return { done: true };
       }
 
-      if (res?.status === 200 && res?.data) {
+      if (res?.status === 200 && hasResultPayload(res?.data)) {
         applyResultData(res.data);
         setLoading(false);
         return { done: true };
+      }
+
+      // 2) 결과는 없지만 상태 정보가 있는 경우
+      const resultStatus = extractAnalysisStatus(res);
+
+      if (
+        resultStatus === "PENDING" ||
+        resultStatus === "PROCESSING" ||
+        resultStatus === "FAILED"
+      ) {
+        return {
+          done: false,
+          needsAnalyze: true,
+          analysisStatus: resultStatus,
+          raw: res,
+        };
+      }
+
+      if (res?.status === 202) {
+        return {
+          done: false,
+          needsAnalyze: true,
+          analysisStatus: "PENDING",
+          raw: res,
+        };
       }
 
       return { done: false, raw: res };
@@ -255,6 +291,27 @@ const Evaluation = ({ evaluationData }) => {
 
         if (resultState.done) return;
 
+        if (resultState.analysisStatus) {
+          setAnalysisStatus(resultState.analysisStatus);
+        }
+
+        if (resultState.needsAnalyze && !analyzeRequested) {
+          analyzeRequested = true;
+
+          try {
+            await interviewApi.startAnalysis(sessionId);
+          } catch (analyzeError) {
+            if (!alive) return;
+            setErr(
+              analyzeError?.response?.data?.message ||
+                analyzeError?.message ||
+                "분석 요청 실패",
+            );
+            setLoading(false);
+            return;
+          }
+        }
+
         continuePolling();
       } catch (e) {
         if (!alive) return;
@@ -266,6 +323,7 @@ const Evaluation = ({ evaluationData }) => {
         if (status === 202 || status === 404) {
           if (!analyzeRequested) {
             analyzeRequested = true;
+
             try {
               await interviewApi.startAnalysis(sessionId);
             } catch (analyzeError) {
