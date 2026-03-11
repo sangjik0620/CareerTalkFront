@@ -9,7 +9,7 @@ export default function ChatBot() {
   const [input, setInput] = useState("");
   const [scrollOffset, setScrollOffset] = useState(0);
   const [messages, setMessages] = useState([
-    { type: "bot", text: "안녕하세요. CarrerTalk 궁금한 점을 입력해주세요." },
+    { type: "bot", text: "안녕하세요. CareerTalk 궁금한 점을 입력해주세요." },
   ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -109,7 +109,7 @@ export default function ChatBot() {
       {isOpen && (
         <div className="chatbot-window">
           <div className="chatbot-header">
-            <span>CarrerTalk</span>
+            <span>CareerTalk</span>
             <button
               className="chatbot-close-button"
               onClick={() => setIsOpen(false)}
