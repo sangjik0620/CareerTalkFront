@@ -2558,6 +2558,41 @@
   display: inline-block;
 }
 
+.interview-voice-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+}
+
+.interview-voice-panel {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+  min-width: 0;
+}
+
+.interview-voice-radar {
+  width: 100%;
+  min-width: 0;
+  height: 320px;
+  position: relative;
+}
+
+.interview-voice-panel__title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .interview-voice-metrics {
   display: grid;
   gap: 14px;
@@ -2596,8 +2631,23 @@
   transition: width 0.6s ease;
 }
 
+.interview-voice-radar .recharts-wrapper:focus,
+.interview-voice-radar .recharts-surface:focus {
+  outline: none;
+}
+
+.interview-voice-radar .recharts-wrapper:focus-visible,
+.interview-voice-radar .recharts-surface:focus-visible {
+  outline: none;
+}
+
+.interview-voice-radar *:focus,
+.interview-voice-radar *:focus-visible {
+  outline: none !important;
+}
+
 .interview-voice-coaching {
-  margin-top: 24px;
+  margin-top: 0;
 }
 
 .interview-voice-coaching__title {
@@ -2632,6 +2682,18 @@
 .interview-voice-coaching__bullet {
   flex-shrink: 0;
   margin-top: 1px;
+}
+
+.interview-voice-coaching__label {
+  font-weight: 700;
+  font-size: 13px;
+  color: #334155;
+  margin-right: 6px;
+}
+
+.interview-voice-coaching__text {
+  font-size: 13px;
+  color: #475569;
 }
 
 .interview-stats-grid {
@@ -3123,3 +3185,12 @@
   margin-top: 2px;
 }
 
+@media (max-width: 1024px) {
+  .interview-voice-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .interview-voice-radar {
+    height: 280px;
+  }
+}
