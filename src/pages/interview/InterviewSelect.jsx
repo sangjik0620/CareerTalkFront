@@ -97,8 +97,8 @@ const ScoreBadge = ({ score }) => {
     score >= 90
       ? "bg-emerald-100 text-emerald-700 border-emerald-300"
       : score >= 75
-      ? "bg-blue-100 text-blue-700 border-blue-300"
-      : "bg-amber-100 text-amber-700 border-amber-300";
+        ? "bg-blue-100 text-blue-700 border-blue-300"
+        : "bg-amber-100 text-amber-700 border-amber-300";
 
   return (
     <span
@@ -128,8 +128,12 @@ function CardEmptyState({ meta, onClickAnalyze }) {
           className={`absolute -top-1 -right-1 w-2.5 h-2.5 ${meta.dotColor} rounded-full`}
         />
       </div>
-      <p className={`font-bold text-sm mb-1 ${meta.emptyText}`}>{meta.emptyMsg}</p>
-      <p className="text-gray-400 text-xs mb-4 leading-relaxed">{meta.emptyHint}</p>
+      <p className={`font-bold text-sm mb-1 ${meta.emptyText}`}>
+        {meta.emptyMsg}
+      </p>
+      <p className="text-gray-400 text-xs mb-4 leading-relaxed">
+        {meta.emptyHint}
+      </p>
       <button
         type="button"
         onClick={onClickAnalyze}
@@ -161,9 +165,12 @@ function GlobalEmptyBanner() {
           <span className="text-white text-xs font-bold">!</span>
         </div>
       </div>
-      <h3 className="text-2xl font-bold text-gray-900 mb-2">아직 분석된 자료가 없어요</h3>
+      <h3 className="text-2xl font-bold text-gray-900 mb-2">
+        아직 분석된 자료가 없어요
+      </h3>
       <p className="text-gray-500 mb-8 text-sm leading-relaxed max-w-sm mx-auto">
-        면접을 시작하려면 먼저 문서를 분석해야 해요. AI가 분석 후 이 화면에서 선택할 수 있습니다.
+        면접을 시작하려면 먼저 문서를 분석해야 해요. AI가 분석 후 이 화면에서
+        선택할 수 있습니다.
       </p>
       <div className="flex items-center justify-center gap-3 flex-wrap">
         {steps.map((s, i) => (
@@ -175,7 +182,9 @@ function GlobalEmptyBanner() {
               <span className="text-xs font-bold text-gray-700">{s.label}</span>
               <span className="text-[10px] text-gray-400">{s.desc}</span>
             </div>
-            {i < steps.length - 1 && <span className="text-gray-300 text-lg mb-4">→</span>}
+            {i < steps.length - 1 && (
+              <span className="text-gray-300 text-lg mb-4">→</span>
+            )}
           </div>
         ))}
       </div>
@@ -197,17 +206,23 @@ function AnalysisItemCard({ item, isSelected, onSelect, meta }) {
       ].join(" ")}
     >
       <div className="flex items-start justify-between gap-2 mb-2">
-        <span className={`font-bold text-sm leading-tight ${isSelected ? "text-white" : "text-gray-900"}`}>
+        <span
+          className={`font-bold text-sm leading-tight ${isSelected ? "text-white" : "text-gray-900"}`}
+        >
           {item.title}
         </span>
         <ScoreBadge score={item.score} />
       </div>
 
-      <p className={`text-xs truncate mb-2 ${isSelected ? "text-white/75" : "text-gray-400"}`}>
+      <p
+        className={`text-xs truncate mb-2 ${isSelected ? "text-white/75" : "text-gray-400"}`}
+      >
         📎 {item.fileName}
       </p>
 
-      <p className={`text-xs ${isSelected ? "text-white/65" : "text-gray-400"}`}>
+      <p
+        className={`text-xs ${isSelected ? "text-white/65" : "text-gray-400"}`}
+      >
         🕐 분석일: {item.analyzedAt}
       </p>
 
@@ -237,7 +252,10 @@ function AnalysisCategoryCard({
   const hasItems = items && items.length > 0;
 
   return (
-    <div className="animate-fade-in-up" style={{ animationDelay: `${index * 0.12}s`, opacity: 0 }}>
+    <div
+      className="animate-fade-in-up"
+      style={{ animationDelay: `${index * 0.12}s`, opacity: 0 }}
+    >
       <div
         className={[
           "group relative bg-white/80 backdrop-blur-md rounded-3xl p-6 shadow-lg border transition-all duration-500",
@@ -246,8 +264,8 @@ function AnalysisCategoryCard({
           selectedId
             ? `border-transparent ring-2 ring-offset-2 ${meta.ringColor}`
             : hasItems
-            ? "border-gray-200/80 hover:border-gray-300"
-            : "border-gray-100",
+              ? "border-gray-200/80 hover:border-gray-300"
+              : "border-gray-100",
         ].join(" ")}
       >
         {selectedId && (
@@ -266,24 +284,30 @@ function AnalysisCategoryCard({
               selectedId
                 ? `bg-gradient-to-br ${meta.gradient} shadow-md`
                 : hasItems
-                ? `bg-gradient-to-br ${meta.lightBg}`
-                : "bg-gray-100",
+                  ? `bg-gradient-to-br ${meta.lightBg}`
+                  : "bg-gray-100",
             ].join(" ")}
           >
-            <span className={`text-2xl ${!hasItems && !isLoading ? "grayscale opacity-40" : ""}`}>
+            <span
+              className={`text-2xl ${!hasItems && !isLoading ? "grayscale opacity-40" : ""}`}
+            >
               {meta.icon}
             </span>
           </div>
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className={`text-lg font-bold ${hasItems ? "text-gray-900" : "text-gray-400"}`}>
+              <h3
+                className={`text-lg font-bold ${hasItems ? "text-gray-900" : "text-gray-400"}`}
+              >
                 {meta.label}
               </h3>
               {!isLoading && (
                 <span
                   className={`text-xs font-bold px-2 py-0.5 rounded-full border ${
-                    hasItems ? meta.badgeColor : "bg-gray-100 text-gray-400 border-gray-200"
+                    hasItems
+                      ? meta.badgeColor
+                      : "bg-gray-100 text-gray-400 border-gray-200"
                   }`}
                 >
                   {hasItems ? `${items.length}개` : "없음"}
@@ -299,11 +323,17 @@ function AnalysisCategoryCard({
         {isLoading ? (
           <div className="space-y-3 flex-1">
             {[1, 2].map((i) => (
-              <div key={i} className="h-24 rounded-2xl bg-gray-100/80 animate-pulse" />
+              <div
+                key={i}
+                className="h-24 rounded-2xl bg-gray-100/80 animate-pulse"
+              />
             ))}
           </div>
         ) : !hasItems ? (
-          <CardEmptyState meta={meta} onClickAnalyze={() => onOpenAnalyze(fileKey)} />
+          <CardEmptyState
+            meta={meta}
+            onClickAnalyze={() => onOpenAnalyze(fileKey)}
+          />
         ) : (
           <div className="space-y-3 max-h-72 overflow-y-auto pr-1 custom-scroll">
             {items.map((item) => (
@@ -311,7 +341,9 @@ function AnalysisCategoryCard({
                 key={item.id}
                 item={item}
                 isSelected={selectedId === item.id}
-                onSelect={() => onSelect(selectedId === item.id ? null : item.id)}
+                onSelect={() =>
+                  onSelect(selectedId === item.id ? null : item.id)
+                }
                 meta={meta}
               />
             ))}
@@ -327,8 +359,18 @@ function EstimatedTimeCard({ questionCount }) {
   const count = parseInt(questionCount, 10);
   const minutes = count * 2;
   const segments = [
-    { label: "답변 시간", min: Math.round(minutes * 1.0), color: "bg-indigo-400", icon: "🎤" },
-    { label: "피드백 분석", min: Math.round(minutes * 0.3), color: "bg-violet-400", icon: "📊" },
+    {
+      label: "답변 시간",
+      min: Math.round(minutes * 1.0),
+      color: "bg-indigo-400",
+      icon: "🎤",
+    },
+    {
+      label: "피드백 분석",
+      min: Math.round(minutes * 0.3),
+      color: "bg-violet-400",
+      icon: "📊",
+    },
   ];
   const total = segments.reduce((s, x) => s + x.min, 0);
 
@@ -361,7 +403,9 @@ function EstimatedTimeCard({ questionCount }) {
               <span className="text-sm">{seg.icon}</span>
               <span className="text-xs text-gray-600">{seg.label}</span>
             </div>
-            <span className="text-xs font-bold text-gray-700">약 {seg.min}분</span>
+            <span className="text-xs font-bold text-gray-700">
+              약 {seg.min}분
+            </span>
           </div>
         ))}
       </div>
@@ -389,7 +433,9 @@ function PreChecklistCard() {
             ✅
           </div>
           <div>
-            <p className="text-sm font-bold text-gray-800">시작 전 체크리스트</p>
+            <p className="text-sm font-bold text-gray-800">
+              시작 전 체크리스트
+            </p>
             <p className="text-xs text-gray-400">
               {doneCount}/{CHECKLIST_ITEMS.length} 완료
             </p>
@@ -436,7 +482,9 @@ function PreChecklistCard() {
             <span className="text-sm">{item.icon}</span>
             <span
               className={`text-xs font-medium flex-1 ${
-                checked[item.id] ? "text-emerald-700 line-through" : "text-gray-600"
+                checked[item.id]
+                  ? "text-emerald-700 line-through"
+                  : "text-gray-600"
               }`}
             >
               {item.text}
@@ -515,12 +563,12 @@ export default function InterviewSelect() {
 
   const isAllEmpty = useMemo(
     () => !isLoading && Object.values(analyses).every((l) => l.length === 0),
-    [analyses, isLoading]
+    [analyses, isLoading],
   );
 
   const hasSelection = useMemo(
     () => Object.values(selectedIds).some((id) => id !== null),
-    [selectedIds]
+    [selectedIds],
   );
 
   const selectedSummary = useMemo(() => {
@@ -567,7 +615,7 @@ export default function InterviewSelect() {
         (q) =>
           q !== introQuestion &&
           q !== motivationQuestion &&
-          q !== finalQuestion
+          q !== finalQuestion,
       );
 
     const result = [...fixedFront];
@@ -603,7 +651,9 @@ export default function InterviewSelect() {
       const selectedAnalysisId = selectedIds[key];
       if (!selectedAnalysisId) return;
 
-      const selectedItem = analyses[key]?.find((item) => item.id === selectedAnalysisId);
+      const selectedItem = analyses[key]?.find(
+        (item) => item.id === selectedAnalysisId,
+      );
       if (!selectedItem) return;
 
       targets.push({
@@ -629,7 +679,7 @@ export default function InterviewSelect() {
 
     if (!quotaLoading && remainingMockCount <= 0) {
       const moveToPayment = window.confirm(
-        "모의면접 무료 이용 횟수를 모두 사용했습니다.\n추가 이용을 위해 결제 페이지로 이동하시겠어요?"
+        "모의면접 무료 이용 횟수를 모두 사용했습니다.\n추가 이용을 위해 결제 페이지로 이동하시겠어요?",
       );
 
       if (moveToPayment) {
@@ -642,7 +692,7 @@ export default function InterviewSelect() {
 
     const finalQuestions = buildFinalQuestions(
       questions,
-      Number(settings.questionCount || 5)
+      Number(settings.questionCount || 5),
     );
 
     sessionStorage.setItem(
@@ -652,7 +702,7 @@ export default function InterviewSelect() {
         selectedTargets: targets,
         settings,
         questions: finalQuestions,
-      })
+      }),
     );
 
     setIsDeviceTestOpen(true);
@@ -673,7 +723,10 @@ export default function InterviewSelect() {
   return (
     <div
       className="min-h-screen relative overflow-hidden"
-      style={{ background: "linear-gradient(135deg, #f0f2ff 0%, #eaf0ff 50%, #f5f0ff 100%)" }}
+      style={{
+        background:
+          "linear-gradient(135deg, #f0f2ff 0%, #eaf0ff 50%, #f5f0ff 100%)",
+      }}
     >
       <BackgroundMesh />
 
@@ -712,7 +765,9 @@ export default function InterviewSelect() {
         <div className="text-center mb-14">
           <div className="inline-flex items-center gap-2 mb-5 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full border border-blue-200 shadow-sm animate-slide-in-down">
             <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-            <span className="text-blue-700 text-sm font-semibold">AI 모의 면접 준비</span>
+            <span className="text-blue-700 text-sm font-semibold">
+              AI 모의 면접 준비
+            </span>
           </div>
 
           <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 mb-5 leading-tight tracking-tight animate-slide-in-up">
@@ -727,7 +782,8 @@ export default function InterviewSelect() {
           </h1>
 
           <p className="text-lg text-gray-500 animate-slide-in-up animation-delay-300">
-            이전에 분석한 자료 중 최소 1개를 선택하면 AI가 맞춤형 질문을 생성합니다
+            이전에 분석한 자료 중 최소 1개를 선택하면 AI가 맞춤형 질문을
+            생성합니다
           </p>
         </div>
 
@@ -753,21 +809,27 @@ export default function InterviewSelect() {
               </div>
 
               <div className="bg-violet-50 border border-violet-200 rounded-2xl px-4 py-3">
-                <p className="text-xs text-violet-600 font-semibold">무료 면접</p>
+                <p className="text-xs text-violet-600 font-semibold">
+                  무료 면접
+                </p>
                 <p className="text-lg font-bold text-gray-900">
                   {quota.freeMockRemaining}회
                 </p>
               </div>
 
               <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-3">
-                <p className="text-xs text-emerald-600 font-semibold">유료 분석</p>
+                <p className="text-xs text-emerald-600 font-semibold">
+                  유료 분석
+                </p>
                 <p className="text-lg font-bold text-gray-900">
                   {quota.paidAnalysisRemaining}회
                 </p>
               </div>
 
               <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
-                <p className="text-xs text-amber-600 font-semibold">유료 면접</p>
+                <p className="text-xs text-amber-600 font-semibold">
+                  유료 면접
+                </p>
                 <p className="text-lg font-bold text-gray-900">
                   {quota.paidMockRemaining}회
                 </p>
@@ -810,8 +872,12 @@ export default function InterviewSelect() {
                 >
                   <span className="text-2xl">{FILE_META[item.key].icon}</span>
                   <div className="min-w-0">
-                    <p className="text-xs text-gray-400 font-medium">{item.label}</p>
-                    <p className="text-sm font-bold text-gray-900 truncate">{item.title}</p>
+                    <p className="text-xs text-gray-400 font-medium">
+                      {item.label}
+                    </p>
+                    <p className="text-sm font-bold text-gray-900 truncate">
+                      {item.title}
+                    </p>
                     <ScoreBadge score={item.score} />
                   </div>
                 </div>
@@ -841,7 +907,9 @@ export default function InterviewSelect() {
                   <button
                     key={opt.value}
                     type="button"
-                    onClick={() => setSettings((p) => ({ ...p, questionCount: opt.value }))}
+                    onClick={() =>
+                      setSettings((p) => ({ ...p, questionCount: opt.value }))
+                    }
                     className={[
                       "flex-1 flex flex-col items-center gap-1 py-4 rounded-2xl border-2 font-bold transition-all duration-300",
                       "hover:scale-105 hover:shadow-md active:scale-95",
@@ -854,7 +922,9 @@ export default function InterviewSelect() {
                     <span className="text-lg font-extrabold">{opt.label}</span>
                     <span
                       className={`text-xs ${
-                        settings.questionCount === opt.value ? "text-white/75" : "text-gray-400"
+                        settings.questionCount === opt.value
+                          ? "text-white/75"
+                          : "text-gray-400"
                       }`}
                     >
                       {opt.sub}
