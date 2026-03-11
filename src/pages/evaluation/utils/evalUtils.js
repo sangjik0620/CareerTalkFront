@@ -1,9 +1,9 @@
 export const getScoreColor = (score = 0) => {
   const s = Number(score) || 0;
-  if (s >= 85) return "#16a34a";
-  if (s >= 70) return "#2563eb";
-  if (s >= 55) return "#f59e0b";
-  return "#ef4444";
+  if (s >= 80) return "#2563eb"; // 파랑
+  if (s >= 60) return "#16a34a"; // 초록
+  if (s >= 40) return "#f59e0b"; // 노랑
+  return "#ef4444"; // 빨강
 };
 
 export const getScoreLabel = (score = 0) => {

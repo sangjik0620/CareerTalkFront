@@ -193,51 +193,54 @@ export default function InterviewTab({ data, turns = [] }) {
               </div>
 
               <div className="interview-keyword-section__list">
-                {Object.entries(keywordUsage).map(([type, count]) => {
+                {(() => {
                   const total = Object.values(keywordUsage).reduce(
                     (a, b) => a + (Number(b) || 0),
                     0,
                   );
-                  const c = Number(count) || 0;
-                  const pct =
-                    total > 0 ? ((c / total) * 100).toFixed(1) : "0.0";
-                  const labels = {
-                    technical: "기술",
-                    soft: "소프트스킬",
-                    company: "회사",
-                  };
-                  const colors = {
-                    technical: "#334155",
-                    soft: "#475569",
-                    company: "#1D4ED8",
-                  };
-                  const bg = colors[type] ?? "#475569";
 
-                  return (
-                    <div key={type} className="interview-keyword-section__row">
-                      <span className="interview-keyword-section__label">
-                        {labels[type] ?? type}
-                      </span>
+                  return Object.entries(keywordUsage).map(([type, count]) => {
+                    const c = Number(count) || 0;
+                    const pct =
+                      total > 0 ? ((c / total) * 100).toFixed(1) : "0.0";
 
-                      <div className="interview-keyword-section__track">
-                        <div
-                          className="interview-keyword-section__fill"
-                          style={{
-                            width: `${pct}%`,
-                            background: bg,
-                          }}
-                        />
-                      </div>
+                    const labels = {
+                      technical: "기술",
+                      soft: "소프트스킬",
+                      company: "회사",
+                    };
 
-                      <span
-                        className="interview-keyword-section__value"
-                        style={{ color: bg }}
+                    const bg = getScoreColor(Number(pct));
+
+                    return (
+                      <div
+                        key={type}
+                        className="interview-keyword-section__row"
                       >
-                        {c}회 ({pct}%)
-                      </span>
-                    </div>
-                  );
-                })}
+                        <span className="interview-keyword-section__label">
+                          {labels[type] ?? type}
+                        </span>
+
+                        <div className="interview-keyword-section__track">
+                          <div
+                            className="interview-keyword-section__fill"
+                            style={{
+                              width: `${pct}%`,
+                              background: bg,
+                            }}
+                          />
+                        </div>
+
+                        <span
+                          className="interview-keyword-section__value"
+                          style={{ color: bg }}
+                        >
+                          {c}회 ({pct}%)
+                        </span>
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             </div>
           ) : (
@@ -303,7 +306,6 @@ export default function InterviewTab({ data, turns = [] }) {
               const rawFlags =
                 s?.raw?.tremor?.flags || s?.raw?.confidence?.flags || [];
               const flagItems = normalizeFlags(flags, rawFlags);
-              const overallColor = getScoreColor(overallVoiceScore);
 
               const answerKey = t?.turnId ?? idx;
               const isExpanded = !!expandedAnswers[answerKey];
@@ -315,11 +317,17 @@ export default function InterviewTab({ data, turns = [] }) {
 
               const oneLineFeedback = fb?.oneLineFeedback ?? "";
               const fullFeedback = fb?.fullFeedback ?? "";
-              const answerScore = Number(fb?.score ?? 0);
+              const answerScore = clamp100(fb?.score);
               const sentimentScore =
                 typeof fb?.sentimentScore === "number"
-                  ? fb.sentimentScore
+                  ? clamp100(fb.sentimentScore)
                   : null;
+
+              const overallColor = getScoreColor(overallVoiceScore);
+              const answerColor = getScoreColor(answerScore);
+              const sentimentColor =
+                sentimentScore != null ? getScoreColor(sentimentScore) : null;
+
               const keywords = Array.isArray(fb?.keywords) ? fb.keywords : [];
               const { strength: feedbackStrength, weakness: feedbackWeakness } =
                 parseQuestionFeedback(fullFeedback);
@@ -353,8 +361,8 @@ export default function InterviewTab({ data, turns = [] }) {
                     <span
                       className="interview-turn-card__score"
                       style={{
-                        color: overallColor,
-                        background: `${overallColor}18`,
+                        color: answerColor,
+                        background: `${answerColor}18`,
                       }}
                     >
                       {answerScore}점
@@ -520,10 +528,16 @@ export default function InterviewTab({ data, turns = [] }) {
                             <div className="interview-feedback-box__sentiment-track">
                               <div
                                 className="interview-feedback-box__sentiment-fill"
-                                style={{ width: `${sentimentScore}%` }}
+                                style={{
+                                  width: `${sentimentScore}%`,
+                                  background: `linear-gradient(90deg, ${sentimentColor}99, ${sentimentColor})`,
+                                }}
                               />
                             </div>
-                            <span className="interview-feedback-box__sentiment-value">
+                            <span
+                              className="interview-feedback-box__sentiment-value"
+                              style={{ color: sentimentColor }}
+                            >
                               {sentimentScore}%
                             </span>
                           </div>
