@@ -40,7 +40,7 @@ const Signup = () => {
 
     const formatPhoneNumber = (value) => {
         if (!value) return value;
-        const phoneNumber = value.replace(/[^\d]/g, ''); // 숫자만 남기기
+        const phoneNumber = value.replace(/[^\d]/g, '');
         const phoneNumberLength = phoneNumber.length;
 
         if (phoneNumberLength < 4) return phoneNumber;
@@ -92,22 +92,20 @@ const Signup = () => {
 
         try {
             const { passwordConfirm, ...submitData } = formData;
-            const response = await axios.post('http://localhost:8080/api/member/signup', submitData);
+            await axios.post('http://localhost:8080/api/member/signup', submitData);
 
-            // alert("회원가입이 완료되었습니다!"); 
             setShowWelcomeModal(true);
             setTimeout(() => {
                 setShowWelcomeModal(false);
                 navigate('/login');
             }, 3000);
-            // navigate('/login');
         } catch (error) {
             alert(error.response?.data || '회원가입 정보가 올바르지 않습니다.');
         }
     };
 
-    const [idMessage, setIdMessage] = useState(''); // 화면에 표시할 메시지
-    const [isIdAvailable, setIsIdAvailable] = useState(false); // 사용 가능 여부 (색상 결정용)
+    const [idMessage, setIdMessage] = useState('');
+    const [isIdAvailable, setIsIdAvailable] = useState(false);
 
     const checkIdDuplicate = async () => {
         if (!formData.loginId) {
@@ -132,8 +130,8 @@ const Signup = () => {
         }
     };
 
-    const [nicknameMessage, setNicknameMessage] = useState(''); // 안내 메시지
-    const [isNicknameAvailable, setIsNicknameAvailable] = useState(false); // 가입 가능 여부
+    const [nicknameMessage, setNicknameMessage] = useState('');
+    const [isNicknameAvailable, setIsNicknameAvailable] = useState(false);
 
     const checkNicknameDuplicate = async () => {
         if (!formData.nickname) {
@@ -158,11 +156,10 @@ const Signup = () => {
         }
     };
 
-    const [emailCode, setEmailCode] = useState(''); // 사용자가 입력한 인증번호
-    const [isEmailSent, setIsEmailSent] = useState(false); // 메일 발송 여부
-    const [isEmailVerified, setIsEmailVerified] = useState(false); // 인증 성공 여부
+    const [emailCode, setEmailCode] = useState('');
+    const [isEmailSent, setIsEmailSent] = useState(false);
+    const [isEmailVerified, setIsEmailVerified] = useState(false);
 
-    // 1. 인증 메일 보내기
     const sendVerificationEmail = async () => {
         try {
             await axios.post(`http://localhost:8080/api/member/send-email?email=${formData.email}`);
@@ -171,7 +168,6 @@ const Signup = () => {
             setShowSentModal(true);
             setTimeout(() => setShowSentModal(false), 3000);
         } catch (error) {
-            // 409(중복)이거나, 500(서버에러-중복데이터때문)일 때 모달 띄우기
             if (error.response?.status === 409 || error.response?.status === 500) {
                 setModalMessage("동일한 이메일의 계정이 존재합니다.");
                 setShowDuplicateModal(true);
@@ -182,29 +178,39 @@ const Signup = () => {
         }
     };
 
-    // 2. 인증 번호 확인
     const verifyEmailCode = async () => {
-    try {
-        const response = await axios.post(`http://localhost:8080/api/member/verify-email`, null, {
-            params: {
-                email: formData.email,
-                code: emailCode
+        try {
+            const response = await axios.post(`http://localhost:8080/api/member/verify-email`, null, {
+                params: {
+                    email: formData.email,
+                    code: emailCode
+                }
+            });
+            
+            if (response.data) {
+                setIsEmailVerified(true);
+            } else {
+                alert("인증 번호가 일치하지 않습니다.");
             }
-        });
-        
-        if (response.data) {
-            setIsEmailVerified(true);
-            // alert("인증에 성공했습니다.");
-        } else {
-            alert("인증 번호가 일치하지 않습니다.");
+        } catch (error) {
+            alert("인증 확인 중 오류가 발생했습니다.");
         }
-    } catch (error) {
-        alert("인증 확인 중 오류가 발생했습니다.");
-    }
-};
+    };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 font-sans py-12 px-4">
+        <div
+            className="min-h-screen relative overflow-hidden flex items-center justify-center font-sans py-12 px-4"
+            style={{ background: "linear-gradient(135deg, #f0f2ff 0%, #eaf0ff 50%, #f5f0ff 100%)" }}
+        >
+            {/* 배경 블롭 */}
+            <div
+                className="absolute top-[-120px] right-[-100px] w-[500px] h-[500px] rounded-full pointer-events-none"
+                style={{ background: "radial-gradient(circle, rgba(99,120,247,0.12) 0%, transparent 70%)" }}
+            />
+            <div
+                className="absolute bottom-[-80px] left-[-80px] w-[400px] h-[400px] rounded-full pointer-events-none"
+                style={{ background: "radial-gradient(circle, rgba(139,100,247,0.10) 0%, transparent 70%)" }}
+            />
 
             {showSentModal && (
                 <div className="fixed top-12 left-1/2 -translate-x-1/2 z-[300] w-full max-w-sm px-6 animate-in fade-in zoom-in slide-in-from-top-10 duration-500">
@@ -247,21 +253,29 @@ const Signup = () => {
                     </div>
                 </div>
             )}
-            <Link 
-                to="/" 
-                className="absolute top-8 left-8 flex items-center gap-2 text-gray-400 hover:text-gray-900 transition-colors font-semibold group"
+
+            {/* 홈으로 돌아가기 버튼 */}
+            <button
+                onClick={() => navigate("/")}
+                className="absolute top-8 left-8 inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 z-10"
+                style={{
+                    background: "rgba(255,255,255,0.9)",
+                    color: "#4B5672",
+                    border: "1px solid rgba(99,120,247,0.14)",
+                    boxShadow: "0 4px 14px rgba(99,120,247,0.08)",
+                }}
             >
-                <span className="text-xl group-hover:-translate-x-1 transition-transform">←</span>
-                <span>홈으로 이동</span>
-            </Link>
-            <div className="bg-white p-12 rounded-2xl shadow-xl w-full max-w-lg border border-gray-100">
+                <span className="text-base">←</span>
+                홈으로 돌아가기
+            </button>
+
+            <div className="relative z-10 bg-white p-12 rounded-2xl shadow-xl w-full max-w-lg border border-gray-100">
                 <div className="text-center mb-10">
                     <h2 className="text-3xl font-bold text-gray-900 mb-2">회원가입</h2>
                     <p className="text-gray-500 text-sm font-medium">CareerTalk의 모든 서비스를 시작해보세요.</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* 아이디 */}
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">아이디</label>
                         <div className="flex gap-2.5">
@@ -292,7 +306,6 @@ const Signup = () => {
                         )}  
                     </div>
 
-                    {/* 이메일 */}
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">이메일</label>
                         <div className="flex gap-2.5">
@@ -347,7 +360,6 @@ const Signup = () => {
                         )}
                     </div>
 
-                    {/* 비밀번호 섹션 */}
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">비밀번호</label>
                         <input type="password" name="password" value={formData.password} onChange={handleChange} onBlur={handlePwBlur} placeholder="8자 이상 영문, 숫자, 특수문자 조합" className={`w-full px-4 py-3 rounded-lg border outline-none transition ${pwError ? 'border-red-500 focus:ring-2 focus:ring-red-200' : 'border-gray-300 focus:ring-2 focus:ring-blue-500'}`} required />
@@ -359,7 +371,6 @@ const Signup = () => {
                         <input type="password" name="passwordConfirm" value={formData.passwordConfirm} onChange={handleChange} placeholder="비밀번호를 한 번 더 입력하세요" className={`w-full px-4 py-3 rounded-lg border outline-none transition ${formData.password && formData.passwordConfirm && formData.password !== formData.passwordConfirm ? 'border-red-500 focus:ring-2 focus:ring-red-200' : 'border-gray-300 focus:ring-2 focus:ring-blue-500'}`} required />
                     </div>
 
-                    {/* 이름 & 닉네임 */}
                     <div className="grid grid-cols-1 gap-6">
                         <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">이름</label>
@@ -396,7 +407,6 @@ const Signup = () => {
                         </div>
                     </div>
 
-                    {/* 휴대폰 & 생년월일 */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">휴대폰 번호</label>
@@ -408,7 +418,6 @@ const Signup = () => {
                         </div>
                     </div>
 
-                    {/* 목표 직무 */}
                     <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">목표 직무</label>
                         <select name="targetJob" value={formData.targetJob} onChange={handleChange} className="w-full px-4 py-3 rounded-lg border border-gray-300 outline-none focus:ring-2 focus:ring-blue-500 bg-white transition" required>

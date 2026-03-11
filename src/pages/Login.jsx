@@ -57,15 +57,36 @@ const Login = () => {
     }, [location, navigate]);
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 font-sans">
-            <Link 
-                to="/" 
-                className="absolute top-8 left-8 flex items-center gap-2 text-gray-400 hover:text-gray-900 transition-colors font-semibold group"
+        <div
+            className="min-h-screen relative overflow-hidden flex items-center justify-center font-sans px-4"
+            style={{ background: "linear-gradient(135deg, #f0f2ff 0%, #eaf0ff 50%, #f5f0ff 100%)" }}
+        >
+            {/* 배경 블롭 */}
+            <div
+                className="absolute top-[-120px] right-[-100px] w-[500px] h-[500px] rounded-full pointer-events-none"
+                style={{ background: "radial-gradient(circle, rgba(99,120,247,0.12) 0%, transparent 70%)" }}
+            />
+            <div
+                className="absolute bottom-[-80px] left-[-80px] w-[400px] h-[400px] rounded-full pointer-events-none"
+                style={{ background: "radial-gradient(circle, rgba(139,100,247,0.10) 0%, transparent 70%)" }}
+            />
+
+            {/* 홈으로 돌아가기 버튼 */}
+            <button
+                onClick={() => navigate("/")}
+                className="absolute top-8 left-8 inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 z-10"
+                style={{
+                    background: "rgba(255,255,255,0.9)",
+                    color: "#4B5672",
+                    border: "1px solid rgba(99,120,247,0.14)",
+                    boxShadow: "0 4px 14px rgba(99,120,247,0.08)",
+                }}
             >
-                <span className="text-xl group-hover:-translate-x-1 transition-transform">←</span>
-                <span>홈으로 이동</span>
-            </Link>
-            <div className="bg-white p-10 rounded-2xl shadow-xl w-full max-w-md border border-gray-100">
+                <span className="text-base">←</span>
+                홈으로 돌아가기
+            </button>
+
+            <div className="relative z-10 bg-white p-10 rounded-2xl shadow-xl w-full max-w-md border border-gray-100">
                 <div className="text-center mb-8">
                     <h2 className="text-3xl font-bold text-gray-900 mb-2">로그인</h2>
                     <p className="text-gray-500">CareerTalk 서비스 이용을 위해 로그인해주세요.</p>

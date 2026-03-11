@@ -618,6 +618,62 @@ const MyPage = () => {
   );
 };
 
+function ResultCard({
+    badge,
+    badgeClass,
+    date,
+    title,
+    score,
+    duration,
+    onClick,
+    buttonClass,
+    interview = false
+}) {
+    return (
+        <div className="group border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-blue-200 transition-all bg-white">
+            <div className="flex justify-between items-center mb-4">
+                <span className={`text-xs font-bold px-3 py-1 rounded-lg ${badgeClass}`}>
+                    {badge}
+                </span>
+                <span className="text-xs text-gray-400 font-medium">{date}</span>
+            </div>
+
+            <h4 className="text-lg font-bold text-gray-900 mb-4 line-clamp-2">{title}</h4>
+
+            <div className="flex justify-between items-end mt-auto">
+                <div>
+                    <p className="text-xs text-gray-400 font-bold mb-1">
+                        {interview ? '진행 시간' : 'AI 종합 점수'}
+                    </p>
+                    {interview ? (
+                        <p className="text-xl font-bold text-gray-700">{duration}</p>
+                    ) : (
+                        <p className="text-2xl font-black text-gray-900">
+                            {score}
+                            <span className="text-sm font-medium text-gray-500 ml-1">점</span>
+                        </p>
+                    )}
+                </div>
+
+                <button
+                    onClick={onClick}
+                    className={`px-4 py-2 bg-gray-50 text-gray-600 rounded-xl text-sm font-bold transition-colors ${buttonClass}`}
+                >
+                    {interview ? '기록 보기' : '결과 보기'}
+                </button>
+            </div>
+        </div>
+    );
+}
+
+function EmptyState({ text }) {
+    return (
+        <div className="col-span-2 py-16 text-center bg-gray-50 rounded-2xl border border-gray-100 border-dashed">
+            <p className="text-gray-400 font-semibold">{text}</p>
+        </div>
+    );
+}
+
 function QuotaCard({ title, value, desc, color, icon }) {
   const colorMap = {
     blue: {
