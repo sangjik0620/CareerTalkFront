@@ -44,7 +44,7 @@ export default function Resume({ isOpen, onClose, onAnalyzeSuccess }) {
 
     const isDocx =
       file.type ===
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
       /\.docx$/i.test(file.name);
 
     if (!isDocx) {
@@ -98,8 +98,17 @@ export default function Resume({ isOpen, onClose, onAnalyzeSuccess }) {
       }
     } catch (error) {
       console.error("분석 실패:", error);
-      alert("분석 중 에러가 발생했습니다.");
       setIsAnalyzing(false);
+
+      // 이용권 없음 (HTTP 402) → 결제 페이지로 이동
+      if (error.response?.status === 402) {
+        alert("이용권이 없습니다. 이용권을 구매해 주세요.");
+        navigate("/payment");
+        return;
+      }
+
+      const message = error.response?.data?.message || "오류가 발생했습니다.";
+      alert(message);
       setViewStep("input");
     }
   };
@@ -358,8 +367,8 @@ export default function Resume({ isOpen, onClose, onAnalyzeSuccess }) {
                     이력서 분석
                   </h2>
                   <p className="text-sm text-gray-500 mt-0.5">
-                    반드시 이력서 양식을 다운로드 후 양식에 맞춰 Docx 파일로 업로드
-                    해주세요.
+                    이력서 양식을 다운로드 후 양식에 맞춰 Docx 파일로 업로드
+                    하는 것을 권장합니다. (선택한 파일이 양식이 다를 경우 분석 정확도가 떨어질 수 있습니다.)
                   </p>
                 </div>
               </div>
@@ -426,10 +435,9 @@ export default function Resume({ isOpen, onClose, onAnalyzeSuccess }) {
 
                 <div
                   className={`relative border-2 border-dashed rounded-2xl flex flex-col justify-center items-center p-8 transition-all duration-200 bg-blue-50/70 flex-1 h-full
-                    ${
-                      isDragging
-                        ? "border-blue-500 bg-blue-100"
-                        : "border-blue-300 hover:border-blue-400 hover:bg-blue-50"
+                    ${isDragging
+                      ? "border-blue-500 bg-blue-100"
+                      : "border-blue-300 hover:border-blue-400 hover:bg-blue-50"
                     }`}
                   onDragOver={(e) => {
                     e.preventDefault();
@@ -522,10 +530,9 @@ export default function Resume({ isOpen, onClose, onAnalyzeSuccess }) {
                 onClick={handleAnalyzeClick}
                 disabled={!canAnalyze}
                 className={`px-8 py-2.5 font-bold rounded-lg transition-all text-sm
-                  ${
-                    !canAnalyze
-                      ? "bg-blue-100 text-blue-400 cursor-not-allowed"
-                      : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow-md active:scale-[0.98]"
+                  ${!canAnalyze
+                    ? "bg-blue-100 text-blue-400 cursor-not-allowed"
+                    : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm hover:shadow-md active:scale-[0.98]"
                   }`}
               >
                 분석하기
