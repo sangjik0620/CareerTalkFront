@@ -9,6 +9,8 @@ const MyPage = () => {
     const [loading, setLoading] = useState(true);
     const [editMode, setEditMode] = useState(false);
 
+    const [quota, setQuota] = useState(null);
+
     const [originalData, setOriginalData] = useState({ name: '', nickname: '', email: '', targetJob: '' });
     const [formData, setFormData] = useState({ name: '', nickname: '', email: '', targetJob: '' });
 
