@@ -5,13 +5,6 @@ import axios from "axios";
 const MyPage = () => {
   const navigate = useNavigate();
 
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [editMode, setEditMode] = useState(false);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [editMode, setEditMode] = useState(false);
-
   const [quota, setQuota] = useState(null);
 
   const [originalData, setOriginalData] = useState({
