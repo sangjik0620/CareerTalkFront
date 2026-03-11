@@ -770,7 +770,7 @@ const Hero = ({ onStart }) => {
           <div>
             <div className="inline-block mb-6 px-5 py-2.5 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full border-2 border-blue-300 animate-slide-in-down shadow-md">
               <span className="text-blue-700 text-sm font-bold flex items-center gap-2">
-                <span className="animate-bounce-subtle">🚀</span>
+                <span className="animate-bounce-subtle"></span>
                 AI 기반 취업 준비 플랫폼
               </span>
             </div>
@@ -804,7 +804,7 @@ const Hero = ({ onStart }) => {
                 className="group relative bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-size-200 bg-pos-0 hover:bg-pos-100 text-white px-10 py-4 rounded-full font-bold shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-105 overflow-hidden"
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
-                  무료로 시작하기
+                  시작하기
                   <span className="transform group-hover:translate-x-2 transition-transform duration-300">
                     →
                   </span>

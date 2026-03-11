@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { getProducts, getQuota, readyKakaoPay } from "../../lib/api/paymentApi";
 
 // ── 아이콘 ───────────────────────────────────────────────────
@@ -65,6 +66,8 @@ const KakaoIcon = () => (
 
 // ════════════════════════════════════════════════════════════
 export default function PaymentPage() {
+  const navigate = useNavigate();
+
   const [quota, setQuota] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -74,6 +77,8 @@ export default function PaymentPage() {
   const [paymentStep, setPaymentStep] = useState("confirm"); // confirm | kakao
   const [kakaoRedirectUrl, setKakaoRedirectUrl] = useState("");
   const [paymentError, setPaymentError] = useState("");
+
+  const [activeCategory, setActiveCategory] = useState("ANALYSIS");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -132,6 +137,19 @@ export default function PaymentPage() {
     }
   };
 
+  const filteredProducts = products.filter((product) => {
+    if (activeCategory === "ANALYSIS") {
+      return product.productType === "ANALYSIS_PACKAGE";
+    }
+    if (activeCategory === "MOCK") {
+      return product.productType === "MOCK_PACKAGE";
+    }
+    if (activeCategory === "STARTER") {
+      return product.productType === "COMBO_PACKAGE";
+    }
+    return true;
+  });
+
   if (loading) {
     return (
       <div
@@ -165,7 +183,38 @@ export default function PaymentPage() {
         style={{ background: "radial-gradient(circle, rgba(139,100,247,0.10) 0%, transparent 70%)" }}
       />
 
-      <div className="relative z-10 max-w-5xl mx-auto px-6 py-14">
+      <div className="relative z-10 max-w-5xl mx-auto px-6 py-10">
+        {/* 상단 이동 버튼 */}
+        <div className="flex items-center justify-between mb-8">
+          <button
+            onClick={() => navigate("/")}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-bold transition-all duration-200 hover:-translate-y-0.5"
+            style={{
+              background: "rgba(255,255,255,0.9)",
+              color: "#4B5672",
+              border: "1px solid rgba(99,120,247,0.14)",
+              boxShadow: "0 4px 14px rgba(99,120,247,0.08)",
+            }}
+          >
+            <span className="text-base">←</span>
+            홈으로 돌아가기
+          </button>
+
+          <button
+            onClick={() => navigate("/mypage")}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-bold transition-all duration-200 hover:-translate-y-0.5"
+            style={{
+              background: "rgba(255,255,255,0.9)",
+              color: "#4B5672",
+              border: "1px solid rgba(99,120,247,0.14)",
+              boxShadow: "0 4px 14px rgba(99,120,247,0.08)",
+            }}
+          >
+            마이페이지
+            <span className="text-base">→</span>
+          </button>
+        </div>
+
         <div className="text-center mb-14">
           <div
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold mb-6"
@@ -210,16 +259,48 @@ export default function PaymentPage() {
 
         <section>
           <SectionTitle icon={Icons.Lock()} label="이용권 구매" />
+
+          <div className="flex flex-wrap gap-3 mb-6">
+            <CategoryTab
+              label="분석권"
+              active={activeCategory === "ANALYSIS"}
+              onClick={() => setActiveCategory("ANALYSIS")}
+            />
+            <CategoryTab
+              label="면접권"
+              active={activeCategory === "MOCK"}
+              onClick={() => setActiveCategory("MOCK")}
+            />
+            <CategoryTab
+              label="패키지 상품"
+              active={activeCategory === "STARTER"}
+              onClick={() => setActiveCategory("STARTER")}
+            />
+          </div>
+
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {products.map((product, idx) => (
+            {filteredProducts.map((product, idx) => (
               <ProductCard
                 key={product.productCode}
                 product={product}
                 onSelect={handleOpenModal}
-                highlight={idx === 1}
+                highlight={idx === 0}
               />
             ))}
           </div>
+
+          {filteredProducts.length === 0 && (
+            <div
+              className="rounded-3xl py-16 text-center mt-2"
+              style={{
+                background: "rgba(255,255,255,0.7)",
+                border: "1px dashed rgba(99,120,247,0.18)",
+                color: "#9BA8C8",
+              }}
+            >
+              해당 카테고리의 상품이 아직 없습니다.
+            </div>
+          )}
         </section>
 
         <div
@@ -605,7 +686,7 @@ function ProductCard({ product, onSelect, highlight }) {
               <path d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
             </svg>
           }
-          label={`AI 이력서 분석 ${product.analysisCreditCount}회`}
+          label={`AI 문서 분석 ${product.analysisCreditCount}회`}
           highlight={highlight}
         />
         <FeatureItem
@@ -665,6 +746,29 @@ function SectionTitle({ icon, label }) {
       <span style={{ color: "#4F6EF7" }}>{icon}</span>
       <h2 className="text-base font-bold" style={{ color: "#1a1d3a" }}>{label}</h2>
     </div>
+  );
+}
+
+function CategoryTab({ label, active, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="px-5 py-2.5 rounded-full text-sm font-bold transition-all duration-200"
+      style={{
+        background: active
+          ? "linear-gradient(90deg, #4F6EF7, #7B61FF)"
+          : "rgba(255,255,255,0.9)",
+        color: active ? "white" : "#6B7DB3",
+        border: active
+          ? "1px solid transparent"
+          : "1px solid rgba(99,120,247,0.14)",
+        boxShadow: active
+          ? "0 8px 24px rgba(99,120,247,0.22)"
+          : "0 2px 10px rgba(99,120,247,0.05)",
+      }}
+    >
+      {label}
+    </button>
   );
 }
 
