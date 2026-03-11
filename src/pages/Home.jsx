@@ -458,8 +458,9 @@ const Navigation = ({ onStart }) => {
   // 로그아웃
   const handleLogout = () => {
     localStorage.removeItem('user'); 
-    localStorage.clear();
-    setUser(null); // 상태 초기화
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    setUser(null); 
     window.location.href = "/";
   };
 
@@ -1306,23 +1307,39 @@ export default function Home() {
     }
   }, [location]);
 
-  const goInterview = () => navigate("/interview/select");
+  // 로그인 여부 체크 래퍼(Wrapper) 함수 추가
+  const requireLogin = (actionCallback) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert("로그인이 필요한 서비스입니다."); // 안내 메시지를 띄우고
+      navigate("/login"); // 로그인 페이지로 즉시 이동
+    } else {
+      actionCallback(); // 로그인이 되어 있다면 원래 하려던 동작 실행
+    }
+  };
+
+  const handleGoInterview = () => requireLogin(() => navigate("/interview/select"));
+  const handleOpenPortfolio = () => requireLogin(() => setIsPortfolioModalOpen(true));
+  const handleOpenCoverLetter = () => requireLogin(() => setIsCoverLetterModalOpen(true));
+  const handleOpenResume = () => requireLogin(() => setIsResumeModalOpen(true));
+
+  // const goInterview = () => navigate("/interview/select");
 
   return (
     <>
-      <Navigation onStart={goInterview} />
-      <Hero onStart={goInterview} />
+      <Navigation onStart={handleGoInterview} />
+      <Hero onStart={handleGoInterview} />
 
       <Features
-        onGoInterview={goInterview}
-        onOpenPortfolioModal={() => setIsPortfolioModalOpen(true)}
-        onOpenCoverLetterModal={() => setIsCoverLetterModalOpen(true)}
-        onOpenResumeModal={() => setIsResumeModalOpen(true)}
+        onGoInterview={handleGoInterview}
+        onOpenPortfolioModal={handleOpenPortfolio}
+        onOpenCoverLetterModal={handleOpenCoverLetter}
+        onOpenResumeModal={handleOpenResume}
       />
       <HowItWorks />
       <Statistics />
       <FAQ />
-      <CTA onStart={goInterview} />
+      <CTA onStart={handleGoInterview} />
       <Footer />
 
       <PortfolioUploadModal
