@@ -72,7 +72,7 @@ const PortfolioUploadModal = ({ isOpen, onClose }) => {
     }
 
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
 
       const response = await axios.post(
         "http://localhost:8080/api/portfolios/analyze",

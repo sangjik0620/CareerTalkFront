@@ -34,7 +34,7 @@ const MyPage = () => {
 
     useEffect(() => {
         const fetchAllMyData = async () => {
-            const token = localStorage.getItem('token');
+            const token = sessionStorage.getItem('token');
             if (!token) {
                 setLoading(false);
                 return;
@@ -134,7 +134,7 @@ const MyPage = () => {
         }
 
         try {
-            const token = localStorage.getItem('token');
+            const token = sessionStorage.getItem('token');
             await axios.post('http://localhost:8080/api/member/update', formData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -143,11 +143,11 @@ const MyPage = () => {
             setOriginalData(formData);
             setEditMode(false);
             setErrorMsg('');
-
-            const currentUserStr = localStorage.getItem('user');
+            
+            const currentUserStr = sessionStorage.getItem('user');
             if (currentUserStr) {
                 const currentUser = JSON.parse(currentUserStr);
-                localStorage.setItem('user', JSON.stringify({ ...currentUser, ...formData }));
+                sessionStorage.setItem('user', JSON.stringify({ ...currentUser, ...formData }));
             }
         } catch (error) {
             setErrorMsg(error.response?.data || "수정 중 오류가 발생했습니다.");
@@ -156,14 +156,14 @@ const MyPage = () => {
 
     const handleWithdrawal = async () => {
         try {
-            const token = localStorage.getItem('token');
+            const token = sessionStorage.getItem('token');
             await axios.delete(`http://localhost:8080/api/member/delete/me`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
             setShowModal(false);
             setShowAlert(true);
-            localStorage.clear();
+            sessionStorage.clear();
 
             setTimeout(() => {
                 window.location.href = "/";

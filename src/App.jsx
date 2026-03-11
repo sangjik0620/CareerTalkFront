@@ -35,9 +35,9 @@ axios.interceptors.response.use(
         return Promise.reject(error);
       }
 
-      localStorage.removeItem("user");
-      localStorage.removeItem("token");
-      localStorage.removeItem("refreshToken");
+      sessionStorage.removeItem("user");
+      sessionStorage.removeItem("token");
+      sessionStorage.removeItem("refreshToken");
 
       window.dispatchEvent(new CustomEvent("tokenExpired"));    
     }

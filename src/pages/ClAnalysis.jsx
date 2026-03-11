@@ -120,7 +120,7 @@ export default function ClAnalysis({ isOpen, onClose }) {
     setIsAnalyzing(true);
 
     try {
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
 
       if (!token) {
         throw new Error("로그인 토큰이 없습니다.");
@@ -162,8 +162,8 @@ export default function ClAnalysis({ isOpen, onClose }) {
 
       console.log("analysis result =", result);
 
-      localStorage.removeItem("ci_result");
-      localStorage.setItem("ci_result", JSON.stringify(result));
+      sessionStorage.removeItem("ci_result");
+      sessionStorage.setItem("ci_result", JSON.stringify(result));
 
       setIsAnalyzing(false);
       handleClose();

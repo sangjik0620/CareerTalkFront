@@ -58,7 +58,7 @@ export default function InterviewSession() {
 
   const interviewData = useMemo(() => {
     try {
-      const raw = localStorage.getItem("interviewData");
+      const raw = sessionStorage.getItem("interviewData");
       return raw ? JSON.parse(raw) : null;
     } catch {
       return null;
