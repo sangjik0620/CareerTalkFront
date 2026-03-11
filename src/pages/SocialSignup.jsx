@@ -92,8 +92,8 @@ const SocialSignup = () => {
 
         try {
             const response = await axios.post('http://localhost:8080/api/member/social-signup-complete', formData);
-            localStorage.setItem('token', response.data.accessToken); 
-            localStorage.setItem('user', JSON.stringify(response.data.user));
+            sessionStorage.setItem('token', response.data.accessToken); 
+            sessionStorage.setItem('user', JSON.stringify(response.data.user));
             
             setShowWelcomeModal(true);
             setTimeout(() => {

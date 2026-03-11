@@ -448,7 +448,7 @@ const Navigation = ({ onStart }) => {
   const userMenuRef = useRef(null);
   const voucherRef = useRef(null);
 
-  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
+  const [user, setUser] = useState(JSON.parse(sessionStorage.getItem("user")));
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -485,8 +485,8 @@ const Navigation = ({ onStart }) => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    localStorage.clear();
+    sessionStorage.removeItem("user");
+    sessionStorage.clear();
     setUser(null);
     setUserMenuOpen(false);
     window.location.href = "/";
@@ -1690,7 +1690,7 @@ export default function Home() {
       const loginId = params.get("loginId");
 
       if (token) {
-        localStorage.setItem("token", token);
+        sessionStorage.setItem("token", token);
       }
 
       const userData = {
@@ -1700,7 +1700,7 @@ export default function Home() {
         targetJob: params.get("targetJob"),
       };
 
-      localStorage.setItem("user", JSON.stringify(userData));
+      sessionStorage.setItem("user", JSON.stringify(userData));
 
       const action = sessionStorage.getItem("postLoginAction");
       if (action) {
@@ -1719,8 +1719,8 @@ export default function Home() {
 
   useEffect(() => {
     const savedAction = sessionStorage.getItem("postLoginAction");
-    const token = localStorage.getItem("token");
-    const user = localStorage.getItem("user");
+    const token = sessionStorage.getItem("token");
+    const user = sessionStorage.getItem("user");
 
     if (
       token &&
@@ -1734,8 +1734,8 @@ export default function Home() {
   }, [location.search]);
 
   const requireLoginAndRun = (actionType) => {
-    const token = localStorage.getItem("token");
-    const user = localStorage.getItem("user");
+    const token = sessionStorage.getItem("token");
+    const user = sessionStorage.getItem("user");
 
     if (!token || !user) {
       sessionStorage.setItem("postLoginAction", actionType);

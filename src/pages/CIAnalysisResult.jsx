@@ -40,7 +40,7 @@ export default function CIAnalysisResult() {
         }
 
         const token =
-          localStorage.getItem("token") || localStorage.getItem("accessToken");
+          sessionStorage.getItem("token") || sessionStorage.getItem("accessToken");
 
         const response = await fetch(ANALYSIS_DETAIL_URL, {
           method: "GET",
@@ -113,7 +113,7 @@ export default function CIAnalysisResult() {
       setToast("");
 
       const token =
-        localStorage.getItem("token") || localStorage.getItem("accessToken");
+        sessionStorage.getItem("token") || sessionStorage.getItem("accessToken");
 
       const payload = {
         analysisId: Number(data?.analysisId ?? analysisId),
