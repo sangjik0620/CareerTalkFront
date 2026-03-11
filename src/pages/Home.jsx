@@ -7,6 +7,8 @@ import CIAnalysis from "./ClAnalysis";
 import logo from "../img/logo.png";
 import Resume from "./Resume";
 import ChatBot from "../components/chatbot/ChatBot";
+import { getQuota } from "../lib/api/paymentApi";
+
 
 // ===== Icons (SVG) =====
 const Icons = {
@@ -433,7 +435,6 @@ const AnimatedBackground = () => {
   );
 };
 
-// ===== 그라데이션 웨이브 배경 =====
 const WaveBackground = () => (
   <div className="absolute inset-0 overflow-hidden">
     <div className="wave wave1"></div>
@@ -442,12 +443,17 @@ const WaveBackground = () => (
   </div>
 );
 
-// ===== Navigation (개선된 헤더) =====
 const Navigation = ({ onStart }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [voucherPopup, setVoucherPopup] = useState(false);
+  const [quota, setQuota] = useState(null);                  
+  const [quotaLoading, setQuotaLoading] = useState(false);
 
-  // 로그인 상태 관리
+  const userMenuRef = useRef(null);
+  const voucherRef  = useRef(null);
+
   const [user, setUser] = useState(JSON.parse(localStorage.getItem('user')));
 
   useEffect(() => {
@@ -456,11 +462,39 @@ const Navigation = ({ onStart }) => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // 로그아웃
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setUserMenuOpen(false);
+      }
+      if (voucherRef.current && !voucherRef.current.contains(e.target)) {
+        setVoucherPopup(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleOpenVoucher = async () => {
+    setVoucherPopup((prev) => {
+      const next = !prev;
+      if (next) {
+        setQuotaLoading(true);
+        getQuota()
+          .then((data) => setQuota(data))
+          .catch(() => setQuota(null))
+          .finally(() => setQuotaLoading(false));
+      }
+      return next;
+    });
+    setUserMenuOpen(false);
+  };
+
   const handleLogout = () => {
-    localStorage.removeItem('user'); 
+    localStorage.removeItem('user');
     localStorage.clear();
-    setUser(null); // 상태 초기화
+    setUser(null);
+    setUserMenuOpen(false);
     window.location.href = "/";
   };
 
@@ -468,6 +502,15 @@ const Navigation = ({ onStart }) => {
     onStart?.();
     setIsOpen(false);
   };
+
+  const voucherItems = quota
+    ? [
+        { label: "무료 분석권", value: quota.freeAnalysisRemaining ?? 0, free: true,  icon: "✨" },
+        { label: "무료 면접권", value: quota.freeMockRemaining      ?? 0, free: true,  icon: "🎙️" },
+        { label: "유료 분석권", value: quota.paidAnalysisRemaining  ?? 0, free: false, icon: "✨" },
+        { label: "유료 면접권", value: quota.paidMockRemaining      ?? 0, free: false, icon: "🎙️" },
+      ]
+    : [];
 
   return (
     <nav
@@ -479,135 +522,194 @@ const Navigation = ({ onStart }) => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          <div className="flex justify-between items-center h-32">
-            <img
-              src={logo}
-              alt="CareerTalk Logo"
-              className="h-44 w-auto object-contain"
-            />
+
+          {/* 로고 */}
+          <div className="flex items-center h-32">
+            <img src={logo} alt="CareerTalk Logo" className="h-44 w-auto object-contain" />
           </div>
 
-          {/* Desktop Menu */}
+          {/* ── Desktop Menu ── */}
           <div className="hidden md:flex items-center space-x-8">
-            <a
-              href="#features"
-              className="text-gray-700 hover:text-blue-600 transition font-medium"
-            >
-              주요 기능
-            </a>
-            <a
-              href="#how-it-works"
-              className="text-gray-700 hover:text-blue-600 transition font-medium"
-            >
-              사용 방법
-            </a>
-            <a
-              href="#testimonials"
-              className="text-gray-700 hover:text-blue-600 transition font-medium"
-            >
-              후기
-            </a>
-            <a
-              href="#faq"
-              className="text-gray-700 hover:text-blue-600 transition font-medium"
-            >
-              FAQ
-            </a>
-
-            {/* ⭐ 마이페이지 버튼: 로그인 상태(user)일 때만 FAQ 우측에 표시 */}
-            {user && (
-              <a
-                href="/mypage"
-                className="text-gray-700 hover:text-blue-600 transition font-medium"
-              >
-                마이페이지
-              </a>
-            )}
+            <a href="#features"     className="text-gray-700 hover:text-blue-600 transition font-medium">주요 기능</a>
+            <a href="#how-it-works" className="text-gray-700 hover:text-blue-600 transition font-medium">사용 방법</a>
+            <a href="#testimonials" className="text-gray-700 hover:text-blue-600 transition font-medium">후기</a>
+            <a href="#faq"          className="text-gray-700 hover:text-blue-600 transition font-medium">FAQ</a>
 
             {user ? (
-              <div className="flex items-center space-x-4">
-                <span className={`font-semibold ${scrolled ? "text-primary-600" : "text-blue-600"}`}>
-                  {user.nickname}님
-                </span>
-                <button 
-                  onClick={handleLogout}
-                  className="text-gray-700 hover:text-blue-600 transition font-medium"
-                >
-                  로그아웃
-                </button>
+              <div className="flex items-center space-x-3">
+
+                {/* ✅ 이용권 현황 버튼 + 팝업 */}
+                <div className="relative" ref={voucherRef}>
+                  <button
+                    onClick={handleOpenVoucher}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-full border-2 border-blue-400 text-blue-600 font-semibold text-sm hover:bg-blue-50 transition-all duration-200 shadow-sm"
+                  >
+                    이용권 현황
+                  </button>
+
+                  {/* 팝업 카드 */}
+                  {voucherPopup && (
+                    <div
+                      className="absolute right-0 top-12 w-72 bg-white rounded-2xl shadow-2xl border border-blue-100 z-50"
+                      style={{ animation: "navPopIn 0.18s cubic-bezier(0.34,1.56,0.64,1)" }}
+                    >
+                      {/* 팝업 헤더 */}
+                      <div className="px-5 pt-4 pb-3 border-b border-gray-100">
+                        <p className="text-sm font-bold text-gray-900">🎟️ 보유 이용권 현황</p>
+                      </div>
+
+                      {/* 이용권 목록 */}
+                      <div className="px-4 py-3 space-y-2">
+                        {quotaLoading ? (
+                          /* 로딩 스켈레톤 */
+                          <>
+                            {[...Array(4)].map((_, i) => (
+                              <div key={i} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-gray-50 animate-pulse">
+                                <div className="h-3.5 w-24 bg-gray-200 rounded-full" />
+                                <div className="h-5 w-10 bg-gray-200 rounded-full" />
+                              </div>
+                            ))}
+                          </>
+                        ) : quota ? (
+                          <>
+                            {/* 무료권 그룹 */}
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1 pt-1">무료</p>
+                            {voucherItems.filter(v => v.free).map((v) => (
+                              <VoucherRow key={v.label} item={v} />
+                            ))}
+
+                            {/* 유료권 그룹 */}
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1 pt-2">유료</p>
+                            {voucherItems.filter(v => !v.free).map((v) => (
+                              <VoucherRow key={v.label} item={v} />
+                            ))}
+                          </>
+                        ) : (
+                          <p className="text-sm text-red-400 text-center py-3">
+                            이용권 정보를 불러오지 못했습니다.
+                          </p>
+                        )}
+                      </div>
+
+                      {/* 구매 버튼 */}
+                      <div className="px-4 pb-4 pt-1">
+                        <a
+                          href="/payment"
+                          onClick={() => setVoucherPopup(false)}
+                          className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl font-bold text-sm text-white transition-all hover:opacity-90 active:scale-95"
+                          style={{
+                            background: "linear-gradient(90deg, #4F6EF7, #7B61FF)",
+                            boxShadow: "0 4px 14px rgba(99,120,247,0.35)",
+                          }}
+                        >
+                          🛒 이용권 구매하러 가기
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* ✅ 닉네임 + 드롭다운 */}
+                <div className="relative" ref={userMenuRef}>
+                  <button
+                    onClick={() => {
+                      setUserMenuOpen((prev) => !prev);
+                      setVoucherPopup(false);
+                    }}
+                    className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-50 hover:bg-blue-100 transition-all duration-200 border border-blue-200 shadow-sm"
+                  >
+                    <span className="font-bold text-blue-600 text-sm">{user.nickname}님</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16" height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#2563eb"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className={`transition-transform duration-300 ${userMenuOpen ? "rotate-180" : ""}`}
+                    >
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </button>
+
+                  {/* 드롭다운 메뉴 */}
+                  {userMenuOpen && (
+                    <div
+                      className="absolute right-0 top-12 w-44 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50"
+                      style={{ animation: "navPopIn 0.18s cubic-bezier(0.34,1.56,0.64,1)" }}
+                    >
+                      <a
+                        href="/mypage"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="flex items-center gap-2 px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors font-medium text-sm"
+                      >
+                        MY페이지
+                      </a>
+                      <div className="border-t border-gray-100" />
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-2 px-4 py-3 text-red-500 hover:bg-red-50 transition-colors font-medium text-sm"
+                      >
+                        로그아웃
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             ) : (
-              <a 
-                href="/login" 
-                className="text-gray-700 hover:text-blue-600 transition font-medium"
-              >
-                로그인
-              </a>
+              <a href="/login" className="text-gray-700 hover:text-blue-600 transition font-medium">로그인</a>
             )}
-
-            <button
-              onClick={handleStart}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2.5 rounded-full hover:shadow-lg transition transform hover:scale-105 font-medium"
-            >
-              시작하기
-            </button>
           </div>
 
           {/* Mobile Menu Button */}
           <div className="md:hidden">
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="text-gray-700"
-            >
+            <button onClick={() => setIsOpen(!isOpen)} className="text-gray-700">
               {isOpen ? <Icons.X /> : <Icons.Menu />}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* ── Mobile Menu ── */}
       {isOpen && (
         <div className="md:hidden bg-white border-t border-gray-100">
           <div className="px-2 pt-2 pb-3 space-y-1">
-            <a
-              href="#features"
-              className="block px-3 py-2 text-gray-700 hover:bg-blue-50 rounded-md"
-            >
-              주요 기능
-            </a>
-            <a
-              href="#how-it-works"
-              className="block px-3 py-2 text-gray-700 hover:bg-blue-50 rounded-md"
-            >
-              사용 방법
-            </a>
-            <a
-              href="#testimonials"
-              className="block px-3 py-2 text-gray-700 hover:bg-blue-50 rounded-md"
-            >
-              후기
-            </a>
-            <a
-              href="#faq"
-              className="block px-3 py-2 text-gray-700 hover:bg-blue-50 rounded-md"
-            >
-              FAQ
-            </a>
+            <a href="#features"     className="block px-3 py-2 text-gray-700 hover:bg-blue-50 rounded-md">주요 기능</a>
+            <a href="#how-it-works" className="block px-3 py-2 text-gray-700 hover:bg-blue-50 rounded-md">사용 방법</a>
+            <a href="#testimonials" className="block px-3 py-2 text-gray-700 hover:bg-blue-50 rounded-md">후기</a>
+            <a href="#faq"          className="block px-3 py-2 text-gray-700 hover:bg-blue-50 rounded-md">FAQ</a>
 
             {user && (
-            <a
-              href="/mypage"
-              className="block px-3 py-2 text-gray-700 hover:bg-blue-50 rounded-md"
-            >
-              마이페이지
-            </a>
-            )}
-
-            {user ? (
               <>
-                {/* <div className="px-3 py-2 text-primary-600 font-bold border-b border-gray-100">
-                  {user.nickname}님 환영합니다
-                </div> */}
+                {/* 모바일 이용권 현황 */}
+                <div className="mx-1 rounded-xl border border-blue-100 bg-blue-50 overflow-hidden">
+                  <p className="px-3 pt-3 pb-1 text-xs font-bold text-blue-700">🎟️ 보유 이용권 현황</p>
+                  {quota ? (
+                    <div className="px-3 pb-3 grid grid-cols-2 gap-2 mt-1">
+                      {voucherItems.map((v) => (
+                        <div key={v.label} className="bg-white rounded-lg px-3 py-2">
+                          <p className="text-[11px] text-gray-500">{v.icon} {v.label}</p>
+                          <p className="text-lg font-extrabold text-gray-900 mt-0.5">
+                            {v.value}<span className="text-xs font-normal text-gray-400 ml-0.5">회</span>
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="px-3 pb-3 text-xs text-gray-500">이용권 정보를 불러오세요.</p>
+                  )}
+                  <a
+                    href="/payment"
+                    className="flex items-center justify-center gap-1.5 mx-3 mb-3 py-2 rounded-lg text-sm font-bold text-white"
+                    style={{ background: "linear-gradient(90deg, #4F6EF7, #7B61FF)" }}
+                  >
+                    🛒 이용권 구매하러 가기
+                  </a>
+                </div>
+
+                <a href="/mypage" className="block px-3 py-2 text-gray-700 hover:bg-blue-50 rounded-md">MY페이지</a>
                 <button
                   onClick={handleLogout}
                   className="w-full text-left px-3 py-2 text-red-500 hover:bg-red-50 rounded-md"
@@ -615,24 +717,26 @@ const Navigation = ({ onStart }) => {
                   로그아웃
                 </button>
               </>
-            ) : (
-              <a href="/login" className="block px-3 py-2 text-gray-700 hover:bg-primary-50 rounded-md">
-                로그인
-              </a>
             )}
 
-            <button
-              onClick={handleStart}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-full hover:shadow-lg transition"
-            >
-              시작하기
-            </button>
+            {!user && (
+              <a href="/login" className="block px-3 py-2 text-gray-700 hover:bg-blue-50 rounded-md">로그인</a>
+            )}
           </div>
         </div>
       )}
+
+      {/* 팝업 애니메이션 */}
+      <style>{`
+        @keyframes navPopIn {
+          from { opacity: 0; transform: scale(0.94) translateY(-6px); }
+          to   { opacity: 1; transform: scale(1)    translateY(0);    }
+        }
+      `}</style>
     </nav>
   );
 };
+
 
 // ===== 새로운 배경 디자인: 흐르는 그라데이션 오브 =====
 const FlowingGradientOrbs = () => {
@@ -880,6 +984,51 @@ const Features = ({
     </section>
   );
 };
+
+// ── 이용권 현황 팝업 내부 행 컴포넌트 ──────────────────────────
+function VoucherRow({ item }) {
+  const isEmpty = item.value === 0;
+  return (
+    <div
+      className="flex items-center justify-between px-3 py-2.5 rounded-xl transition-colors"
+      style={{
+        background: item.free
+          ? "rgba(99,120,247,0.04)"
+          : "linear-gradient(90deg, rgba(99,120,247,0.07), rgba(123,97,255,0.07))",
+        border: "1px solid rgba(99,120,247,0.08)",
+      }}
+    >
+      {/* 아이콘 + 라벨 */}
+      <div className="flex items-center gap-2">
+        <span
+          className="w-6 h-6 rounded-lg flex items-center justify-center text-xs"
+          style={{
+            background: item.free ? "rgba(99,120,247,0.1)" : "rgba(99,120,247,0.15)",
+          }}
+        >
+          {item.icon}
+        </span>
+        <span className="text-sm font-medium text-gray-700">{item.label}</span>
+      </div>
+
+      {/* 잔여 횟수 */}
+      <span
+        className="text-sm font-extrabold px-2.5 py-0.5 rounded-full"
+        style={{
+          background: isEmpty
+            ? "rgba(239,68,68,0.08)"
+            : item.free
+            ? "rgba(99,120,247,0.1)"
+            : "linear-gradient(90deg, #4F6EF7, #7B61FF)",
+          color: isEmpty ? "#ef4444" : item.free ? "#4F6EF7" : "white",
+        }}
+      >
+        {item.value}회
+      </span>
+    </div>
+  );
+}
+
 
 // ===== HowItWorks (밝은 톤) =====
 const HowItWorks = () => {
