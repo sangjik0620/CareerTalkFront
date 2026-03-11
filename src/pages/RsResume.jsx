@@ -31,7 +31,11 @@ export default function RsResume() {
         setData(response.data);
       } catch (e) {
         console.error("분석 결과 조회 실패:", e);
-        alert("분석 결과를 불러오는데 실패했습니다.");
+        if (e.response?.status !== 401) {
+          // 401은 App.jsx 인터셉터의 토큰 만료 모달이 이미 처리
+          const message = e.response?.data?.message || "분석 결과를 불러오는데 실패했습니다.";
+          alert(message);
+        }
       } finally {
         setIsLoading(false);
       }
