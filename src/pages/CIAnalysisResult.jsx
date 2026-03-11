@@ -19,7 +19,7 @@ export default function CIAnalysisResult() {
   const [toast, setToast] = useState("");
 
   const ANALYSIS_DETAIL_URL = useMemo(
-    () => `${API_BASE}/api/coverletter/analysis/${analysisId}`,
+    () => `${API_BASE}/api/ci/result/${analysisId}`,
     [analysisId],
   );
 
@@ -90,7 +90,10 @@ export default function CIAnalysisResult() {
   };
 
   const normalizedQuestions = useMemo(() => {
+    
     const q = data?.questions;
+    const intents = data?.questionIntents || [];
+
     if (!Array.isArray(q) || q.length === 0) return [];
 
     return q.map((item) => ({

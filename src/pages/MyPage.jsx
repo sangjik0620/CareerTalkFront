@@ -22,27 +22,15 @@ const MyPage = () => {
     const [mainTab, setMainTab] = useState('analysis');
     const [subTab, setSubTab] = useState('이력서');
 
-    const [quota, setQuota] = useState(null);
-
-    // 임시 모크 데이터
-    const mockAnalyses = {
-        '이력서': [
-            { id: 1, date: '2026-03-08', title: '네이버 프론트엔드 지원용 이력서', score: 85 },
-            { id: 2, date: '2026-02-15', title: '기본 이력서 초안 피드백', score: 72 },
-        ],
-        '자기소개서': [
-            { id: 3, date: '2026-03-05', title: '카카오 성장과정 문항 분석', score: 92 },
-        ],
+    const [analysesData, setAnalysesData] = useState({
+        '이력서': [],
+        '자기소개서': [],
         '포트폴리오': []
-    };
-
-    const mockInterviews = [
-        { id: 1, date: '2026-03-01', type: '기술 면접', title: 'React/Vue 실무진 면접 대비', duration: '25분' },
-        { id: 2, date: '2026-02-20', type: '인성 면접', title: '임원진 컬처핏 모의면접', duration: '15분' },
-    ];
+    });
+    const [interviewsData, setInterviewsData] = useState([]);
 
     useEffect(() => {
-        const fetchUserData = async () => {
+        const fetchAllMyData = async () => {
             const token = localStorage.getItem('token');
             if (!token) {
                 setLoading(false);
@@ -50,26 +38,47 @@ const MyPage = () => {
             }
 
             try {
-                const [userRes, quotaRes] = await Promise.all([
-                    axios.get('http://localhost:8080/api/member/me', {
-                        headers: { Authorization: `Bearer ${token}` }
-                    }),
-                    axios.get('http://localhost:8080/api/payments/quota', {
-                        headers: { Authorization: `Bearer ${token}` }
-                    })
+                const config = {
+                    headers: { Authorization: `Bearer ${token}` }
+                };
+
+                //  2. 병렬 통신(Promise.all)으로 내 정보, 분석기록, 면접기록을 한 방에 가져옵니다.
+                // 주의: 아래의 /api/analysis/my 와 /api/interview/my 는 백엔드 개발 상태에 맞춰 주소를 수정해야 합니다!
+                const [userRes, analysisRes, interviewRes] = await Promise.all([
+                    axios.get('http://localhost:8080/api/member/me', config),
+                    // 분석 기록 가져오기 API (예상 경로)
+                    axios.get('http://localhost:8080/api/analysis/my', config).catch(() => ({ data: null })),
+                    // 면접 기록 가져오기 API (예상 경로)
+                    axios.get('http://localhost:8080/api/interview/my', config).catch(() => ({ data: null }))
                 ]);
 
+                // 유저 정보 세팅
                 setUser(userRes.data);
                 setFormData(userRes.data);
                 setOriginalData(userRes.data);
-                setQuota(quotaRes.data);
+
+                // 분석 데이터 세팅 (백엔드에서 어떻게 주는지에 따라 구조를 맞춰주세요)
+                if (analysisRes.data) {
+                    setAnalysesData({
+                        '이력서': analysisRes.data.resume || [],
+                        '자기소개서': analysisRes.data.coverLetter || [],
+                        '포트폴리오': analysisRes.data.portfolio || []
+                    });
+                }
+
+                // 면접 데이터 세팅
+                if (interviewRes.data) {
+                    setInterviewsData(interviewRes.data);
+                }
+
             } catch (error) {
-                console.error("정보 로드 실패", error);
+                console.error("마이페이지 데이터 로드 실패", error);
             } finally {
                 setLoading(false);
             }
         };
-        fetchUserData();
+        
+        fetchAllMyData();
     }, []);
 
     const handleChange = (e) => {
@@ -122,7 +131,7 @@ const MyPage = () => {
             setOriginalData(formData);
             setEditMode(false);
             setErrorMsg('');
-
+            
             const currentUserStr = localStorage.getItem('user');
             if (currentUserStr) {
                 const currentUser = JSON.parse(currentUserStr);
@@ -151,6 +160,23 @@ const MyPage = () => {
         } catch (error) {
             console.error("탈퇴 실패:", error);
             alert("탈퇴 처리 중 오류가 발생했습니다: " + (error.response?.data || "서버 에러"));
+        }
+    };
+
+    // 결과 페이지 이동 함수
+    const handleResultClick = (id, category) => {
+        if (category === 'analysis') {
+            if (subTab === '이력서') {
+                navigate(`/resume/result/${id}`);
+            } else if (subTab === '자기소개서') {
+                navigate(`/analysis/result/${id}`);
+            } else if (subTab === '포트폴리오') {
+                navigate(`/portfolio/result/${id}`);
+            }
+        } else if (category === 'interview') {
+            // App.jsx를 보면 면접 결과는 파라미터(:id) 없이 설정되어 있습니다.
+            // 일단 연결해 두고, 나중에 /interview/result/:sessionId 형태로 수정이 필요할 수 있습니다!
+            navigate(`/interview/result`);
         }
     };
 
@@ -191,7 +217,7 @@ const MyPage = () => {
                                 type="text" name="name" value={formData.name}
                                 onChange={handleChange}
                                 disabled={!editMode}
-                                className={`w-full text-lg font-semibold bg-transparent border-b-2 py-1 transition-all outline-none ${editMode ? 'border-blue-500 text-gray-800' : 'border-transparent text-gray-500'}`}
+                                className={`w-full text-lg font-semibold bg-transparent border-b-2 py-1 transition-all outline-none ${editMode ? 'border-blue-500 text-gray-800' : 'border-transparent text-gray-800'}`}
                             />
                         </div>
                         <div>
@@ -201,7 +227,7 @@ const MyPage = () => {
                                     type="text" name="nickname" value={formData.nickname}
                                     onChange={handleChange}
                                     disabled={!editMode}
-                                    className={`flex-1 text-lg font-semibold bg-transparent border-b-2 py-1 transition-all outline-none ${editMode ? (isNicknameVerified ? 'border-green-500 text-gray-800' : 'border-blue-500 text-gray-800') : 'border-transparent text-gray-500'}`}
+                                    className={`flex-1 text-lg font-semibold bg-transparent border-b-2 py-1 transition-all outline-none text-gray-800 ${editMode ? (isNicknameVerified ? 'border-green-500' : 'border-blue-500') : 'border-transparent'}`}
                                 />
                                 {editMode && (
                                     <button
@@ -213,7 +239,6 @@ const MyPage = () => {
                                     </button>
                                 )}
                             </div>
-
                             {editMode && nicknameMsg && (
                                 <p className={`text-sm font-bold mt-2 animate-in fade-in ${isNicknameVerified ? 'text-green-500' : 'text-red-500'}`}>
                                     {nicknameMsg}
@@ -227,11 +252,11 @@ const MyPage = () => {
                             <p className="h-5 flex items-end text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest whitespace-nowrap">
                                 이메일 (변경 불가)
                             </p>
-                            <input
-                                type="email"
-                                value={formData.email}
-                                disabled
-                                className="w-full text-lg font-semibold bg-transparent text-gray-500 outline-none py-1"
+                            <input 
+                                type="email" 
+                                value={formData.email} 
+                                disabled 
+                                className="w-full text-lg font-semibold bg-transparent text-gray-800 outline-none py-1 border-b-2 border-transparent cursor-not-allowed" 
                             />
                         </div>
 
@@ -239,11 +264,11 @@ const MyPage = () => {
                             <p className="h-5 flex items-end text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest whitespace-nowrap">
                                 목표 직무
                             </p>
-                            <input
-                                type="text"
-                                value={user.targetJob || "미설정"}
-                                disabled
-                                className="w-full text-lg font-semibold bg-transparent text-gray-500 outline-none py-1"
+                            <input 
+                                type="text" 
+                                value={user.targetJob || "미설정"} 
+                                disabled 
+                                className="w-full text-lg font-semibold bg-transparent text-gray-800 outline-none py-1 border-b-2 border-transparent cursor-not-allowed" 
                             />
                         </div>
                     </div>
@@ -315,6 +340,7 @@ const MyPage = () => {
                 </div>
 
                 <div className="min-h-[300px] mb-12">
+                    {/* 3. 분석 탭: State 값(analysesData)으로 매핑! */}
                     {mainTab === 'analysis' && (
                         <div className="animate-in fade-in duration-300">
                             <h3 className="text-2xl font-semibold text-gray-900 mb-6 text-left">분석 결과 조회</h3>
@@ -335,8 +361,8 @@ const MyPage = () => {
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {mockAnalyses[subTab].length > 0 ? (
-                                    mockAnalyses[subTab].map((item) => (
+                                {analysesData[subTab] && analysesData[subTab].length > 0 ? (
+                                    analysesData[subTab].map((item) => (
                                         <div key={item.id} className="group border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-blue-200 transition-all cursor-pointer bg-white">
                                             <div className="flex justify-between items-center mb-4">
                                                 <span className="text-xs font-bold px-3 py-1 bg-blue-50 text-blue-600 rounded-lg">{subTab}</span>
@@ -348,7 +374,10 @@ const MyPage = () => {
                                                     <p className="text-xs text-gray-400 font-bold mb-1">AI 종합 점수</p>
                                                     <p className="text-2xl font-black text-gray-900">{item.score}<span className="text-sm font-medium text-gray-500 ml-1">점</span></p>
                                                 </div>
-                                                <button className="px-4 py-2 bg-gray-50 text-gray-600 rounded-xl text-sm font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                                <button 
+                                                    onClick={() => handleResultClick(item.id, 'analysis')}
+                                                    className="px-4 py-2 bg-gray-50 text-gray-600 rounded-xl text-sm font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors"
+                                                >
                                                     결과 보기
                                                 </button>
                                             </div>
@@ -363,16 +392,17 @@ const MyPage = () => {
                         </div>
                     )}
 
+                    {/* 4. 면접 기록 탭: State 값(interviewsData)으로 매핑! */}
                     {mainTab === 'interview' && (
                         <div className="animate-in fade-in duration-300">
                             <h3 className="text-2xl font-semibold text-gray-900 mb-6 text-left">면접 기록 조회</h3>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {mockInterviews.length > 0 ? (
-                                    mockInterviews.map((item) => (
+                                {interviewsData && interviewsData.length > 0 ? (
+                                    interviewsData.map((item) => (
                                         <div key={item.id} className="group border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-purple-200 transition-all cursor-pointer bg-white">
                                             <div className="flex justify-between items-center mb-4">
-                                                <span className="text-xs font-bold px-3 py-1 bg-purple-50 text-purple-600 rounded-lg">{item.type}</span>
+                                                <span className="text-xs font-bold px-3 py-1 bg-purple-50 text-purple-600 rounded-lg">{item.type || '면접'}</span>
                                                 <span className="text-xs text-gray-400 font-medium">{item.date}</span>
                                             </div>
                                             <h4 className="text-lg font-bold text-gray-900 mb-4 line-clamp-2">{item.title}</h4>
@@ -381,7 +411,10 @@ const MyPage = () => {
                                                     <p className="text-xs text-gray-400 font-bold mb-1">진행 시간</p>
                                                     <p className="text-xl font-bold text-gray-700">{item.duration}</p>
                                                 </div>
-                                                <button className="px-4 py-2 bg-gray-50 text-gray-600 rounded-xl text-sm font-bold group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                                                <button 
+                                                    onClick={() => handleResultClick(item.id, 'interview')}
+                                                    className="px-4 py-2 bg-gray-50 text-gray-600 rounded-xl text-sm font-bold group-hover:bg-purple-600 group-hover:text-white transition-colors"
+                                                >
                                                     기록 보기
                                                 </button>
                                             </div>

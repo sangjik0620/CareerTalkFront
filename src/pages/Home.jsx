@@ -1648,7 +1648,7 @@ export default function Home() {
       <HowItWorks />
       <Statistics />
       <FAQ />
-      <CTA onStart={goInterview} />
+      <CTA onStart={handleGoInterview} />
       <Footer />
 
       <PortfolioUploadModal
