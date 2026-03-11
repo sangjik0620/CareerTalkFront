@@ -185,7 +185,7 @@ const MyPage = () => {
                 navigate(`/portfolio/result/${id}`);
             }
         } else if (category === 'interview') {
-            navigate(`/interview/result`);
+            navigate(`/interview/result/${id}`);
         }
     };
 
