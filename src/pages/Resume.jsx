@@ -37,24 +37,6 @@ export default function Resume({ isOpen, onClose, onAnalyzeSuccess }) {
   const [viewStep, setViewStep] = useState("input"); // input | confirm | analyzing
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!isOpen) {
-      setSelectedFile(null);
-      setJobCategory("");
-      setDetailedPosition("");
-      setIsDragging(false);
-      setIsAnalyzing(false);
-      setViewStep("input");
-    }else {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("로그인이 필요한 서비스입니다. 로그인 페이지로 이동합니다.");
-      onClose?.();
-      navigate("/login");
-    }
-  }
-  }, [isOpen]);
-
   if (!isOpen) return null;
 
   const validateAndSetFile = (file) => {
