@@ -73,11 +73,6 @@ export default function PaymentPage() {
   const [loading, setLoading] = useState(true);
   const [payingCode, setPayingCode] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
-
-  const [paymentStep, setPaymentStep] = useState("confirm"); // confirm | kakao
-  const [kakaoRedirectUrl, setKakaoRedirectUrl] = useState("");
-  const [paymentError, setPaymentError] = useState("");
-
   const [activeCategory, setActiveCategory] = useState("ANALYSIS");
 
   useEffect(() => {
@@ -97,28 +92,16 @@ export default function PaymentPage() {
 
   const handleOpenModal = useCallback((product) => {
     setSelectedProduct(product);
-    setPaymentStep("confirm");
-    setKakaoRedirectUrl("");
-    setPaymentError("");
   }, []);
 
   const handleCloseModal = useCallback(() => {
     setSelectedProduct(null);
-    setPaymentStep("confirm");
-    setKakaoRedirectUrl("");
-    setPaymentError("");
     setPayingCode("");
-  }, []);
-
-  const handleBackToConfirm = useCallback(() => {
-    setPaymentStep("confirm");
-    setPaymentError("");
   }, []);
 
   const handlePay = async (productCode) => {
     try {
       setPayingCode(productCode);
-      setPaymentError("");
 
       const data = await readyKakaoPay(productCode);
 
@@ -126,27 +109,18 @@ export default function PaymentPage() {
         throw new Error("카카오페이 redirectUrl이 없습니다.");
       }
 
-      setKakaoRedirectUrl(data.redirectUrl);
-      setPaymentStep("kakao");
+      window.location.href = data.redirectUrl;
     } catch (e) {
       console.error("결제 요청 실패", e);
-      setPaymentError("결제창을 불러오지 못했습니다. 다시 시도해주세요.");
-      setPaymentStep("kakao");
-    } finally {
+      alert("결제창을 불러오지 못했습니다. 다시 시도해주세요.");
       setPayingCode("");
     }
   };
 
   const filteredProducts = products.filter((product) => {
-    if (activeCategory === "ANALYSIS") {
-      return product.productType === "ANALYSIS_PACKAGE";
-    }
-    if (activeCategory === "MOCK") {
-      return product.productType === "MOCK_PACKAGE";
-    }
-    if (activeCategory === "STARTER") {
-      return product.productType === "COMBO_PACKAGE";
-    }
+    if (activeCategory === "ANALYSIS") return product.productType === "ANALYSIS_PACKAGE";
+    if (activeCategory === "MOCK") return product.productType === "MOCK_PACKAGE";
+    if (activeCategory === "STARTER") return product.productType === "COMBO_PACKAGE";
     return true;
   });
 
@@ -184,7 +158,6 @@ export default function PaymentPage() {
       />
 
       <div className="relative z-10 max-w-5xl mx-auto px-6 py-10">
-        {/* 상단 이동 버튼 */}
         <div className="flex items-center justify-between mb-8">
           <button
             onClick={() => navigate("/")}
@@ -322,10 +295,6 @@ export default function PaymentPage() {
           paying={payingCode === selectedProduct.productCode}
           onConfirm={() => handlePay(selectedProduct.productCode)}
           onClose={handleCloseModal}
-          step={paymentStep}
-          redirectUrl={kakaoRedirectUrl}
-          paymentError={paymentError}
-          onBack={handleBackToConfirm}
         />
       )}
     </div>
@@ -339,10 +308,6 @@ function CompareModal({
   paying,
   onConfirm,
   onClose,
-  step,
-  redirectUrl,
-  paymentError,
-  onBack,
 }) {
   const after = quota
     ? {
@@ -387,17 +352,15 @@ function CompareModal({
                 color: "#4F6EF7",
               }}
             >
-              ✦ {step === "confirm" ? "이용권 구매 확인" : "카카오페이 결제"}
+              ✦ 이용권 구매 확인
             </span>
 
             <h2 className="text-xl font-extrabold" style={{ color: "#1a1d3a" }}>
-              {step === "confirm" ? product.productName : "QR 결제 진행"}
+              {product.productName}
             </h2>
 
             <p className="text-sm mt-0.5" style={{ color: "#6B7DB3" }}>
-              {step === "confirm"
-                ? product.description
-                : "휴대폰으로 QR을 스캔하거나 새 창에서 결제를 진행하세요."}
+              {product.description}
             </p>
           </div>
 
@@ -410,180 +373,86 @@ function CompareModal({
           </button>
         </div>
 
-        {step === "confirm" ? (
-          <>
-            {after && (
-              <div className="px-7 py-5">
-                <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: "#9BA8C8" }}>
-                  구매 후 이용권 변화
-                </p>
+        {after && (
+          <div className="px-7 py-5">
+            <p className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: "#9BA8C8" }}>
+              구매 후 이용권 변화
+            </p>
 
-                <div className="space-y-3">
-                  <CompareRow
-                    icon={Icons.Sparkles("w-3.5 h-3.5")}
-                    label="유료 분석권"
-                    before={quota.paidAnalysisRemaining ?? 0}
-                    added={product.analysisCreditCount}
-                    after={after.paidAnalysis}
-                  />
-                  <CompareRow
-                    icon={Icons.Mic("w-3.5 h-3.5")}
-                    label="유료 면접권"
-                    before={quota.paidMockRemaining ?? 0}
-                    added={product.mockCreditCount}
-                    after={after.paidMock}
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="mx-7" style={{ height: 1, background: "rgba(99,120,247,0.08)" }} />
-
-            <div className="px-7 py-5 flex items-center justify-between">
-              <span className="text-sm font-medium" style={{ color: "#6B7DB3" }}>
-                최종 결제 금액
-              </span>
-              <span className="text-2xl font-extrabold" style={{ color: "#1a1d3a" }}>
-                {product.price.toLocaleString()}
-                <span className="text-base font-semibold ml-1" style={{ color: "#9BA8C8" }}>원</span>
-              </span>
+            <div className="space-y-3">
+              <CompareRow
+                icon={Icons.Sparkles("w-3.5 h-3.5")}
+                label="유료 분석권"
+                before={quota.paidAnalysisRemaining ?? 0}
+                added={product.analysisCreditCount}
+                after={after.paidAnalysis}
+              />
+              <CompareRow
+                icon={Icons.Mic("w-3.5 h-3.5")}
+                label="유료 면접권"
+                before={quota.paidMockRemaining ?? 0}
+                added={product.mockCreditCount}
+                after={after.paidMock}
+              />
             </div>
-
-            <div className="px-7 pb-7 flex flex-col gap-3">
-              <button
-                onClick={onConfirm}
-                disabled={paying}
-                className="w-full py-4 rounded-2xl font-bold text-[15px] flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
-                style={{
-                  background: "#FFE812",
-                  color: "#1a1d3a",
-                  boxShadow: "0 4px 20px rgba(255,232,18,0.35)",
-                }}
-              >
-                {paying ? (
-                  <>
-                    <span
-                      className="w-4 h-4 border-2 rounded-full animate-spin"
-                      style={{ borderColor: "#1a1d3a transparent #1a1d3a #1a1d3a" }}
-                    />
-                    결제 연결 중...
-                  </>
-                ) : (
-                  <>
-                    <KakaoIcon />
-                    카카오페이로 결제하기
-                    <span className="ml-1">{Icons.Arrow("w-4 h-4")}</span>
-                  </>
-                )}
-              </button>
-
-              <button
-                onClick={onClose}
-                className="w-full py-3.5 rounded-2xl font-semibold text-sm transition-all hover:bg-gray-50 active:scale-95"
-                style={{
-                  border: "1.5px solid rgba(99,120,247,0.2)",
-                  color: "#6B7DB3",
-                }}
-              >
-                다시 선택하기
-              </button>
-
-              <p className="text-center text-xs flex items-center justify-center gap-1.5 mt-1" style={{ color: "#C2CADF" }}>
-                {Icons.Shield()} 카카오페이 SSL 암호화 보안 결제
-              </p>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="px-7 py-6">
-              {paymentError ? (
-                <div
-                  className="rounded-2xl p-4 text-sm font-medium"
-                  style={{
-                    background: "rgba(255, 99, 99, 0.08)",
-                    color: "#d14343",
-                    border: "1px solid rgba(255, 99, 99, 0.18)",
-                  }}
-                >
-                  {paymentError}
-                </div>
-              ) : (
-                <>
-                  <div
-                    className="rounded-2xl overflow-hidden mx-auto"
-                    style={{
-                      border: "1px solid rgba(99,120,247,0.12)",
-                      background: "#f8faff",
-                      width: "760px",
-                      maxWidth: "100%",
-                      height: "420px",
-                      display: "flex",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: "950px",
-                        height: "560px",
-                        transform: "translateX(0px) scale(0.8)",
-                        transformOrigin: "top center",
-                      }}
-                    >
-                      <iframe
-                        src={redirectUrl}
-                        title="카카오페이 결제"
-                        style={{
-                          width: "950px",
-                          height: "560px",
-                          border: "none",
-                          display: "block",
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-center mt-4" style={{ color: "#9BA8C8" }}>
-                    QR 화면이 보이지 않으면 아래 버튼으로 새 창에서 열어주세요.
-                  </p>
-                </>
-              )}
-            </div>
-
-            <div className="px-7 pb-7 flex flex-col gap-3">
-              {!!redirectUrl && (
-                <a
-                  href={redirectUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="w-full py-4 rounded-2xl font-bold text-[15px] flex items-center justify-center gap-2 transition-all active:scale-95"
-                  style={{
-                    background: "#FFE812",
-                    color: "#1a1d3a",
-                    boxShadow: "0 4px 20px rgba(255,232,18,0.35)",
-                  }}
-                >
-                  <KakaoIcon />
-                  새 창에서 카카오페이 열기
-                </a>
-              )}
-
-              <button
-                onClick={onBack}
-                className="w-full py-3.5 rounded-2xl font-semibold text-sm transition-all hover:bg-gray-50 active:scale-95"
-                style={{
-                  border: "1.5px solid rgba(99,120,247,0.2)",
-                  color: "#6B7DB3",
-                }}
-              >
-                이전으로 돌아가기
-              </button>
-
-              <p className="text-center text-xs flex items-center justify-center gap-1.5 mt-1" style={{ color: "#C2CADF" }}>
-                {Icons.Shield()} 카카오페이 SSL 암호화 보안 결제
-              </p>
-            </div>
-          </>
+          </div>
         )}
+
+        <div className="mx-7" style={{ height: 1, background: "rgba(99,120,247,0.08)" }} />
+
+        <div className="px-7 py-5 flex items-center justify-between">
+          <span className="text-sm font-medium" style={{ color: "#6B7DB3" }}>
+            최종 결제 금액
+          </span>
+          <span className="text-2xl font-extrabold" style={{ color: "#1a1d3a" }}>
+            {product.price.toLocaleString()}
+            <span className="text-base font-semibold ml-1" style={{ color: "#9BA8C8" }}>원</span>
+          </span>
+        </div>
+
+        <div className="px-7 pb-7 flex flex-col gap-3">
+          <button
+            onClick={onConfirm}
+            disabled={paying}
+            className="w-full py-4 rounded-2xl font-bold text-[15px] flex items-center justify-center gap-2 transition-all active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+            style={{
+              background: "#FFE812",
+              color: "#1a1d3a",
+              boxShadow: "0 4px 20px rgba(255,232,18,0.35)",
+            }}
+          >
+            {paying ? (
+              <>
+                <span
+                  className="w-4 h-4 border-2 rounded-full animate-spin"
+                  style={{ borderColor: "#1a1d3a transparent #1a1d3a #1a1d3a" }}
+                />
+                카카오페이로 이동 중...
+              </>
+            ) : (
+              <>
+                <KakaoIcon />
+                카카오페이로 결제하기
+                <span className="ml-1">{Icons.Arrow("w-4 h-4")}</span>
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={onClose}
+            className="w-full py-3.5 rounded-2xl font-semibold text-sm transition-all hover:bg-gray-50 active:scale-95"
+            style={{
+              border: "1.5px solid rgba(99,120,247,0.2)",
+              color: "#6B7DB3",
+            }}
+          >
+            다시 선택하기
+          </button>
+
+          <p className="text-center text-xs flex items-center justify-center gap-1.5 mt-1" style={{ color: "#C2CADF" }}>
+            {Icons.Shield()} 카카오페이 SSL 암호화 보안 결제
+          </p>
+        </div>
 
         <style>{`
           @keyframes modalIn {

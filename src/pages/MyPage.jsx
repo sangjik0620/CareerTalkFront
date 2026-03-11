@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { getQuota } from '../lib/api/paymentApi';
 
 const MyPage = () => {
     const navigate = useNavigate();
@@ -44,14 +45,11 @@ const MyPage = () => {
                     headers: { Authorization: `Bearer ${token}` }
                 };
 
-                //  2. 병렬 통신(Promise.all)으로 내 정보, 분석기록, 면접기록을 한 방에 가져옵니다.
-                // 주의: 아래의 /api/analysis/my 와 /api/interview/my 는 백엔드 개발 상태에 맞춰 주소를 수정해야 합니다!
-                const [userRes, analysisRes, interviewRes] = await Promise.all([
+                const [userRes, analysisRes, interviewRes, quotaRes] = await Promise.all([
                     axios.get('http://localhost:8080/api/member/me', config),
-                    // 분석 기록 가져오기 API (예상 경로)
                     axios.get('http://localhost:8080/api/analysis/my', config).catch(() => ({ data: null })),
-                    // 면접 기록 가져오기 API (예상 경로)
-                    axios.get('http://localhost:8080/api/interview/my', config).catch(() => ({ data: null }))
+                    axios.get('http://localhost:8080/api/interview/my', config).catch(() => ({ data: null })),
+                    getQuota().catch(() => null)
                 ]);
 
                 // 유저 정보 세팅
@@ -59,7 +57,7 @@ const MyPage = () => {
                 setFormData(userRes.data);
                 setOriginalData(userRes.data);
 
-                // 분석 데이터 세팅 (백엔드에서 어떻게 주는지에 따라 구조를 맞춰주세요)
+                // 분석 데이터 세팅
                 if (analysisRes.data) {
                     setAnalysesData({
                         '이력서': analysisRes.data.resume || [],
@@ -73,13 +71,25 @@ const MyPage = () => {
                     setInterviewsData(interviewRes.data);
                 }
 
+                // 이용권 데이터 세팅
+                if (quotaRes) {
+                    setQuota(quotaRes);
+                } else {
+                    setQuota({
+                        freeAnalysisRemaining: 0,
+                        freeMockRemaining: 0,
+                        paidAnalysisRemaining: 0,
+                        paidMockRemaining: 0,
+                    });
+                }
+
             } catch (error) {
                 console.error("마이페이지 데이터 로드 실패", error);
             } finally {
                 setLoading(false);
             }
         };
-        
+
         fetchAllMyData();
     }, []);
 
@@ -165,7 +175,6 @@ const MyPage = () => {
         }
     };
 
-    // 결과 페이지 이동 함수
     const handleResultClick = (id, category) => {
         if (category === 'analysis') {
             if (subTab === '이력서') {
@@ -176,8 +185,6 @@ const MyPage = () => {
                 navigate(`/portfolio/result/${id}`);
             }
         } else if (category === 'interview') {
-            // App.jsx를 보면 면접 결과는 파라미터(:id) 없이 설정되어 있습니다.
-            // 일단 연결해 두고, 나중에 /interview/result/:sessionId 형태로 수정이 필요할 수 있습니다!
             navigate(`/interview/result`);
         }
     };
@@ -210,7 +217,6 @@ const MyPage = () => {
                     </div>
                 )}
 
-                {/* 정보 입력 영역 */}
                 <div className="bg-gray-50 rounded-2xl p-10 mb-10 border border-gray-100 space-y-10">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                         <div>
@@ -254,11 +260,11 @@ const MyPage = () => {
                             <p className="h-5 flex items-end text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest whitespace-nowrap">
                                 이메일 (변경 불가)
                             </p>
-                            <input 
-                                type="email" 
-                                value={formData.email} 
-                                disabled 
-                                className="w-full text-lg font-semibold bg-transparent text-gray-800 outline-none py-1 border-b-2 border-transparent cursor-not-allowed" 
+                            <input
+                                type="email"
+                                value={formData.email}
+                                disabled
+                                className="w-full text-lg font-semibold bg-transparent text-gray-800 outline-none py-1 border-b-2 border-transparent cursor-not-allowed"
                             />
                         </div>
 
@@ -266,17 +272,16 @@ const MyPage = () => {
                             <p className="h-5 flex items-end text-xs font-bold text-gray-400 uppercase mb-2 tracking-widest whitespace-nowrap">
                                 목표 직무
                             </p>
-                            <input 
-                                type="text" 
-                                value={user.targetJob || "미설정"} 
-                                disabled 
-                                className="w-full text-lg font-semibold bg-transparent text-gray-800 outline-none py-1 border-b-2 border-transparent cursor-not-allowed" 
+                            <input
+                                type="text"
+                                value={user.targetJob || "미설정"}
+                                disabled
+                                className="w-full text-lg font-semibold bg-transparent text-gray-800 outline-none py-1 border-b-2 border-transparent cursor-not-allowed"
                             />
                         </div>
                     </div>
                 </div>
 
-                {/* 이용권 현황 카드 */}
                 <div className="mb-12">
                     <div className="flex items-center justify-between mb-5">
                         <h3 className="text-2xl font-semibold text-gray-900">이용권 현황</h3>
@@ -320,7 +325,6 @@ const MyPage = () => {
                     </div>
                 </div>
 
-                {/* 분석결과 / 면접기록 */}
                 <div className="flex border-b-2 border-gray-100 mb-10 mt-12">
                     <button
                         onClick={() => setMainTab('analysis')}
@@ -342,7 +346,6 @@ const MyPage = () => {
                 </div>
 
                 <div className="min-h-[300px] mb-12">
-                    {/* 3. 분석 탭: State 값(analysesData)으로 매핑! */}
                     {mainTab === 'analysis' && (
                         <div className="animate-in fade-in duration-300">
                             <h3 className="text-2xl font-semibold text-gray-900 mb-6 text-left">분석 결과 조회</h3>
@@ -376,7 +379,7 @@ const MyPage = () => {
                                                     <p className="text-xs text-gray-400 font-bold mb-1">AI 종합 점수</p>
                                                     <p className="text-2xl font-black text-gray-900">{item.score}<span className="text-sm font-medium text-gray-500 ml-1">점</span></p>
                                                 </div>
-                                                <button 
+                                                <button
                                                     onClick={() => handleResultClick(item.id, 'analysis')}
                                                     className="px-4 py-2 bg-gray-50 text-gray-600 rounded-xl text-sm font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors"
                                                 >
@@ -394,7 +397,6 @@ const MyPage = () => {
                         </div>
                     )}
 
-                    {/* 4. 면접 기록 탭: State 값(interviewsData)으로 매핑! */}
                     {mainTab === 'interview' && (
                         <div className="animate-in fade-in duration-300">
                             <h3 className="text-2xl font-semibold text-gray-900 mb-6 text-left">면접 기록 조회</h3>
@@ -413,7 +415,7 @@ const MyPage = () => {
                                                     <p className="text-xs text-gray-400 font-bold mb-1">진행 시간</p>
                                                     <p className="text-xl font-bold text-gray-700">{item.duration}</p>
                                                 </div>
-                                                <button 
+                                                <button
                                                     onClick={() => handleResultClick(item.id, 'interview')}
                                                     className="px-4 py-2 bg-gray-50 text-gray-600 rounded-xl text-sm font-bold group-hover:bg-purple-600 group-hover:text-white transition-colors"
                                                 >

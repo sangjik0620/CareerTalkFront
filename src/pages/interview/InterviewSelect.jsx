@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import PortfolioUploadModal from "../../components/portfolio/PortfolioUploadModal";
 import ClAnalysis from "../ClAnalysis";
 import Resume from "../Resume";
-import logo from "../../img/logo.png";
 import DeviceTestModal from "../interview/DeviceTestModal";
 
 import { api } from "../../lib/api";
@@ -84,8 +83,6 @@ const fetchUserAnalyses = async () => {
 };
 
 // ─────────────────────────────────────────────
-// 배경 그라디언트
-// ─────────────────────────────────────────────
 const BackgroundMesh = () => (
   <div className="fixed inset-0 pointer-events-none overflow-hidden">
     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_#dbeafe_0%,_transparent_50%)]" />
@@ -94,8 +91,6 @@ const BackgroundMesh = () => (
   </div>
 );
 
-// ─────────────────────────────────────────────
-// 점수 뱃지
 // ─────────────────────────────────────────────
 const ScoreBadge = ({ score }) => {
   const color =
@@ -114,8 +109,6 @@ const ScoreBadge = ({ score }) => {
   );
 };
 
-// ─────────────────────────────────────────────
-// 빈 상태 (카드 내부)
 // ─────────────────────────────────────────────
 function CardEmptyState({ meta, onClickAnalyze }) {
   return (
@@ -148,8 +141,6 @@ function CardEmptyState({ meta, onClickAnalyze }) {
   );
 }
 
-// ─────────────────────────────────────────────
-// 전체 빈 상태 배너
 // ─────────────────────────────────────────────
 function GlobalEmptyBanner() {
   const steps = [
@@ -193,8 +184,6 @@ function GlobalEmptyBanner() {
 }
 
 // ─────────────────────────────────────────────
-// 분석 아이템 카드
-// ─────────────────────────────────────────────
 function AnalysisItemCard({ item, isSelected, onSelect, meta }) {
   return (
     <button
@@ -235,8 +224,6 @@ function AnalysisItemCard({ item, isSelected, onSelect, meta }) {
 }
 
 // ─────────────────────────────────────────────
-// 카테고리 카드
-// ─────────────────────────────────────────────
 function AnalysisCategoryCard({
   fileKey,
   meta,
@@ -255,7 +242,7 @@ function AnalysisCategoryCard({
         className={[
           "group relative bg-white/80 backdrop-blur-md rounded-3xl p-6 shadow-lg border transition-all duration-500",
           "hover:-translate-y-1.5 hover:shadow-2xl hover:bg-white/95",
-          "h-[270px] flex flex-col",
+          "h-[350px] flex flex-col",
           selectedId
             ? `border-transparent ring-2 ring-offset-2 ${meta.ringColor}`
             : hasItems
@@ -336,8 +323,6 @@ function AnalysisCategoryCard({
 }
 
 // ─────────────────────────────────────────────
-// 예상 소요 시간 카드
-// ─────────────────────────────────────────────
 function EstimatedTimeCard({ questionCount }) {
   const count = parseInt(questionCount, 10);
   const minutes = count * 2;
@@ -384,8 +369,6 @@ function EstimatedTimeCard({ questionCount }) {
   );
 }
 
-// ─────────────────────────────────────────────
-// 시작 전 체크리스트 카드
 // ─────────────────────────────────────────────
 const CHECKLIST_ITEMS = [
   { id: "mic", icon: "🎙️", text: "마이크 상태를 확인했어요" },
@@ -465,8 +448,6 @@ function PreChecklistCard() {
   );
 }
 
-// ─────────────────────────────────────────────
-// 메인 페이지
 // ─────────────────────────────────────────────
 export default function InterviewSelect() {
   const navigate = useNavigate();
@@ -690,24 +671,44 @@ export default function InterviewSelect() {
   };
 
   return (
-    <div className="min-h-screen relative">
+    <div
+      className="min-h-screen relative overflow-hidden"
+      style={{ background: "linear-gradient(135deg, #f0f2ff 0%, #eaf0ff 50%, #f5f0ff 100%)" }}
+    >
       <BackgroundMesh />
 
-      <nav className="fixed w-full z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200/60 shadow-sm">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="flex justify-between items-center h-16">
-            <img src={logo} alt="CareerTalk" className="h-36 w-auto object-contain" />
-            <button
-              onClick={() => navigate("/")}
-              className="flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 font-medium transition-colors duration-200 px-4 py-2 rounded-xl hover:bg-blue-50"
-            >
-              ← 메인으로 돌아가기
-            </button>
-          </div>
-        </div>
-      </nav>
+      <div className="relative z-10 max-w-6xl mx-auto px-6 py-10">
+        {/* 상단 이동 버튼 */}
+        <div className="flex items-center justify-between mb-8">
+          <button
+            onClick={() => navigate("/")}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-bold transition-all duration-200 hover:-translate-y-0.5"
+            style={{
+              background: "rgba(255,255,255,0.9)",
+              color: "#4B5672",
+              border: "1px solid rgba(99,120,247,0.14)",
+              boxShadow: "0 4px 14px rgba(99,120,247,0.08)",
+            }}
+          >
+            <span className="text-base">←</span>
+            홈으로 돌아가기
+          </button>
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 pt-28 pb-24">
+          <button
+            onClick={() => navigate("/mypage")}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-bold transition-all duration-200 hover:-translate-y-0.5"
+            style={{
+              background: "rgba(255,255,255,0.9)",
+              color: "#4B5672",
+              border: "1px solid rgba(99,120,247,0.14)",
+              boxShadow: "0 4px 14px rgba(99,120,247,0.08)",
+            }}
+          >
+            마이페이지
+            <span className="text-base">→</span>
+          </button>
+        </div>
+
         <div className="text-center mb-14">
           <div className="inline-flex items-center gap-2 mb-5 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full border border-blue-200 shadow-sm animate-slide-in-down">
             <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
