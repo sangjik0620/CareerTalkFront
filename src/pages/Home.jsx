@@ -334,7 +334,6 @@ const AnimatedBackground = () => {
     let animationFrameId;
     let particles = [];
 
-    // 캔버스 크기 설정
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -342,7 +341,6 @@ const AnimatedBackground = () => {
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
 
-    // 입자 클래스
     class Particle {
       constructor() {
         this.x = Math.random() * canvas.width;
@@ -371,7 +369,6 @@ const AnimatedBackground = () => {
       }
     }
 
-    // 입자 생성
     const initParticles = () => {
       particles = [];
       const numberOfParticles = Math.floor(
@@ -384,7 +381,6 @@ const AnimatedBackground = () => {
 
     initParticles();
 
-    // 입자 연결선 그리기
     const connectParticles = () => {
       for (let i = 0; i < particles.length; i++) {
         for (let j = i + 1; j < particles.length; j++) {
@@ -404,7 +400,6 @@ const AnimatedBackground = () => {
       }
     };
 
-    // 애니메이션 루프
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -541,7 +536,6 @@ const Navigation = ({ onStart }) => {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
-          {/* 로고 */}
           <div className="flex items-center h-32">
             <img
               src={logo}
@@ -550,7 +544,6 @@ const Navigation = ({ onStart }) => {
             />
           </div>
 
-          {/* ── Desktop Menu ── */}
           <div className="hidden md:flex items-center space-x-8">
             <a
               href="#features"
@@ -579,7 +572,6 @@ const Navigation = ({ onStart }) => {
 
             {user ? (
               <div className="flex items-center space-x-3">
-                {/* ✅ 이용권 현황 버튼 + 팝업 */}
                 <div className="relative" ref={voucherRef}>
                   <button
                     onClick={handleOpenVoucher}
@@ -588,7 +580,6 @@ const Navigation = ({ onStart }) => {
                     이용권 현황
                   </button>
 
-                  {/* 팝업 카드 */}
                   {voucherPopup && (
                     <div
                       className="absolute right-0 top-12 w-72 bg-white rounded-2xl shadow-2xl border border-blue-100 z-50"
@@ -597,17 +588,14 @@ const Navigation = ({ onStart }) => {
                           "navPopIn 0.18s cubic-bezier(0.34,1.56,0.64,1)",
                       }}
                     >
-                      {/* 팝업 헤더 */}
                       <div className="px-5 pt-4 pb-3 border-b border-gray-100">
                         <p className="text-sm font-bold text-gray-900">
                           🎟️ 보유 이용권 현황
                         </p>
                       </div>
 
-                      {/* 이용권 목록 */}
                       <div className="px-4 py-3 space-y-2">
                         {quotaLoading ? (
-                          /* 로딩 스켈레톤 */
                           <>
                             {[...Array(4)].map((_, i) => (
                               <div
@@ -621,7 +609,6 @@ const Navigation = ({ onStart }) => {
                           </>
                         ) : quota ? (
                           <>
-                            {/* 무료권 그룹 */}
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1 pt-1">
                               무료
                             </p>
@@ -631,7 +618,6 @@ const Navigation = ({ onStart }) => {
                                 <VoucherRow key={v.label} item={v} />
                               ))}
 
-                            {/* 유료권 그룹 */}
                             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1 pt-2">
                               유료
                             </p>
@@ -648,7 +634,6 @@ const Navigation = ({ onStart }) => {
                         )}
                       </div>
 
-                      {/* 구매 버튼 */}
                       <div className="px-4 pb-4 pt-1">
                         <a
                           href="/payment"
@@ -667,7 +652,6 @@ const Navigation = ({ onStart }) => {
                   )}
                 </div>
 
-                {/* ✅ 닉네임 + 드롭다운 */}
                 <div className="relative" ref={userMenuRef}>
                   <button
                     onClick={() => {
@@ -695,7 +679,6 @@ const Navigation = ({ onStart }) => {
                     </svg>
                   </button>
 
-                  {/* 드롭다운 메뉴 */}
                   {userMenuOpen && (
                     <div
                       className="absolute right-0 top-12 w-44 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50"
@@ -732,7 +715,6 @@ const Navigation = ({ onStart }) => {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
           <div className="md:hidden">
             <button
               onClick={() => setIsOpen(!isOpen)}
@@ -744,7 +726,6 @@ const Navigation = ({ onStart }) => {
         </div>
       </div>
 
-      {/* ── Mobile Menu ── */}
       {isOpen && (
         <div className="md:hidden bg-white border-t border-gray-100">
           <div className="px-2 pt-2 pb-3 space-y-1">
@@ -775,7 +756,6 @@ const Navigation = ({ onStart }) => {
 
             {user && (
               <>
-                {/* 모바일 이용권 현황 */}
                 <div className="mx-1 rounded-xl border border-blue-100 bg-blue-50 overflow-hidden">
                   <p className="px-3 pt-3 pb-1 text-xs font-bold text-blue-700">
                     🎟️ 보유 이용권 현황
@@ -842,7 +822,6 @@ const Navigation = ({ onStart }) => {
         </div>
       )}
 
-      {/* 팝업 애니메이션 */}
       <style>{`
         @keyframes navPopIn {
           from { opacity: 0; transform: scale(0.94) translateY(-6px); }
@@ -857,13 +836,11 @@ const Navigation = ({ onStart }) => {
 const FlowingGradientOrbs = () => {
   return (
     <div className="absolute inset-0 overflow-hidden">
-      {/* 큰 그라데이션 오브들 */}
       <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-gradient-to-br from-blue-400/30 via-indigo-400/20 to-transparent rounded-full blur-3xl animate-orb-1"></div>
       <div className="absolute top-1/4 right-0 w-[700px] h-[700px] bg-gradient-to-bl from-indigo-400/30 via-purple-400/20 to-transparent rounded-full blur-3xl animate-orb-2"></div>
       <div className="absolute bottom-0 left-1/4 w-[550px] h-[550px] bg-gradient-to-tr from-purple-400/30 via-blue-400/20 to-transparent rounded-full blur-3xl animate-orb-3"></div>
       <div className="absolute top-1/2 left-1/2 w-[500px] h-[500px] bg-gradient-to-br from-cyan-400/20 via-blue-400/15 to-transparent rounded-full blur-3xl animate-orb-4"></div>
 
-      {/* 작은 액센트 오브들 */}
       <div className="absolute top-1/3 left-1/4 w-32 h-32 bg-blue-500/40 rounded-full blur-2xl animate-float-slow-1"></div>
       <div className="absolute bottom-1/3 right-1/3 w-40 h-40 bg-indigo-500/40 rounded-full blur-2xl animate-float-slow-2"></div>
       <div className="absolute top-2/3 right-1/4 w-36 h-36 bg-purple-500/40 rounded-full blur-2xl animate-float-slow-3"></div>
@@ -877,7 +854,6 @@ const Hero = ({ onStart }) => {
 
   return (
     <section className="relative bg-gradient-to-br from-white via-blue-50/30 to-indigo-50/50 min-h-screen flex items-center pt-20 overflow-hidden">
-      {/* 흐르는 그라데이션 오브 배경 */}
       <FlowingGradientOrbs />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
@@ -885,7 +861,7 @@ const Hero = ({ onStart }) => {
           <div>
             <div className="inline-block mb-6 px-5 py-2.5 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-full border-2 border-blue-300 animate-slide-in-down shadow-md">
               <span className="text-blue-700 text-sm font-bold flex items-center gap-2">
-                <span className="animate-bounce-subtle">🚀</span>
+                <span className="animate-bounce-subtle"></span>
                 AI 기반 취업 준비 플랫폼
               </span>
             </div>
@@ -919,7 +895,7 @@ const Hero = ({ onStart }) => {
                 className="group relative bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-size-200 bg-pos-0 hover:bg-pos-100 text-white px-10 py-4 rounded-full font-bold shadow-2xl hover:shadow-3xl transition-all duration-500 transform hover:scale-105 overflow-hidden"
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
-                  무료로 시작하기
+                  시작하기
                   <span className="transform group-hover:translate-x-2 transition-transform duration-300">
                     →
                   </span>
@@ -940,7 +916,6 @@ const Hero = ({ onStart }) => {
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-tr from-blue-300/40 via-transparent to-purple-300/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 
-                {/* 재생 버튼 효과 */}
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <div className="w-20 h-20 bg-white/90 backdrop-blur-md rounded-full flex items-center justify-center shadow-2xl animate-pulse-slow">
                     <svg
@@ -963,7 +938,6 @@ const Hero = ({ onStart }) => {
               </div>
             </div>
 
-            {/* 장식 요소 */}
             <div className="absolute top-1/2 -right-8 w-24 h-24 border-4 border-blue-400/70 rounded-full animate-spin-slow shadow-lg"></div>
             <div className="absolute -bottom-8 left-1/2 w-16 h-16 border-4 border-indigo-400/70 rounded-full animate-spin-reverse shadow-lg"></div>
             <div className="absolute top-10 -left-6 w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-full opacity-60 animate-float-gentle shadow-xl"></div>
@@ -1100,7 +1074,6 @@ const Features = ({
   );
 };
 
-// ── 이용권 현황 팝업 내부 행 컴포넌트 ──────────────────────────
 function VoucherRow({ item }) {
   const isEmpty = item.value === 0;
   return (
@@ -1113,7 +1086,6 @@ function VoucherRow({ item }) {
         border: "1px solid rgba(99,120,247,0.08)",
       }}
     >
-      {/* 아이콘 + 라벨 */}
       <div className="flex items-center gap-2">
         <span
           className="w-6 h-6 rounded-lg flex items-center justify-center text-xs"
@@ -1128,7 +1100,6 @@ function VoucherRow({ item }) {
         <span className="text-sm font-medium text-gray-700">{item.label}</span>
       </div>
 
-      {/* 잔여 횟수 */}
       <span
         className="text-sm font-extrabold px-2.5 py-0.5 rounded-full"
         style={{
@@ -1232,7 +1203,6 @@ const HowItWorks = () => {
   );
 };
 
-// ===== TestimonialsInner (후기 '내용만') =====
 const TestimonialsInner = () => {
   const testimonials = [
     {
@@ -1328,20 +1298,83 @@ const TestimonialsInner = () => {
   );
 };
 
-// ===== Statistics (껍데기: 그라데이션 배경 유지 + 내용은 후기) =====
+const StatisticsInner = () => {
+  const stats = [
+    {
+      icon: <Icons.Users />,
+      number: "10,000+",
+      label: "활성 사용자",
+      gradient: "from-blue-500 to-indigo-500",
+    },
+    {
+      icon: <Icons.TrendingUp />,
+      number: "85%",
+      label: "취업 성공률 향상",
+      gradient: "from-indigo-500 to-purple-500",
+    },
+    {
+      icon: <Icons.CheckCircle />,
+      number: "50,000+",
+      label: "완료된 면접",
+      gradient: "from-purple-500 to-pink-500",
+    },
+    {
+      icon: <Icons.Award />,
+      number: "4.9/5",
+      label: "사용자 만족도",
+      gradient: "from-pink-500 to-rose-500",
+    },
+  ];
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="text-center mb-16" data-aos="fade-up">
+        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+          검증된{" "}
+          <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            성과
+          </span>
+        </h2>
+        <p className="text-xl text-gray-600">
+          CareerTalk가 만들어낸 놀라운 결과들
+        </p>
+      </div>
+
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        {stats.map((stat, index) => (
+          <div
+            key={index}
+            className="group bg-white rounded-2xl p-8 text-center shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 border border-gray-100"
+            data-aos="fade-up"
+            data-aos-delay={index * 100}
+          >
+            <div
+              className={`inline-flex p-4 rounded-2xl bg-gradient-to-br ${stat.gradient} text-white mb-5 shadow-lg group-hover:scale-110 transition-transform duration-300`}
+            >
+              {stat.icon}
+            </div>
+            <div className="text-4xl md:text-5xl font-bold text-gray-900 mb-2 counter-animation">
+              {stat.number}
+            </div>
+            <div className="text-gray-600 font-medium">{stat.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const Statistics = () => {
   return (
     <section
       id="testimonials"
       className="py-24 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative overflow-hidden"
     >
-      {/* 배경 장식 그대로 */}
       <div className="absolute inset-0">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-300 opacity-20 rounded-full blur-3xl"></div>
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-300 opacity-20 rounded-full blur-3xl"></div>
       </div>
 
-      {/* ✅ 내용만 후기 */}
       <div className="relative z-10">
         <TestimonialsInner />
       </div>
@@ -1349,11 +1382,9 @@ const Statistics = () => {
   );
 };
 
-// ===== Testimonials (껍데기: 흰 배경 유지 + 내용은 통계) =====
 const Testimonials = () => {
   return (
     <section className="py-24 bg-white">
-      {/* ✅ 내용만 통계 */}
       <StatisticsInner />
     </section>
   );
@@ -1508,21 +1539,145 @@ const Footer = () => (
   </footer>
 );
 
+function LoginGuideModal({ isOpen, onClose, onGoLogin }) {
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center px-4"
+      style={{
+        background: "rgba(15, 23, 42, 0.45)",
+        backdropFilter: "blur(6px)",
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="w-full max-w-md rounded-3xl p-7 bg-white shadow-2xl border"
+        style={{
+          borderColor: "rgba(99,120,247,0.14)",
+          animation: "modalPopIn 0.2s cubic-bezier(0.34,1.56,0.64,1)",
+        }}
+      >
+        <div className="flex items-start justify-between mb-5">
+          <div>
+            <div
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold mb-3"
+              style={{
+                background: "rgba(99,120,247,0.08)",
+                color: "#4F6EF7",
+              }}
+            >
+              🔒 이용 안내
+            </div>
+            <h3 className="text-2xl font-extrabold text-gray-900 mb-2">
+              로그인 후 이용가능합니다
+            </h3>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              AI 모의면접 기능은 로그인한 사용자만 이용할 수 있어요.
+              <br />
+              로그인 후 바로 면접 페이지로 이동됩니다.
+            </p>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="ml-4 w-9 h-9 rounded-full flex items-center justify-center hover:bg-gray-100 transition"
+          >
+            <Icons.X />
+          </button>
+        </div>
+
+        <div
+          className="rounded-2xl p-4 mb-5"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(99,120,247,0.06), rgba(123,97,255,0.06))",
+            border: "1px solid rgba(99,120,247,0.1)",
+          }}
+        >
+          <p className="text-sm font-medium text-gray-700">
+            로그인 완료 후 자동으로
+            <span className="font-bold text-blue-600"> AI 모의면접 페이지</span>
+            로 이동합니다.
+          </p>
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 rounded-2xl font-bold text-sm transition"
+            style={{
+              background: "#F8FAFC",
+              color: "#64748B",
+              border: "1px solid #E2E8F0",
+            }}
+          >
+            닫기
+          </button>
+
+          <button
+            onClick={onGoLogin}
+            className="flex-1 py-3 rounded-2xl font-bold text-sm text-white transition hover:opacity-95"
+            style={{
+              background: "linear-gradient(90deg, #4F6EF7, #7B61FF)",
+              boxShadow: "0 8px 24px rgba(99,120,247,0.28)",
+            }}
+          >
+            로그인하러 가기
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ===== Home Page =====
 export default function Home() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ⭐ 1. 자물쇠 역할을 할 Ref 생성 (리렌더링 되어도 값이 유지됨)
   const isProcessed = useRef(false);
 
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false);
   const [isCoverLetterModalOpen, setIsCoverLetterModalOpen] = useState(false);
   const [isResumeModalOpen, setIsResumeModalOpen] = useState(false);
+  const [loginGuideOpen, setLoginGuideOpen] = useState(false);
 
   useEffect(() => {
     AOS.init({ duration: 1000, once: true, offset: 100 });
   }, []);
+
+  const runProtectedAction = (actionType) => {
+    switch (actionType) {
+      case "INTERVIEW":
+        navigate("/interview/select");
+        break;
+      case "RESUME":
+        setIsResumeModalOpen(true);
+        break;
+      case "COVERLETTER":
+        setIsCoverLetterModalOpen(true);
+        break;
+      case "PORTFOLIO":
+        setIsPortfolioModalOpen(true);
+        break;
+      default:
+        break;
+    }
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -1539,7 +1694,7 @@ export default function Home() {
       }
 
       const userData = {
-        loginId: loginId,
+        loginId,
         email: params.get("email"),
         nickname: params.get("nickname"),
         targetJob: params.get("targetJob"),
@@ -1547,27 +1702,76 @@ export default function Home() {
 
       localStorage.setItem("user", JSON.stringify(userData));
 
+      const action = sessionStorage.getItem("postLoginAction");
+      if (action) {
+        sessionStorage.removeItem("postLoginAction");
+      }
+
       window.history.replaceState({}, document.title, window.location.pathname);
-      window.location.href = "/";
+
+      if (action === "INTERVIEW") {
+        window.location.href = "/interview/select";
+      } else {
+        window.location.href = "/";
+      }
     }
   }, [location]);
 
-  const goInterview = () => navigate("/interview/select");
+  useEffect(() => {
+    const savedAction = sessionStorage.getItem("postLoginAction");
+    const token = localStorage.getItem("token");
+    const user = localStorage.getItem("user");
+
+    if (
+      token &&
+      user &&
+      savedAction &&
+      !location.search.includes("loginSuccess=true")
+    ) {
+      sessionStorage.removeItem("postLoginAction");
+      runProtectedAction(savedAction);
+    }
+  }, [location.search]);
+
+  const requireLoginAndRun = (actionType) => {
+    const token = localStorage.getItem("token");
+    const user = localStorage.getItem("user");
+
+    if (!token || !user) {
+      sessionStorage.setItem("postLoginAction", actionType);
+      setLoginGuideOpen(true);
+      return;
+    }
+
+    runProtectedAction(actionType);
+  };
+
+  const goInterview = () => requireLoginAndRun("INTERVIEW");
+  const openResume = () => requireLoginAndRun("RESUME");
+  const openCoverLetter = () => requireLoginAndRun("COVERLETTER");
+  const openPortfolio = () => requireLoginAndRun("PORTFOLIO");
+
+  const goLoginFromGuide = () => {
+    setLoginGuideOpen(false);
+    navigate("/login");
+  };
 
   return (
     <>
       <div>
         <ChatBot />
       </div>
+
       <Navigation onStart={goInterview} />
       <Hero onStart={goInterview} />
 
       <Features
         onGoInterview={goInterview}
-        onOpenPortfolioModal={() => setIsPortfolioModalOpen(true)}
-        onOpenCoverLetterModal={() => setIsCoverLetterModalOpen(true)}
-        onOpenResumeModal={() => setIsResumeModalOpen(true)}
+        onOpenPortfolioModal={openPortfolio}
+        onOpenCoverLetterModal={openCoverLetter}
+        onOpenResumeModal={openResume}
       />
+
       <HowItWorks />
       <Statistics />
       <FAQ />
@@ -1600,100 +1804,99 @@ export default function Home() {
         }}
       />
 
+      <LoginGuideModal
+        isOpen={loginGuideOpen}
+        onClose={() => setLoginGuideOpen(false)}
+        onGoLogin={goLoginFromGuide}
+      />
+
       <style>{`
-  /* 흐르는 그라데이션 오브 애니메이션 */
-  @keyframes orb-1 {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    33% { transform: translate(100px, 50px) scale(1.1); }
-    66% { transform: translate(-50px, -30px) scale(0.9); }
-  }
-  @keyframes orb-2 {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    33% { transform: translate(-80px, 60px) scale(1.15); }
-    66% { transform: translate(40px, -40px) scale(0.95); }
-  }
-  @keyframes orb-3 {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(60px, -50px) scale(1.2); }
-  }
-  @keyframes orb-4 {
-    0%, 100% { transform: translate(-50%, -50%) scale(1); }
-    33% { transform: translate(-45%, -55%) scale(1.1); }
-    66% { transform: translate(-55%, -45%) scale(0.9); }
-  }
+        @keyframes orb-1 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(100px, 50px) scale(1.1); }
+          66% { transform: translate(-50px, -30px) scale(0.9); }
+        }
+        @keyframes orb-2 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(-80px, 60px) scale(1.15); }
+          66% { transform: translate(40px, -40px) scale(0.95); }
+        }
+        @keyframes orb-3 {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          50% { transform: translate(60px, -50px) scale(1.2); }
+        }
+        @keyframes orb-4 {
+          0%, 100% { transform: translate(-50%, -50%) scale(1); }
+          33% { transform: translate(-45%, -55%) scale(1.1); }
+          66% { transform: translate(-55%, -45%) scale(0.9); }
+        }
 
-  .animate-orb-1 { animation: orb-1 25s ease-in-out infinite; }
-  .animate-orb-2 { animation: orb-2 30s ease-in-out infinite; }
-  .animate-orb-3 { animation: orb-3 28s ease-in-out infinite; }
-  .animate-orb-4 { animation: orb-4 35s ease-in-out infinite; }
+        .animate-orb-1 { animation: orb-1 25s ease-in-out infinite; }
+        .animate-orb-2 { animation: orb-2 30s ease-in-out infinite; }
+        .animate-orb-3 { animation: orb-3 28s ease-in-out infinite; }
+        .animate-orb-4 { animation: orb-4 35s ease-in-out infinite; }
 
-  /* 작은 오브 플로팅 */
-  @keyframes float-slow-1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(30px,-40px)} }
-  @keyframes float-slow-2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-40px,30px)} }
-  @keyframes float-slow-3 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(25px,35px)} }
-  .animate-float-slow-1 { animation: float-slow-1 15s ease-in-out infinite; }
-  .animate-float-slow-2 { animation: float-slow-2 18s ease-in-out infinite; }
-  .animate-float-slow-3 { animation: float-slow-3 20s ease-in-out infinite; }
+        @keyframes float-slow-1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(30px,-40px)} }
+        @keyframes float-slow-2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-40px,30px)} }
+        @keyframes float-slow-3 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(25px,35px)} }
+        .animate-float-slow-1 { animation: float-slow-1 15s ease-in-out infinite; }
+        .animate-float-slow-2 { animation: float-slow-2 18s ease-in-out infinite; }
+        .animate-float-slow-3 { animation: float-slow-3 20s ease-in-out infinite; }
 
-  /* 부드러운 펄스 */
-  @keyframes pulse-slow { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.05);opacity:.9} }
-  .animate-pulse-slow { animation: pulse-slow 3s ease-in-out infinite; }
+        @keyframes pulse-slow { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.05);opacity:.9} }
+        .animate-pulse-slow { animation: pulse-slow 3s ease-in-out infinite; }
 
-  /* 부드러운 플로팅 */
-  @keyframes float-gentle {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    33% { transform: translateY(-20px) rotate(3deg); }
-    66% { transform: translateY(-10px) rotate(-3deg); }
-  }
-  .animate-float-gentle { animation: float-gentle 12s ease-in-out infinite; }
+        @keyframes float-gentle {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          33% { transform: translateY(-20px) rotate(3deg); }
+          66% { transform: translateY(-10px) rotate(-3deg); }
+        }
+        .animate-float-gentle { animation: float-gentle 12s ease-in-out infinite; }
 
-  /* 부드러운 바운스 */
-  @keyframes bounce-subtle { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
-  .animate-bounce-subtle { animation: bounce-subtle 2s ease-in-out infinite; }
+        @keyframes bounce-subtle { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+        .animate-bounce-subtle { animation: bounce-subtle 2s ease-in-out infinite; }
 
-  /* 타이핑 커서 깜빡임 */
-  @keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
-  .animate-blink { animation: blink 0.8s infinite; color:#2563eb; font-weight:bold; }
+        @keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+        .animate-blink { animation: blink 0.8s infinite; color:#2563eb; font-weight:bold; }
 
-  /* 슬라이드 인 애니메이션 */
-  @keyframes slideInDown { from{opacity:0;transform:translateY(-30px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes slideInUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes slideInLeft { from{opacity:0;transform:translateX(40px)} to{opacity:1;transform:translateX(0)} }
-  .animate-slide-in-down { animation: slideInDown 1s ease-out forwards; }
-  .animate-slide-in-up { animation: slideInUp 1s ease-out forwards; }
-  .animate-slide-in-left { animation: slideInLeft 1s ease-out forwards; }
+        @keyframes slideInDown { from{opacity:0;transform:translateY(-30px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes slideInUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes slideInLeft { from{opacity:0;transform:translateX(40px)} to{opacity:1;transform:translateX(0)} }
+        .animate-slide-in-down { animation: slideInDown 1s ease-out forwards; }
+        .animate-slide-in-up { animation: slideInUp 1s ease-out forwards; }
+        .animate-slide-in-left { animation: slideInLeft 1s ease-out forwards; }
 
-  /* 애니메이션 딜레이 */
-  .animation-delay-300 { animation-delay: 0.3s; opacity: 0; }
-  .animation-delay-600 { animation-delay: 0.6s; opacity: 0; }
-  .animation-delay-900 { animation-delay: 0.9s; opacity: 0; }
+        .animation-delay-300 { animation-delay: 0.3s; opacity: 0; }
+        .animation-delay-600 { animation-delay: 0.6s; opacity: 0; }
+        .animation-delay-900 { animation-delay: 0.9s; opacity: 0; }
 
-  /* 회전 애니메이션 */
-  @keyframes spin-slow {
-    from { transform: rotate(0deg) scale(1); }
-    50% { transform: rotate(180deg) scale(1.1); }
-    to { transform: rotate(360deg) scale(1); }
-  }
-  @keyframes spin-reverse {
-    from { transform: rotate(360deg) scale(1); }
-    50% { transform: rotate(180deg) scale(1.1); }
-    to { transform: rotate(0deg) scale(1); }
-  }
-  .animate-spin-slow { animation: spin-slow 20s ease-in-out infinite; }
-  .animate-spin-reverse { animation: spin-reverse 18s ease-in-out infinite; }
+        @keyframes spin-slow {
+          from { transform: rotate(0deg) scale(1); }
+          50% { transform: rotate(180deg) scale(1.1); }
+          to { transform: rotate(360deg) scale(1); }
+        }
+        @keyframes spin-reverse {
+          from { transform: rotate(360deg) scale(1); }
+          50% { transform: rotate(180deg) scale(1.1); }
+          to { transform: rotate(0deg) scale(1); }
+        }
+        .animate-spin-slow { animation: spin-slow 20s ease-in-out infinite; }
+        .animate-spin-reverse { animation: spin-reverse 18s ease-in-out infinite; }
 
-  /* 그라데이션 배경 애니메이션 */
-  .bg-size-200 { background-size: 200% auto; }
-  .bg-pos-0 { background-position: 0% center; }
-  .bg-pos-100 { background-position: 100% center; }
+        .bg-size-200 { background-size: 200% auto; }
+        .bg-pos-0 { background-position: 0% center; }
+        .bg-pos-100 { background-position: 100% center; }
 
-  /* 그림자 효과 */
-  .shadow-3xl { box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.3); }
+        .shadow-3xl { box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.3); }
 
-  /* 카운터 애니메이션 */
-  @keyframes counter-up { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-  .counter-animation { animation: counter-up 1s ease-out; }
-`}</style>
+        @keyframes counter-up { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        .counter-animation { animation: counter-up 1s ease-out; }
+
+        @keyframes modalPopIn {
+          from { opacity: 0; transform: scale(0.94) translateY(8px); }
+          to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+      `}</style>
     </>
   );
 }
