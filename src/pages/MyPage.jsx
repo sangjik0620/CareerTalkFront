@@ -196,6 +196,7 @@ const MyPage = () => {
     }
   };
 
+  // 수정
       const handleResultClick = (id, category) => {
         if (category === 'analysis') {
             if (subTab === '이력서') {
