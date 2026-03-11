@@ -128,7 +128,7 @@ const Evaluation = ({ evaluationData }) => {
   const [err, setErr] = useState("");
 
   const [analysisStatus, setAnalysisStatus] = useState("PENDING");
-  const [phase, setPhase] = useState("ANALYZING");
+  const [phase, setPhase] = useState("BOOTSTRAP");
 
   const [docLoading, setDocLoading] = useState(false);
   const [docErr, setDocErr] = useState("");
@@ -148,13 +148,6 @@ const Evaluation = ({ evaluationData }) => {
     const fromState = location?.state?.uploadResult?.sessionId;
     const fromQuery = searchParams.get("sessionId");
     return fromState ?? (fromQuery ? Number(fromQuery) : null);
-  }, [location?.state, searchParams]);
-
-  // mode 정보
-  const mode = useMemo(() => {
-    const fromState = location?.state?.mode;
-    const fromQuery = searchParams.get("mode");
-    return fromState ?? fromQuery ?? "result";
   }, [location?.state, searchParams]);
 
   // pdf 다운로드 함수
@@ -191,124 +184,135 @@ const Evaluation = ({ evaluationData }) => {
   };
 
   useEffect(() => {
-    if (!sessionId || mode !== "analyze") return;
-
     let alive = true;
     let pollTimer = null;
+    let analyzeRequested = false;
 
-    const startAndPoll = async () => {
+    const clearTimers = () => {
+      if (pollTimer) window.clearTimeout(pollTimer);
+      if (doneTimerRef.current) window.clearTimeout(doneTimerRef.current);
+    };
+
+    const applyResultData = (res) => {
+      setData(res ?? null);
+      setTurns(res?.turns ?? []);
+      setPhase("SHOW_RESULT");
+    };
+
+    const tryFetchResult = async () => {
+      const res = await interviewApi.getResult(sessionId);
+      if (!alive) return { done: false };
+
+      // getResult가 결과 객체를 바로 주는 경우
+      const hasResultPayload =
+        !!res &&
+        (Array.isArray(res?.turns) ||
+          !!res?.summary ||
+          !!res?.interviewAnalysis ||
+          !!res?.comparison ||
+          !!res?.competencyAnalysis);
+
+      if (hasResultPayload) {
+        applyResultData(res);
+        setLoading(false);
+        return { done: true };
+      }
+
+      // getResult가 axios response 형태를 주는 경우까지 방어
+      if (res?.status === 200 && res?.data) {
+        applyResultData(res.data);
+        setLoading(false);
+        return { done: true };
+      }
+
+      return { done: false, raw: res };
+    };
+
+    const pollResultUntilDone = async () => {
       try {
-        setErr("");
-        setLoading(true);
+        const resultState = await tryFetchResult();
+        if (!alive) return;
+
+        if (resultState.done) {
+          return;
+        }
+
         setPhase("ANALYZING");
-        setAnalysisStatus("PENDING");
+        setLoading(true);
 
-        await interviewApi.startAnalysis(sessionId);
-
-        const poll = async () => {
-          const res = await interviewApi.getAnalysisStatus(sessionId);
-          const st = res?.data?.status ?? "PENDING";
-          if (!alive) return;
-
-          setAnalysisStatus(st);
-
-          if (st === "DONE") {
-            setPhase("DONE_SPLASH");
-            setLoading(true);
-
-            if (doneTimerRef.current) window.clearTimeout(doneTimerRef.current);
-
-            doneTimerRef.current = window.setTimeout(() => {
-              if (!alive) return;
-              setPhase("FETCH_RESULT");
-            }, 1000);
-            return;
-          }
-
-          if (st === "FAILED") {
-            setErr("분석에 실패했습니다.");
-            setLoading(false);
-            return;
-          }
-
-          setPhase("ANALYZING");
-          setLoading(true);
-          pollTimer = window.setTimeout(poll, 1200);
-        };
-
-        await poll();
+        pollTimer = window.setTimeout(pollResultUntilDone, 1200);
       } catch (e) {
         if (!alive) return;
-        setErr(e?.response?.data?.message ?? e?.message ?? "분석 요청 실패");
+
+        const status = e?.response?.status;
+        const message =
+          e?.response?.data?.message || e?.message || "결과 조회 실패";
+
+        // 202 / 404 류는 아직 결과 준비 전으로 보고 계속 진행
+        if (status === 202 || status === 404) {
+          setPhase("ANALYZING");
+          setLoading(true);
+
+          if (!analyzeRequested) {
+            analyzeRequested = true;
+            try {
+              await interviewApi.startAnalysis(sessionId);
+            } catch (analyzeError) {
+              if (!alive) return;
+              setErr(
+                analyzeError?.response?.data?.message ||
+                  analyzeError?.message ||
+                  "분석 요청 실패",
+              );
+              setLoading(false);
+              return;
+            }
+          }
+
+          pollTimer = window.setTimeout(pollResultUntilDone, 1200);
+          return;
+        }
+
+        setErr(message);
         setLoading(false);
       }
     };
 
-    startAndPoll();
+    const bootstrap = async () => {
+      try {
+        setErr("");
+        setLoading(true);
+        setAnalysisStatus("PENDING");
 
-    return () => {
-      alive = false;
-      if (pollTimer) window.clearTimeout(pollTimer);
-      if (doneTimerRef.current) window.clearTimeout(doneTimerRef.current);
-    };
-  }, [sessionId, mode]);
+        if (evaluationData) {
+          applyResultData(evaluationData);
+          setLoading(false);
+          return;
+        }
 
-  useEffect(() => {
-    let alive = true;
+        if (!sessionId) {
+          setErr(
+            "sessionId가 없습니다. 업로드 후 이동하거나 ?sessionId= 로 접근하세요.",
+          );
+          setLoading(false);
+          return;
+        }
 
-    if (evaluationData) {
-      setData(evaluationData);
-      setTurns(evaluationData?.turns ?? []);
-      setLoading(false);
-      setPhase("SHOW_RESULT");
-      return () => {
-        alive = false;
-      };
-    }
-
-    if (!sessionId) {
-      setLoading(false);
-      setErr(
-        "sessionId가 없습니다. 업로드 후 이동하거나 ?sessionId= 로 접근하세요.",
-      );
-      return () => {
-        alive = false;
-      };
-    }
-
-    const shouldFetchResult =
-      mode === "result" || (mode === "analyze" && phase === "FETCH_RESULT");
-
-    if (!shouldFetchResult) {
-      return () => {
-        alive = false;
-      };
-    }
-
-    setLoading(true);
-    setErr("");
-
-    interviewApi
-      .getResult(sessionId)
-      .then((res) => {
+        await pollResultUntilDone();
+      } catch (e) {
         if (!alive) return;
-        setData(res ?? null);
-        setTurns(res?.turns ?? []);
-        setPhase("SHOW_RESULT");
-      })
-      .catch((e) => {
-        if (!alive) return;
-        setErr(e?.response?.data?.message || e?.message || "결과 조회 실패");
-      })
-      .finally(() => {
-        if (!alive) return;
+        setErr(e?.response?.data?.message ?? e?.message ?? "결과 조회 실패");
         setLoading(false);
-      });
+      }
+    };
+
+    bootstrap();
 
     return () => {
       alive = false;
+      clearTimers();
     };
-  }, [sessionId, evaluationData, phase, mode]);
+  }, [sessionId, evaluationData]);
 
   useEffect(() => {
     if (!sessionId || !data) return;
@@ -355,32 +359,42 @@ const Evaluation = ({ evaluationData }) => {
   }, [activeTab, sessionId, data]);
 
   /* ── Guards ── */
-  if (loading && mode === "analyze") {
-    if (phase === "DONE_SPLASH") {
-      return <EvaluationLoading analysisStatus="DONE" />;
-    }
+  // 결과 조회 시작 직후(BOOTSTRAP/FETCH_RESULT)에는 화면을 비워두고 기다림
+  if (loading && !data && phase !== "ANALYZING") {
+    return null;
+  }
 
+  // 실제 분석 진행 중일 때만 로딩 UI 표시
+  if (loading && phase === "ANALYZING") {
     return <EvaluationLoading analysisStatus={analysisStatus} />;
   }
-  if (err)
+
+  // 에러 발생
+  if (err) {
     return (
       <div
         className="evaluation-container"
-        style={{ paddingTop: "4rem", textAlign: "center", color: "#ef4444" }}
+        style={{
+          paddingTop: "4rem",
+          textAlign: "center",
+          color: "#ef4444",
+        }}
       >
         ⚠️ {err}
       </div>
     );
-    
-  if (!data) {
-    if (mode === "result" && loading) {
-      return null;
-    }
+  }
 
+  // 결과가 없는 경우
+  if (!data) {
     return (
       <div
         className="evaluation-container"
-        style={{ paddingTop: "4rem", textAlign: "center", color: "#94a3b8" }}
+        style={{
+          paddingTop: "4rem",
+          textAlign: "center",
+          color: "#94a3b8",
+        }}
       >
         데이터가 없습니다.
       </div>
