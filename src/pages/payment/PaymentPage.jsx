@@ -368,7 +368,7 @@ function CompareModal({
       }}
     >
       <div
-        className="w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl"
+        className="w-full max-w-2xl rounded-3xl overflow-hidden shadow-2xl"
         style={{
           background: "white",
           border: "1px solid rgba(99,120,247,0.12)",
@@ -510,18 +510,36 @@ function CompareModal({
               ) : (
                 <>
                   <div
-                    className="rounded-2xl overflow-hidden"
+                    className="rounded-2xl overflow-hidden mx-auto"
                     style={{
                       border: "1px solid rgba(99,120,247,0.12)",
                       background: "#f8faff",
+                      width: "760px",
+                      maxWidth: "100%",
+                      height: "420px",
+                      display: "flex",
+                      justifyContent: "center",
                     }}
                   >
-                    <iframe
-                      src={redirectUrl}
-                      title="카카오페이 결제"
-                      className="w-full"
-                      style={{ height: "620px", border: "none" }}
-                    />
+                    <div
+                      style={{
+                        width: "950px",
+                        height: "560px",
+                        transform: "translateX(0px) scale(0.8)",
+                        transformOrigin: "top center",
+                      }}
+                    >
+                      <iframe
+                        src={redirectUrl}
+                        title="카카오페이 결제"
+                        style={{
+                          width: "950px",
+                          height: "560px",
+                          border: "none",
+                          display: "block",
+                        }}
+                      />
+                    </div>
                   </div>
 
                   <p className="text-xs text-center mt-4" style={{ color: "#9BA8C8" }}>
