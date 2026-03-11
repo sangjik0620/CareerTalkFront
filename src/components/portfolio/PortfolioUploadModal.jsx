@@ -37,25 +37,6 @@ const PortfolioUploadModal = ({ isOpen, onClose }) => {
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (isOpen) {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("로그인이 필요한 서비스입니다. 로그인 페이지로 이동합니다.");
-        onClose();
-        navigate("/login");
-        return;
-      }
-
-      setSelectedFile(null);
-      setJobCategory("");
-      setDetailedPosition("");
-      setIsDragging(false);
-      setIsAnalyzing(false);
-      setViewStep("input");
-    }
-  }, [isOpen, navigate, onClose]);
-
   if (!isOpen) return null;
 
   const validateAndSetFile = (file) => {
