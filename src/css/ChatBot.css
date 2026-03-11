@@ -193,36 +193,27 @@
 }
 
 .chatbot-send-button {
-  width: 44px; /* 동그란 버튼으로 변경 */
-  height: 44px;
-  border-radius: 50%;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 10px 14px;
   border: none;
-  background: linear-gradient(135deg, #385ee2, #4c48dd);
+  border-radius: 10px;
+  background: linear-gradient(to right, #385ee2, #4c48dd);
   color: #fff;
-  font-weight: bold;
-  font-size: 13px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 10px rgba(76, 72, 221, 0.25);
-  flex-shrink: 0;
 }
 
 .chatbot-send-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(76, 72, 221, 0.35);
+  transform: translateY(-1px);
+  filter: brightness(1.05);
 }
 
 .chatbot-send-button:active {
-  transform: scale(0.95);
+  transform: scale(0.97);
 }
 
 .chatbot-send-button:disabled,
 .chatbot-input:disabled {
-  opacity: 0.6;
+  opacity: 0.7;
   cursor: not-allowed;
   transform: none;
 }
