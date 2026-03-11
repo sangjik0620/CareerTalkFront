@@ -150,6 +150,13 @@ const Evaluation = ({ evaluationData }) => {
     return fromState ?? (fromQuery ? Number(fromQuery) : null);
   }, [location?.state, searchParams]);
 
+  // mode 정보
+  const mode = useMemo(() => {
+    const fromState = location?.state?.mode;
+    const fromQuery = searchParams.get("mode");
+    return fromState ?? fromQuery ?? "result";
+  }, [location?.state, searchParams]);
+
   // pdf 다운로드 함수
   const handleExportPdf = useReactToPrint({
     contentRef: reportPrintRef, // ✅ 핵심 (ref 자체 전달)
@@ -184,7 +191,8 @@ const Evaluation = ({ evaluationData }) => {
   };
 
   useEffect(() => {
-    if (!sessionId) return;
+    if (!sessionId || mode !== "analyze") return;
+
     let alive = true;
     let pollTimer = null;
 
@@ -201,23 +209,28 @@ const Evaluation = ({ evaluationData }) => {
           const res = await interviewApi.getAnalysisStatus(sessionId);
           const st = res?.data?.status ?? "PENDING";
           if (!alive) return;
+
           setAnalysisStatus(st);
 
           if (st === "DONE") {
             setPhase("DONE_SPLASH");
             setLoading(true);
+
             if (doneTimerRef.current) window.clearTimeout(doneTimerRef.current);
+
             doneTimerRef.current = window.setTimeout(() => {
               if (!alive) return;
               setPhase("FETCH_RESULT");
             }, 1000);
             return;
           }
+
           if (st === "FAILED") {
             setErr("분석에 실패했습니다.");
             setLoading(false);
             return;
           }
+
           setPhase("ANALYZING");
           setLoading(true);
           pollTimer = window.setTimeout(poll, 1200);
@@ -232,18 +245,20 @@ const Evaluation = ({ evaluationData }) => {
     };
 
     startAndPoll();
+
     return () => {
       alive = false;
       if (pollTimer) window.clearTimeout(pollTimer);
       if (doneTimerRef.current) window.clearTimeout(doneTimerRef.current);
     };
-  }, [sessionId]);
+  }, [sessionId, mode]);
 
   useEffect(() => {
     let alive = true;
 
     if (evaluationData) {
       setData(evaluationData);
+      setTurns(evaluationData?.turns ?? []);
       setLoading(false);
       setPhase("SHOW_RESULT");
       return () => {
@@ -261,10 +276,14 @@ const Evaluation = ({ evaluationData }) => {
       };
     }
 
-    if (phase !== "FETCH_RESULT")
+    const shouldFetchResult =
+      mode === "result" || (mode === "analyze" && phase === "FETCH_RESULT");
+
+    if (!shouldFetchResult) {
       return () => {
         alive = false;
       };
+    }
 
     setLoading(true);
     setErr("");
@@ -289,7 +308,7 @@ const Evaluation = ({ evaluationData }) => {
     return () => {
       alive = false;
     };
-  }, [sessionId, evaluationData, phase]);
+  }, [sessionId, evaluationData, phase, mode]);
 
   useEffect(() => {
     if (!sessionId || !data) return;
@@ -336,12 +355,13 @@ const Evaluation = ({ evaluationData }) => {
   }, [activeTab, sessionId, data]);
 
   /* ── Guards ── */
-  if (loading) {
-    if (phase === "DONE_SPLASH")
+  if (loading && mode === "analyze") {
+    if (phase === "DONE_SPLASH") {
       return <EvaluationLoading analysisStatus="DONE" />;
+    }
+
     return <EvaluationLoading analysisStatus={analysisStatus} />;
   }
-
   if (err)
     return (
       <div
@@ -351,7 +371,12 @@ const Evaluation = ({ evaluationData }) => {
         ⚠️ {err}
       </div>
     );
-  if (!data)
+    
+  if (!data) {
+    if (mode === "result" && loading) {
+      return null;
+    }
+
     return (
       <div
         className="evaluation-container"
@@ -360,6 +385,7 @@ const Evaluation = ({ evaluationData }) => {
         데이터가 없습니다.
       </div>
     );
+  }
 
   return (
     <>
