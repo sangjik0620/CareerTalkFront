@@ -329,6 +329,19 @@ const MyPage = () => {
           </div>
         </div>
 
+    const handleResultClick = (id, category) => {
+        if (category === 'analysis') {
+            if (subTab === '이력서') {
+                navigate(`/resume/result/${id}`);
+            } else if (subTab === '자기소개서') {
+                navigate(`/analysis/result/${id}`);
+            } else if (subTab === '포트폴리오') {
+                navigate(`/portfolio/result/${id}`);
+            }
+        } else if (category === 'interview') {
+            navigate(`/interview/result/${id}`);
+        }
+    };
         <div className="mb-12">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-2xl font-semibold text-gray-900">
