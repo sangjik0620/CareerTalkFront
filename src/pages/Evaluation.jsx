@@ -1,6 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "../css/Evaluation.css";
-import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
+import {
+Navigate,
+  useLocation,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 import { interviewApi } from "../lib/api/interviewApi";
 import EvaluationReport from "./evaluation/EvaluationReport";
 import { useReactToPrint } from "react-to-print";
@@ -162,6 +167,7 @@ const Evaluation = ({ evaluationData }) => {
 
   const [turns, setTurns] = useState([]);
   const navigate = useNavigate();
+  const [showTopButton, setShowTopButton] = useState(false);
 
   const { sessionId: paramSessionId } = useParams();
 
@@ -414,6 +420,22 @@ const Evaluation = ({ evaluationData }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, sessionId, data]);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setShowTopButton(true);
+      } else {
+        setShowTopButton(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
   /* ── Guards ── */
   if (loading && !data && phase !== "ANALYZING") {
     return null;
@@ -452,15 +474,14 @@ const Evaluation = ({ evaluationData }) => {
       </div>
     );
   }
-
   return (
     <>
       <div className="evaluation-container">
         <div className="evaluation-header">
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <button className="back-btn" onClick={() => navigate(-1)}>
-            ← 뒤로
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button className="back-btn" onClick={() => navigate(-1)}>
+              ← 뒤로
+            </button>
           </div>
           <h1>면접 평가 결과</h1>
           <div className="header-actions">
@@ -526,6 +547,14 @@ const Evaluation = ({ evaluationData }) => {
           </div>
         </div>
       </div>
+{showTopButton && (
+  <button
+    className="scroll-top-btn"
+    onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+  >
+    ↑
+  </button>
+)}
     </>
   );
 };
