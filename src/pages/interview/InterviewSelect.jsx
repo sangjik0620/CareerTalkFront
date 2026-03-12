@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import PortfolioUploadModal from "../../components/portfolio/PortfolioUploadModal";
@@ -75,6 +75,32 @@ const FILE_META = {
     emptyBtnBg: "bg-emerald-500 hover:bg-emerald-600",
   },
 };
+
+// ─────────────────────────────────────────────
+// ✅ 신규: 직군 목록
+const JOB_CATEGORIES = [
+  "기획∙전략",
+  "마케팅∙홍보∙조사",
+  "회계∙세무∙재무",
+  "인사∙노무∙HRD",
+  "총무∙법무∙사무",
+  "IT개발∙데이터",
+  "디자인",
+  "영업∙판매∙무역",
+  "고객상담∙TM",
+  "구매∙자재∙물류",
+  "상품기획∙MD",
+  "운전∙운송∙배송",
+  "서비스",
+  "생산",
+  "건설∙건축",
+  "의료",
+  "연구∙R&D",
+  "교육",
+  "미디어∙문화∙스포츠",
+  "금융∙보험",
+  "공공∙복지",
+];
 
 // ─────────────────────────────────────────────
 const fetchUserAnalyses = async () => {
@@ -413,88 +439,124 @@ function EstimatedTimeCard({ questionCount }) {
   );
 }
 
-// ─────────────────────────────────────────────
-const CHECKLIST_ITEMS = [
-  { id: "mic", icon: "🎙️", text: "마이크 상태를 확인했어요" },
-  { id: "quiet", icon: "🔇", text: "조용한 환경이 준비됐어요" },
-];
+// ✅ 직군 선택 카드 — 드롭다운 방식
+function JobCategoryCard({ value, onChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
-function PreChecklistCard() {
-  const [checked, setChecked] = useState({});
-  const toggle = (id) => setChecked((p) => ({ ...p, [id]: !p[id] }));
-  const doneCount = Object.values(checked).filter(Boolean).length;
-  const allDone = doneCount === CHECKLIST_ITEMS.length;
+  // 바깥 클릭 시 닫기
+  useEffect(() => {
+    const handler = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleSelect = (cat) => {
+    onChange(cat);
+    setIsOpen(false);
+  };
 
   return (
-    <div className="flex-1 bg-white/70 backdrop-blur-sm rounded-2xl p-5 border border-gray-200/80 shadow-sm hover:shadow-md transition-all duration-300">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-xl flex items-center justify-center text-sm shadow-sm">
-            ✅
-          </div>
-          <div>
-            <p className="text-sm font-bold text-gray-800">
-              시작 전 체크리스트
-            </p>
-            <p className="text-xs text-gray-400">
-              {doneCount}/{CHECKLIST_ITEMS.length} 완료
-            </p>
-          </div>
+    <div className="flex-1 bg-white/70 backdrop-blur-sm rounded-2xl p-5 border border-gray-200/80 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col">
+      {/* 헤더 */}
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-xl flex items-center justify-center text-sm shadow-sm">
+          🏢
         </div>
-        {allDone && (
-          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-600 border border-emerald-200 animate-bounce-subtle">
-            준비 완료! 🎉
+        <div>
+          <p className="text-sm font-bold text-gray-800">직군 선택</p>
+          <p className="text-xs text-gray-400">면접 질문 방향에 반영됩니다</p>
+        </div>
+        {value && (
+          <span className="ml-auto text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-100 text-indigo-600 border border-indigo-200 animate-bounce-subtle shrink-0">
+            선택됨 ✓
           </span>
         )}
       </div>
 
-      <div className="h-1.5 bg-gray-100 rounded-full mb-4 overflow-hidden">
-        <div
-          className="h-full bg-gradient-to-r from-emerald-400 to-teal-400 rounded-full transition-all duration-500"
-          style={{ width: `${(doneCount / CHECKLIST_ITEMS.length) * 100}%` }}
-        />
-      </div>
-
-      <div className="space-y-2">
-        {CHECKLIST_ITEMS.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => toggle(item.id)}
-            className={[
-              "w-full flex items-center gap-3 p-2.5 rounded-xl border transition-all duration-200",
-              "hover:scale-[1.01] active:scale-[0.99] text-left",
-              checked[item.id]
-                ? "bg-emerald-50 border-emerald-200"
-                : "bg-gray-50/80 border-gray-200/60 hover:border-gray-300",
-            ].join(" ")}
+      {/* 드롭다운 트리거 */}
+      <div ref={dropdownRef} className="relative">
+        <button
+          type="button"
+          onClick={() => setIsOpen((v) => !v)}
+          className={[
+            "w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 font-semibold text-sm transition-all duration-200",
+            "hover:shadow-md active:scale-[0.99]",
+            isOpen
+              ? "border-indigo-400 bg-indigo-50 text-indigo-700 shadow-md"
+              : value
+                ? "border-indigo-300 bg-white text-gray-900"
+                : "border-gray-200 bg-white text-gray-400 hover:border-indigo-300 hover:text-indigo-500",
+          ].join(" ")}
+        >
+          <span className="flex items-center gap-2 truncate">
+            {value ? (
+              <>
+                <span className="w-2 h-2 rounded-full bg-indigo-500 shrink-0" />
+                {value}
+              </>
+            ) : (
+              <>
+                <span className="w-2 h-2 rounded-full bg-gray-300 shrink-0" />
+                직군을 선택하세요
+              </>
+            )}
+          </span>
+          {/* 화살표 아이콘 */}
+          <svg
+            className={`w-4 h-4 shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180 text-indigo-500" : "text-gray-400"}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2.5}
           >
-            <span
-              className={[
-                "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-300",
-                checked[item.id]
-                  ? "bg-emerald-500 border-emerald-500 text-white text-[10px]"
-                  : "border-gray-300 bg-white",
-              ].join(" ")}
-            >
-              {checked[item.id] && "✓"}
-            </span>
-            <span className="text-sm">{item.icon}</span>
-            <span
-              className={`text-xs font-medium flex-1 ${
-                checked[item.id]
-                  ? "text-emerald-700 line-through"
-                  : "text-gray-600"
-              }`}
-            >
-              {item.text}
-            </span>
-          </button>
-        ))}
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+
+        {/* 드롭다운 목록 */}
+        {isOpen && (
+          <div className="absolute top-full left-0 right-0 z-50 bg-white border border-indigo-100 rounded-2xl shadow-2xl overflow-hidden animate-dropdown-open">
+            <div className="max-h-56 overflow-y-auto custom-scroll py-1.5">
+              {JOB_CATEGORIES.map((cat) => {
+                const isSelected = value === cat;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => handleSelect(cat)}
+                    className={[
+                      "w-full text-left px-4 py-2.5 text-sm font-medium transition-all duration-150",
+                      "flex items-center gap-2.5",
+                      isSelected
+                        ? "bg-gradient-to-r from-indigo-500 to-violet-500 text-white font-bold"
+                        : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-700",
+                    ].join(" ")}
+                  >
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                        isSelected ? "bg-white" : "bg-indigo-300"
+                      }`}
+                    />
+                    {cat}
+                    {isSelected && (
+                      <span className="ml-auto text-white text-xs">✓</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
 
 // ─────────────────────────────────────────────
 export default function InterviewSelect() {
@@ -521,7 +583,12 @@ export default function InterviewSelect() {
     portfolio: null,
   });
 
-  const [settings, setSettings] = useState({ questionCount: "5" });
+  // ✅ jobCategory 필드 추가
+  const [settings, setSettings] = useState({
+    questionCount: "5",
+    jobCategory: "",
+  });
+
   const [isDeviceTestOpen, setIsDeviceTestOpen] = useState(false);
 
   const openAnalyzeModal = (fileKey) => {
@@ -567,8 +634,10 @@ export default function InterviewSelect() {
   );
 
   const hasSelection = useMemo(
-    () => Object.values(selectedIds).some((id) => id !== null),
-    [selectedIds],
+  () =>
+    Object.values(selectedIds).some((id) => id !== null) &&
+    !!settings.jobCategory,
+    [selectedIds, settings.jobCategory],
   );
 
   const selectedSummary = useMemo(() => {
@@ -700,7 +769,7 @@ export default function InterviewSelect() {
       JSON.stringify({
         selectedAnalyses: selectedIds,
         selectedTargets: targets,
-        settings,
+        settings,                   // ✅ jobCategory 포함됨
         questions: finalQuestions,
       }),
     );
@@ -895,14 +964,15 @@ export default function InterviewSelect() {
           </h3>
 
           <div className="flex flex-col md:flex-row gap-5">
+            {/* 질문 개수 */}
             <div className="flex-1 bg-gradient-to-br from-blue-50/80 to-indigo-50/80 rounded-2xl p-5 border border-blue-100/80">
               <p className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
                 <span className="text-blue-500">📊</span> 질문 개수
               </p>
               <div className="flex gap-3">
                 {[
-                  { value: "5", label: "5개", sub: "약 10분", icon: "⚡" },
-                  { value: "10", label: "10개", sub: "약 20분", icon: "🎯" },
+                  { value: "5", label: "5개", sub: "약 10분"},
+                  { value: "10", label: "10개", sub: "약 20분"},
                 ].map((opt) => (
                   <button
                     key={opt.value}
@@ -937,22 +1007,52 @@ export default function InterviewSelect() {
               </p>
             </div>
 
+            {/* 예상 시간 */}
             <EstimatedTimeCard questionCount={settings.questionCount} />
-            <PreChecklistCard />
+
+            {/* ✅ 직군 선택 카드 */}
+            <JobCategoryCard
+              value={settings.jobCategory}
+              onChange={(cat) =>
+                setSettings((p) => ({ ...p, jobCategory: cat }))
+              }
+            />
           </div>
         </div>
 
         <div className="flex flex-col items-center gap-4">
-          {!hasSelection ? (
-            <div className="inline-flex items-center gap-2 bg-red-50 border border-red-200 text-red-500 px-5 py-2.5 rounded-full text-sm font-semibold">
-              <span>⚠️</span> 최소 1개 이상의 분석 자료를 선택해주세요
-            </div>
-          ) : (
-            <p className="text-sm text-gray-500 flex items-center gap-2">
-              <span className="text-emerald-500 font-bold">✓</span>
-              준비 완료! 면접을 시작할 수 있습니다
-            </p>
-          )}
+          {(() => {
+            const noDoc = !Object.values(selectedIds).some((id) => id !== null);
+            const noJob = !settings.jobCategory;
+
+            if (noDoc && noJob) {
+              return (
+                <div className="inline-flex items-center gap-2 bg-red-50 border border-red-200 text-red-500 px-5 py-2.5 rounded-full text-sm font-semibold">
+                  <span>⚠️</span> 분석 자료와 직군을 선택해주세요
+                </div>
+              );
+            }
+            if (noDoc) {
+              return (
+                <div className="inline-flex items-center gap-2 bg-red-50 border border-red-200 text-red-500 px-5 py-2.5 rounded-full text-sm font-semibold">
+                  <span>⚠️</span> 최소 1개 이상의 분석 자료를 선택해주세요
+                </div>
+              );
+            }
+            if (noJob) {
+              return (
+                <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-600 px-5 py-2.5 rounded-full text-sm font-semibold">
+                  <span>⚠️</span> 지원 직군을 선택해주세요
+                </div>
+              );
+            }
+            return (
+              <p className="text-sm text-gray-500 flex items-center gap-2">
+                <span className="text-emerald-500 font-bold">✓</span>
+                준비 완료! 면접을 시작할 수 있습니다
+              </p>
+            );
+          })()}
 
           <button
             onClick={startInterview}
@@ -1030,6 +1130,17 @@ export default function InterviewSelect() {
           from { opacity:0; transform:translateY(16px); }
           to { opacity:1; transform:translateY(0); }
         }
+
+        // 기존 style 태그 안에 아래 내용 추가
+        @keyframes dropdownOpen {
+          from { opacity: 0; transform: translateY(-8px) scaleY(0.95); }
+          to   { opacity: 1; transform: translateY(0)   scaleY(1);    }
+        }
+        .animate-dropdown-open {
+          animation: dropdownOpen 0.18s ease-out forwards;
+          transform-origin: top;
+        }
+
 
         .animate-bounce-subtle { animation: bounce-subtle 2s ease-in-out infinite; }
         .animate-empty-float { animation: empty-float 3.5s ease-in-out infinite; }
