@@ -249,6 +249,31 @@ const MyPage = () => {
     }
   };
 
+  const handleInterviewDelete = async (id) => {
+  const ok = window.confirm(
+    "이 면접 기록을 삭제할까요?\n삭제 후에는 복구할 수 없습니다.",
+  );
+  if (!ok) return;
+
+  try {
+    const token = sessionStorage.getItem("token");
+
+    await axios.delete(`http://localhost:8080/api/interview/sessions/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    setInterviewsData((prev) => prev.filter((item) => item.id !== id));
+    alert("면접 기록이 삭제되었습니다.");
+  } catch (error) {
+    console.error("면접 기록 삭제 실패", error);
+    alert(
+      error.response?.data?.message || "면접 기록 삭제 중 오류가 발생했습니다.",
+    );
+  }
+};
+
   if (loading) {
     return (
       <div className="text-center mt-20">데이터를 불러오는 중입니다...</div>
@@ -556,6 +581,7 @@ const MyPage = () => {
                       duration={item.duration}
                       interview
                       onClick={() => handleResultClick(item.id, "interview")}
+                      onDelete={() => handleInterviewDelete(item.id)}
                       buttonClass="group-hover:bg-purple-600 group-hover:text-white"
                     />
                   ))
