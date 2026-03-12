@@ -2,23 +2,14 @@ import React from "react";
 import EmptyBlock from "../components/EmptyBlock";
 import { asArray, clamp100, hasItems } from "../utils/evalUtils";
 
-const TECH_LABELS = {
-  frontEnd: "프론트엔드",
-  backEnd: "백엔드",
-  database: "데이터베이스",
-  deployment: "배포/운영",
-};
-
-const SOFT_LABELS = {
-  communication: "커뮤니케이션",
-  teamwork: "팀워크",
-  leadership: "리더십",
-  presentation: "발표력",
-};
-
 const PRIORITY_TEXT = { high: "높음", medium: "보통", low: "낮음" };
 
-function CompetencyBlock({ title, data, labelMap }) {
+function normalizeDetails(details) {
+  if (!details || typeof details !== "object") return [];
+  return Object.entries(details).filter(([key]) => String(key).trim() !== "");
+}
+
+function CompetencyBlock({ title, data }) {
   if (!data) {
     return (
       <div className="competency-card">
@@ -29,7 +20,7 @@ function CompetencyBlock({ title, data, labelMap }) {
 
   const current = clamp100(data?.current);
   const target = clamp100(data?.target);
-  const details = Object.entries(data?.details ?? {});
+  const details = normalizeDetails(data?.details);
 
   return (
     <div className="competency-card">
@@ -55,11 +46,11 @@ function CompetencyBlock({ title, data, labelMap }) {
 
       <div className="competency-details">
         {hasItems(details) ? (
-          details.map(([key, value]) => {
+          details.map(([label, value]) => {
             const v = clamp100(value);
             return (
-              <div key={key} className="detail-item">
-                <span className="detail-label">{labelMap[key] ?? key}</span>
+              <div key={label} className="detail-item">
+                <span className="detail-label">{label}</span>
                 <div className="detail-bar">
                   <div className="detail-fill" style={{ width: `${v}%` }} />
                 </div>
@@ -78,6 +69,10 @@ function CompetencyBlock({ title, data, labelMap }) {
 export default function CompetencyTab({ data }) {
   const evaluation = data?.evaluation;
   const comp = evaluation?.competency;
+  const jobCategory =
+    evaluation?.interviewInfo?.jobCategory ??
+    evaluation?.interviewInfo?.position ??
+    "";
 
   if (!comp) {
     return (
@@ -93,20 +88,23 @@ export default function CompetencyTab({ data }) {
     <div className="tab-content">
       <h2>역량 분석 및 개선 방안</h2>
 
+      {jobCategory ? (
+        <div className="muted" style={{ marginBottom: 12 }}>
+          기준 직군: {jobCategory}
+        </div>
+      ) : null}
+
       <div className="competency-overview">
         <CompetencyBlock
-          title="💻 기술 역량"
+          title="🧩 직무 역량"
           data={comp?.technical}
-          labelMap={TECH_LABELS}
         />
         <CompetencyBlock
-          title="🤝 소프트 스킬"
+          title="🤝 공통 역량"
           data={comp?.soft}
-          labelMap={SOFT_LABELS}
         />
       </div>
 
-      {/* ── Improvements ── */}
       {Array.isArray(improvements) ? (
         <div className="improvements-section">
           <h3>🎯 개선 계획</h3>
