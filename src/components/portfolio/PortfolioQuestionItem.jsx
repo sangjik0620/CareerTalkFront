@@ -7,7 +7,6 @@ const PortfolioQuestionItem = ({ index, question, intent }) => {
     <div className="border border-[#0F3CA01F] rounded-2xl bg-gradient-to-b from-white to-[#f6f9ff] shadow-[0_10px_26px_rgba(10,30,80,0.06)] overflow-hidden flex flex-col h-fit">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        // ⭐ items-start 대신 items-center를 주고 패딩을 조절하여 딱 맞게 정렬!
         className="w-full text-left py-4 px-5 flex gap-4 items-center hover:bg-white/50 transition-colors"
       >
         <div className="w-10 h-10 rounded-xl flex items-center justify-center font-black text-[#1f55ff] border border-[#1f55ff40] bg-white shrink-0 shadow-sm">
