@@ -116,7 +116,7 @@ export default function SummaryTab({ data }) {
           <div className="interview-info summaryInfoCompact">
             <span>📅 {info?.date ?? "—"}</span>
             <span>⏱️ {info?.duration ?? "—"}</span>
-            <span>💼 {info?.position ?? "—"}</span>
+            <span>💼 {info?.title ?? "—"}</span>
           </div>
         </div>
         <div className="summaryTopRight">
