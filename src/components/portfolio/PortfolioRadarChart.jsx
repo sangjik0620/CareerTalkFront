@@ -23,11 +23,9 @@ const PortfolioRadarChart = ({ data }) => {
   return (
     <div className="w-full h-full flex items-center justify-center">
       <ResponsiveContainer width="100%" height="100%">
-        {/* ⭐ outerRadius를 80% -> 60% 로 대폭 줄여서 글자가 절대 안 짤리게 수정했습니다! ⭐ */}
         <RadarChart cx="50%" cy="50%" outerRadius="60%" data={chartData}>
           <PolarGrid stroke="#e5e7eb" />
 
-          {/* ⭐ 좁은 공간에 맞게 글자 크기를 13 -> 11.5 로 줄였습니다. */}
           <PolarAngleAxis
             dataKey="subject"
             tick={{ fill: "#4B5563", fontSize: 11.5, fontWeight: 700 }}
