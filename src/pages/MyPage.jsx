@@ -206,7 +206,7 @@ const MyPage = () => {
     }
   };
 
-  // 💡 [추가됨] 개별 분석 기록 삭제 로직
+  // 개별 분석 기록 삭제 로직
   const handleDeleteAnalysis = async (id) => {
     if (
       !window.confirm(
@@ -250,29 +250,30 @@ const MyPage = () => {
   };
 
   const handleInterviewDelete = async (id) => {
-  const ok = window.confirm(
-    "이 면접 기록을 삭제할까요?\n삭제 후에는 복구할 수 없습니다.",
-  );
-  if (!ok) return;
-
-  try {
-    const token = sessionStorage.getItem("token");
-
-    await axios.delete(`http://localhost:8080/api/interview/sessions/${id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    setInterviewsData((prev) => prev.filter((item) => item.id !== id));
-    alert("면접 기록이 삭제되었습니다.");
-  } catch (error) {
-    console.error("면접 기록 삭제 실패", error);
-    alert(
-      error.response?.data?.message || "면접 기록 삭제 중 오류가 발생했습니다.",
+    const ok = window.confirm(
+      "이 면접 기록을 삭제할까요?\n삭제 후에는 복구할 수 없습니다.",
     );
-  }
-};
+    if (!ok) return;
+
+    try {
+      const token = sessionStorage.getItem("token");
+
+      await axios.delete(`http://localhost:8080/api/interview/sessions/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setInterviewsData((prev) => prev.filter((item) => item.id !== id));
+      alert("면접 기록이 삭제되었습니다.");
+    } catch (error) {
+      console.error("면접 기록 삭제 실패", error);
+      alert(
+        error.response?.data?.message ||
+          "면접 기록 삭제 중 오류가 발생했습니다.",
+      );
+    }
+  };
 
   if (loading) {
     return (
@@ -682,7 +683,7 @@ const MyPage = () => {
   );
 };
 
-// 💡 [수정됨] ResultCard 컴포넌트에 삭제 버튼 UI 추가
+// ResultCard 컴포넌트에 삭제 버튼 UI 추가
 function ResultCard({
   badge,
   badgeClass,
@@ -701,11 +702,11 @@ function ResultCard({
       className="relative group border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-blue-200 transition-all bg-white cursor-pointer"
       onClick={onClick}
     >
-      {/* 💡 삭제 버튼 로직 (onDelete가 전달되었을 때만 렌더링) */}
+      {/* 삭제 버튼 로직 (onDelete가 전달되었을 때만 렌더링) */}
       {onDelete && (
         <button
           onClick={(e) => {
-            e.stopPropagation(); // 카드 전체 클릭(상세 페이지 이동)을 막아줌
+            e.stopPropagation(); // 카드 전체 클릭을 막아줌
             onDelete();
           }}
           className="absolute top-4 right-4 p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all duration-200"
