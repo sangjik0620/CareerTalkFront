@@ -33,7 +33,7 @@ const MyPage = () => {
   const [errorMsg, setErrorMsg] = useState("");
 
   const [mainTab, setMainTab] = useState("analysis");
-  const [subTab, setSubTab] = useState("이력서");
+  const [subTab, setSubTab] = useState("포트폴리오"); // 기본 탭을 포트폴리오로 두면 테스트하기 편합니다.
 
   const [analysesData, setAnalysesData] = useState({
     이력서: [],
@@ -206,6 +206,49 @@ const MyPage = () => {
     }
   };
 
+  // 💡 [추가됨] 개별 분석 기록 삭제 로직
+  const handleDeleteAnalysis = async (id) => {
+    if (
+      !window.confirm(
+        `정말 이 ${subTab} 분석 기록을 삭제하시겠습니까?\n(원본 파일도 함께 영구 삭제됩니다)`,
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const token = sessionStorage.getItem("token");
+      let apiUrl = "";
+
+      // 현재는 포트폴리오 API만 연결되어 있으므로 분기 처리
+      if (subTab === "포트폴리오") {
+        apiUrl = `http://localhost:8080/api/portfolios/${id}`;
+      } else {
+        alert("현재 포트폴리오 삭제 기능만 지원됩니다.");
+        return;
+        // 나중에 이력서/자소서 백엔드가 완성되면 아래 주석을 풀고 사용하세요!
+        // if (subTab === "이력서") apiUrl = `http://localhost:8080/api/resumes/${id}`;
+        // if (subTab === "자기소개서") apiUrl = `http://localhost:8080/api/cover-letters/${id}`;
+      }
+
+      // 백엔드 삭제 API 호출
+      await axios.delete(apiUrl, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      // 화면에서 즉시 삭제된 데이터 제거 (새로고침 불필요)
+      setAnalysesData((prev) => ({
+        ...prev,
+        [subTab]: prev[subTab].filter((item) => item.id !== id),
+      }));
+
+      alert("성공적으로 삭제되었습니다.");
+    } catch (error) {
+      console.error("삭제 실패:", error);
+      alert("삭제 중 오류가 발생했습니다.");
+    }
+  };
+
   if (loading) {
     return (
       <div className="text-center mt-20">데이터를 불러오는 중입니다...</div>
@@ -222,19 +265,22 @@ const MyPage = () => {
     <div
       className="min-h-screen relative overflow-hidden pt-28 pb-12 px-4 font-sans"
       style={{
-        background: "linear-gradient(135deg, #f0f2ff 0%, #eaf0ff 50%, #f5f0ff 100%)",
+        background:
+          "linear-gradient(135deg, #f0f2ff 0%, #eaf0ff 50%, #f5f0ff 100%)",
       }}
     >
       <div
         className="absolute top-[-120px] right-[-100px] w-[500px] h-[500px] rounded-full pointer-events-none"
         style={{
-          background: "radial-gradient(circle, rgba(99,120,247,0.12) 0%, transparent 70%)",
+          background:
+            "radial-gradient(circle, rgba(99,120,247,0.12) 0%, transparent 70%)",
         }}
       />
       <div
         className="absolute bottom-[-80px] left-[-80px] w-[400px] h-[400px] rounded-full pointer-events-none"
         style={{
-          background: "radial-gradient(circle, rgba(139,100,247,0.10) 0%, transparent 70%)",
+          background:
+            "radial-gradient(circle, rgba(139,100,247,0.10) 0%, transparent 70%)",
         }}
       />
 
@@ -481,6 +527,7 @@ const MyPage = () => {
                       title={item.title}
                       score={item.score}
                       onClick={() => handleResultClick(item.id, "analysis")}
+                      onDelete={() => handleDeleteAnalysis(item.id)} // 💡 삭제 프롭스 전달
                       buttonClass="group-hover:bg-blue-600 group-hover:text-white"
                     />
                   ))
@@ -609,6 +656,7 @@ const MyPage = () => {
   );
 };
 
+// 💡 [수정됨] ResultCard 컴포넌트에 삭제 버튼 UI 추가
 function ResultCard({
   badge,
   badgeClass,
@@ -619,11 +667,45 @@ function ResultCard({
   onClick,
   buttonClass,
   interview = false,
+  onDelete, // 삭제 핸들러 Props 추가
 }) {
   return (
-    <div className="group border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-blue-200 transition-all bg-white">
-      <div className="flex justify-between items-center mb-4">
-        <span className={`text-xs font-bold px-3 py-1 rounded-lg ${badgeClass}`}>
+    // relative 속성을 주어 우측 상단 삭제 버튼 위치 기준점을 잡아줍니다.
+    <div
+      className="relative group border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-blue-200 transition-all bg-white cursor-pointer"
+      onClick={onClick}
+    >
+      {/* 💡 삭제 버튼 로직 (onDelete가 전달되었을 때만 렌더링) */}
+      {onDelete && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation(); // 카드 전체 클릭(상세 페이지 이동)을 막아줌
+            onDelete();
+          }}
+          className="absolute top-4 right-4 p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all duration-200"
+          title="삭제하기"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+            />
+          </svg>
+        </button>
+      )}
+
+      <div className="flex justify-between items-center mb-4 pr-8">
+        <span
+          className={`text-xs font-bold px-3 py-1 rounded-lg ${badgeClass}`}
+        >
           {badge}
         </span>
         <span className="text-xs text-gray-400 font-medium">{date}</span>
@@ -649,7 +731,6 @@ function ResultCard({
         </div>
 
         <button
-          onClick={onClick}
           className={`px-4 py-2 bg-gray-50 text-gray-600 rounded-xl text-sm font-bold transition-colors ${buttonClass}`}
         >
           {interview ? "기록 보기" : "결과 보기"}
