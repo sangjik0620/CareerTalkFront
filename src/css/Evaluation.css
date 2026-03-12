@@ -3201,4 +3201,31 @@
   border: 1px solid rgba(15, 60, 160, 0.15);
   width: auto;
   margin-right: 10px;
-};
+}
+
+.scroll-top-btn {
+  position: fixed !important;
+  right: 24px !important;
+  bottom: 24px !important;
+  width: 48px !important;
+  height: 48px !important;
+  border: none !important;
+  border-radius: 9999px !important;
+  background: #334155 !important;
+  color: #fff !important;
+  font-size: 20px !important;
+  cursor: pointer !important;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15) !important;
+  z-index: 9999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.scroll-top-btn:hover {
+  transform: translateY(-2px);
+}
+
+.test-red-border {
+  border: 5px solid red !important;
+}
