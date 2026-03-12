@@ -71,6 +71,10 @@ export default function InterviewSession() {
     return [];
   }, [interviewData]);
 
+  const jobCategory = useMemo(() => {
+    return String(interviewData?.jobCategory || "").trim();
+  }, [interviewData]);
+
   const totalCount = Number(interviewData?.settings?.questionCount ?? 10);
 
   const questions = useMemo(() => {
@@ -387,6 +391,10 @@ export default function InterviewSession() {
 
     if (selectedTargets.length > 0) {
       fd.append("targetsJson", JSON.stringify(selectedTargets));
+    }
+
+    if (jobPosition) {
+      fd.append("jobPosition", jobPosition);
     }
 
     setIsUploading(true);

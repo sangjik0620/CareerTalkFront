@@ -514,7 +514,11 @@ function JobCategoryCard({ value, onChange }) {
             stroke="currentColor"
             strokeWidth={2.5}
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M19 9l-7 7-7-7"
+            />
           </svg>
         </button>
 
@@ -556,7 +560,6 @@ function JobCategoryCard({ value, onChange }) {
     </div>
   );
 }
-
 
 // ─────────────────────────────────────────────
 export default function InterviewSelect() {
@@ -634,9 +637,9 @@ export default function InterviewSelect() {
   );
 
   const hasSelection = useMemo(
-  () =>
-    Object.values(selectedIds).some((id) => id !== null) &&
-    !!settings.jobCategory,
+    () =>
+      Object.values(selectedIds).some((id) => id !== null) &&
+      !!settings.jobCategory,
     [selectedIds, settings.jobCategory],
   );
 
@@ -715,6 +718,7 @@ export default function InterviewSelect() {
 
     const targets = [];
     const questionSet = new Set();
+    let jobCategory = "";
 
     config.forEach(({ key, targetType }) => {
       const selectedAnalysisId = selectedIds[key];
@@ -724,6 +728,10 @@ export default function InterviewSelect() {
         (item) => item.id === selectedAnalysisId,
       );
       if (!selectedItem) return;
+
+      if (!jobCategory && selectedItem.targetJob) {
+        jobCategory = String(selectedItem.targetJob).trim();
+      }
 
       targets.push({
         targetType,
@@ -740,6 +748,7 @@ export default function InterviewSelect() {
     return {
       targets,
       questions: Array.from(questionSet),
+      jobCategory
     };
   };
 
@@ -757,7 +766,7 @@ export default function InterviewSelect() {
       return;
     }
 
-    const { targets, questions } = buildSelectedTargetsAndQuestions();
+    const { targets, questions, jobCategory } = buildSelectedTargetsAndQuestions();
 
     const finalQuestions = buildFinalQuestions(
       questions,
@@ -769,8 +778,9 @@ export default function InterviewSelect() {
       JSON.stringify({
         selectedAnalyses: selectedIds,
         selectedTargets: targets,
-        settings,                   // ✅ jobCategory 포함됨
+        settings, // ✅ jobCategory 포함됨
         questions: finalQuestions,
+        jobCategory,
       }),
     );
 
@@ -971,8 +981,8 @@ export default function InterviewSelect() {
               </p>
               <div className="flex gap-3">
                 {[
-                  { value: "5", label: "5개", sub: "약 10분"},
-                  { value: "10", label: "10개", sub: "약 20분"},
+                  { value: "5", label: "5개", sub: "약 10분" },
+                  { value: "10", label: "10개", sub: "약 20분" },
                 ].map((opt) => (
                   <button
                     key={opt.value}
