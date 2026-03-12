@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "../css/Evaluation.css";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { interviewApi } from "../lib/api/interviewApi";
 import EvaluationReport from "./evaluation/EvaluationReport";
 import { useReactToPrint } from "react-to-print";
@@ -457,6 +457,11 @@ const Evaluation = ({ evaluationData }) => {
     <>
       <div className="evaluation-container">
         <div className="evaluation-header">
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <button className="back-btn" onClick={() => navigate(-1)}>
+            ← 뒤로
+          </button>
+          </div>
           <h1>면접 평가 결과</h1>
           <div className="header-actions">
             <button
