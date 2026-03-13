@@ -223,9 +223,8 @@ const MyPage = () => {
       // 현재는 포트폴리오 API만 연결되어 있으므로 분기 처리
       if (subTab === "포트폴리오") {
         apiUrl = `http://localhost:8080/api/portfolios/${id}`;
-      } else {
-        alert("현재 포트폴리오 삭제 기능만 지원됩니다.");
-        return;
+      } else if (subTab === "이력서") {
+        apiUrl = `http://localhost:8080/api/resumes/${id}`;
         // 나중에 이력서/자소서 백엔드가 완성되면 아래 주석을 풀고 사용하세요!
         // if (subTab === "이력서") apiUrl = `http://localhost:8080/api/resumes/${id}`;
         // if (subTab === "자기소개서") apiUrl = `http://localhost:8080/api/cover-letters/${id}`;
