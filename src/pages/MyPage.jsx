@@ -210,7 +210,7 @@ const MyPage = () => {
   const handleDeleteAnalysis = async (id) => {
     if (
       !window.confirm(
-        `정말 이 ${subTab} 분석 기록을 삭제하시겠습니까?\n(원본 파일도 함께 영구 삭제됩니다)`,
+        `정말 이 ${subTab} 분석 기록을 삭제하시겠습니까?\n삭제 후에는 복구할 수 없습니다.`,
       )
     ) {
       return;
@@ -220,23 +220,21 @@ const MyPage = () => {
       const token = sessionStorage.getItem("token");
       let apiUrl = "";
 
-      // 현재는 포트폴리오 API만 연결되어 있으므로 분기 처리
       if (subTab === "포트폴리오") {
         apiUrl = `http://localhost:8080/api/portfolios/${id}`;
+      } else if (subTab === "자기소개서") {
+        apiUrl = `http://localhost:8080/api/ci/${id}`;
+      } else if (subTab === "이력서") {
+        apiUrl = `http://localhost:8080/api/resumes/${id}`;
       } else {
-        alert("현재 포트폴리오 삭제 기능만 지원됩니다.");
+        alert("지원하지 않는 분석 타입입니다.");
         return;
-        // 나중에 이력서/자소서 백엔드가 완성되면 아래 주석을 풀고 사용하세요!
-        // if (subTab === "이력서") apiUrl = `http://localhost:8080/api/resumes/${id}`;
-        // if (subTab === "자기소개서") apiUrl = `http://localhost:8080/api/cover-letters/${id}`;
       }
 
-      // 백엔드 삭제 API 호출
       await axios.delete(apiUrl, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // 화면에서 즉시 삭제된 데이터 제거 (새로고침 불필요)
       setAnalysesData((prev) => ({
         ...prev,
         [subTab]: prev[subTab].filter((item) => item.id !== id),
@@ -245,7 +243,7 @@ const MyPage = () => {
       alert("성공적으로 삭제되었습니다.");
     } catch (error) {
       console.error("삭제 실패:", error);
-      alert("삭제 중 오류가 발생했습니다.");
+      alert(error.response?.data || "삭제 중 오류가 발생했습니다.");
     }
   };
 
