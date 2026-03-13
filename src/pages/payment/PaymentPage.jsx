@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { getProducts, getQuota, readyKakaoPay } from "../../lib/api/paymentApi";
 
-// ── 아이콘 ───────────────────────────────────────────────────
+
 const Icons = {
   Sparkles: (cls = "w-4 h-4") => (
     <svg viewBox="0 0 24 24" fill="currentColor" className={cls}>
@@ -64,7 +64,7 @@ const KakaoIcon = () => (
   </svg>
 );
 
-// ════════════════════════════════════════════════════════════
+
 export default function PaymentPage() {
   const navigate = useNavigate();
 
@@ -301,7 +301,6 @@ export default function PaymentPage() {
   );
 }
 
-// ════════════════════════════════════════════════════════════
 function CompareModal({
   product,
   quota,
@@ -465,7 +464,6 @@ function CompareModal({
   );
 }
 
-// ════════════════════════════════════════════════════════════
 function CompareRow({ icon, label, before, added, after }) {
   return (
     <div
@@ -517,7 +515,7 @@ function CompareRow({ icon, label, before, added, after }) {
   );
 }
 
-// ════════════════════════════════════════════════════════════
+
 function ProductCard({ product, onSelect, highlight }) {
   return (
     <div
@@ -626,7 +624,6 @@ function ProductCard({ product, onSelect, highlight }) {
   );
 }
 
-// ── 공통 컴포넌트 ─────────────────────────────────────────────
 function SectionTitle({ icon, label }) {
   return (
     <div className="flex items-center gap-2 mb-5">

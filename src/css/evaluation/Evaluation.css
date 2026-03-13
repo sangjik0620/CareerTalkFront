@@ -1,8 +1,8 @@
 
-/* ── Google Fonts (Pretendard fallback) ── */
+
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 :root {
-  /* Brand */
+
   --blue-50: #eff6ff;
   --blue-100: #dbeafe;
   --blue-200: #bfdbfe;
@@ -18,14 +18,12 @@
   --grad-brand: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
   --grad-teal: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
 
-  /* Semantic */
   --green-500: #22c55e;
   --green-600: #16a34a;
   --amber-500: #f59e0b;
   --red-500: #ef4444;
   --red-600: #dc2626;
 
-  /* Neutrals */
   --slate-50: #f8fafc;
   --slate-100: #f1f5f9;
   --slate-200: #e2e8f0;
@@ -41,11 +39,10 @@
   --text-secondary: var(--slate-500);
   --text-muted: var(--slate-400);
   --border: var(--slate-200);
-  --bg-page: #f8fafc;
+  --bg-page: #f4f8ff;
   --bg-card: #ffffff;
   --bg-subtle: var(--slate-50);
 
-  /* Shadows */
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.04);
   --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.07), 0 1px 2px -1px rgb(0 0 0 / 0.06);
   --shadow-md:
@@ -54,25 +51,17 @@
     0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
   --shadow-xl:
     0 20px 25px -5px rgb(0 0 0 / 0.09), 0 8px 10px -6px rgb(0 0 0 / 0.04);
-
-  /* Radius */
   --r-sm: 8px;
   --r-md: 12px;
   --r-lg: 16px;
   --r-xl: 20px;
   --r-2xl: 24px;
   --r-full: 9999px;
-
-  /* Transitions */
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --t-fast: 150ms var(--ease);
   --t-base: 200ms var(--ease);
   --t-slow: 300ms var(--ease);
 }
-
-/* ────────────────────────────────────────────────
-   Reset & Base
-   ──────────────────────────────────────────────── */
 *,
 *::before,
 *::after {
@@ -80,16 +69,14 @@
   margin: 0;
   padding: 0;
 }
-
-/* ────────────────────────────────────────────────
-   Page Container
-   ──────────────────────────────────────────────── */
+.evaluation-page {
+  min-height: 100vh;
+  background: var(--bg-page);
+}
 .evaluation-container {
   max-width: 1160px;
   margin: 0 auto;
   padding: 2rem 1.5rem 4rem;
-  min-height: 100vh;
-  background: var(--bg-page);
   font-family:
     "Inter",
     ui-sans-serif,
@@ -98,10 +85,6 @@
     sans-serif;
   color: var(--text-primary);
 }
-
-/* ────────────────────────────────────────────────
-   Header
-   ──────────────────────────────────────────────── */
 .evaluation-header {
   display: flex;
   justify-content: space-between;
@@ -119,9 +102,6 @@
   color: var(--text-primary);
   letter-spacing: -0.025em;
 }
-/* ────────────────────────────────────────────────
-   Tab Nav
-   ──────────────────────────────────────────────── */
 .tabs {
   display: flex;
   gap: 0.375rem;
@@ -173,10 +153,6 @@
 .tab-label {
   letter-spacing: -0.01em;
 }
-
-/* ────────────────────────────────────────────────
-   Tab Content Wrapper
-   ──────────────────────────────────────────────── */
 .tab-content-wrapper {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -195,10 +171,6 @@
     transform: translateY(0);
   }
 }
-
-/* ────────────────────────────────────────────────
-   Common Utilities
-   ──────────────────────────────────────────────── */
 .tab-content h2 {
   font-size: 1.25rem;
   font-weight: 800;
@@ -220,7 +192,7 @@
   font-size: 0.875rem;
   font-style: italic;
 }
-/* ── Badge ── */
+
 .badge {
   display: inline-flex;
   align-items: center;
@@ -248,7 +220,7 @@
   color: var(--blue-600);
   border: 1px solid var(--blue-100);
 }
-/* ── Generic Card ── */
+
 .ev-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -256,7 +228,7 @@
   padding: 1.5rem;
   box-shadow: var(--shadow-sm);
 }
-/* ── Empty Block ── */
+
 .empty-card {
   display: flex;
   flex-direction: column;
@@ -277,7 +249,7 @@
   font-size: 0.8125rem;
   color: var(--text-muted);
 }
-/* ── Keyword Tag ── */
+
 .keyword-tag {
   display: inline-flex;
   align-items: center;
@@ -303,7 +275,7 @@
   flex-wrap: wrap;
   gap: 0.4rem;
 }
-/* ── Section Header ── */
+
 .section-header {
   display: flex;
   align-items: center;
@@ -320,7 +292,7 @@
   display: flex;
   gap: 12px;
 }
-/* PDF 버튼 */
+
 .export-btn {
   display: inline-flex;
   align-items: center;
@@ -343,7 +315,7 @@
 .export-btn:active {
   transform: translateY(0);
 }
-/* 홈 버튼 */
+
 .home-btn {
   padding: 7px 16px;
   font-size: 13px;
@@ -359,9 +331,6 @@
   background: var(--brand-dark);
 }
 
-/* ────────────────────────────────────────────────
-   Responsive
-   ──────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .evaluation-container {
     padding: 1rem 1rem 3rem;
@@ -410,8 +379,6 @@
     grid-template-columns: 80px 1fr 44px;
   }
 }
-
-/* PDF 다운로드 CSS */
 .print-root {
   position: fixed;
   left: -99999px;
@@ -434,7 +401,7 @@
     sans-serif;
 }
 .pdf-cover {
-  page-break-after: always; /* 표지는 1페이지로 끝 */
+  page-break-after: always;
   padding: 14mm 12mm;
 }
 .pdf-cover-badge {

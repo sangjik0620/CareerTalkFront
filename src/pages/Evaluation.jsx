@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import "../css/evaluation/Evaluation.css";
 import {
-Navigate,
+  Navigate,
   useLocation,
   useNavigate,
   useParams,
@@ -17,7 +17,6 @@ import ComparisonTab from "./evaluation/tabs/ComparisonTab";
 import CompetencyTab from "./evaluation/tabs/CompetencyTab";
 import EvaluationLoading from "./evaluation/components/EvaluationLoading";
 
-/* ── SVG icon helpers (no dependency) ── */
 const Icon = {
   Summary: () => (
     <svg
@@ -243,7 +242,6 @@ const Evaluation = ({ evaluationData }) => {
       const res = await interviewApi.getResult(sessionId);
       if (!alive) return { done: false };
 
-      // 1) 이미 결과 payload가 있는 경우
       if (hasResultPayload(res)) {
         applyResultData(res);
         setLoading(false);
@@ -256,7 +254,6 @@ const Evaluation = ({ evaluationData }) => {
         return { done: true };
       }
 
-      // 2) 결과는 없지만 상태 정보가 있는 경우
       const resultStatus = extractAnalysisStatus(res);
 
       if (
@@ -400,7 +397,6 @@ const Evaluation = ({ evaluationData }) => {
     return () => {
       aliveRef.current = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId, data]);
 
   useEffect(() => {
@@ -417,7 +413,6 @@ const Evaluation = ({ evaluationData }) => {
     return () => {
       aliveRef.current = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, sessionId, data]);
 
   useEffect(() => {
@@ -436,7 +431,6 @@ const Evaluation = ({ evaluationData }) => {
     };
   }, []);
 
-  /* ── Guards ── */
   if (loading && !data && phase !== "ANALYZING") {
     return null;
   }
@@ -476,85 +470,87 @@ const Evaluation = ({ evaluationData }) => {
   }
   return (
     <>
-      <div className="evaluation-container">
-        <div className="evaluation-header">
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <button className="back-btn" onClick={() => navigate(-1)}>
-              ← 뒤로
-            </button>
+      <div className="evaluation-page">
+        <div className="evaluation-container">
+          <div className="evaluation-header">
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <button className="back-btn" onClick={() => navigate(-1)}>
+                ← 뒤로
+              </button>
+            </div>
+            <h1>면접 평가 결과</h1>
+            <div className="header-actions">
+              <button
+                className="export-btn"
+                onClick={() => {
+                  console.log("handleExportPdf type:", typeof handleExportPdf);
+                  handleExportPdf?.();
+                }}
+              >
+                <Icon.Export />
+                PDF 내보내기
+              </button>
+              <button className="home-btn" onClick={() => navigate("/")}>
+                홈으로
+              </button>
+            </div>
           </div>
-          <h1>면접 평가 결과</h1>
-          <div className="header-actions">
-            <button
-              className="export-btn"
-              onClick={() => {
-                console.log("handleExportPdf type:", typeof handleExportPdf);
-                handleExportPdf?.();
-              }}
-            >
-              <Icon.Export />
-              PDF 내보내기
-            </button>
-            <button className="home-btn" onClick={() => navigate("/")}>
-              홈으로
-            </button>
+
+          <div className="tabs">
+            {TABS.map(({ id, label, IconComp }) => (
+              <button
+                key={id}
+                className={`tab${activeTab === id ? " active" : ""}`}
+                onClick={() => setActiveTab(id)}
+              >
+                <span className="tab-icon">
+                  <IconComp />
+                </span>
+                <span className="tab-label">{label}</span>
+              </button>
+            ))}
           </div>
-        </div>
 
-        <div className="tabs">
-          {TABS.map(({ id, label, IconComp }) => (
-            <button
-              key={id}
-              className={`tab${activeTab === id ? " active" : ""}`}
-              onClick={() => setActiveTab(id)}
-            >
-              <span className="tab-icon">
-                <IconComp />
-              </span>
-              <span className="tab-label">{label}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="tab-content-wrapper">
-          {activeTab === "summary" && <SummaryTab data={data} />}
-          {activeTab === "document" && (
-            <DocumentTab
-              docLoading={docLoading}
-              docErr={docErr}
-              docAnalysisMap={docAnalysisMap}
-            />
-          )}
-          {activeTab === "interview" && (
-            <InterviewTab data={data} turns={turns} />
-          )}
-          {activeTab === "comparison" && <ComparisonTab data={data} />}
-          {activeTab === "competency" && <CompetencyTab data={data} />}
-        </div>
-
-        <div className="evaluation-container screen-only">
-          <div className="print-root" aria-hidden="true">
-            <div ref={reportPrintRef}>
-              <EvaluationReport
-                data={data}
-                turns={turns}
+          <div className="tab-content-wrapper">
+            {activeTab === "summary" && <SummaryTab data={data} />}
+            {activeTab === "document" && (
+              <DocumentTab
                 docLoading={docLoading}
                 docErr={docErr}
                 docAnalysisMap={docAnalysisMap}
-                sessionId={sessionId}
               />
+            )}
+            {activeTab === "interview" && (
+              <InterviewTab data={data} turns={turns} />
+            )}
+            {activeTab === "comparison" && <ComparisonTab data={data} />}
+            {activeTab === "competency" && <CompetencyTab data={data} />}
+          </div>
+
+          <div className="evaluation-container screen-only">
+            <div className="print-root" aria-hidden="true">
+              <div ref={reportPrintRef}>
+                <EvaluationReport
+                  data={data}
+                  turns={turns}
+                  docLoading={docLoading}
+                  docErr={docErr}
+                  docAnalysisMap={docAnalysisMap}
+                  sessionId={sessionId}
+                />
+              </div>
             </div>
           </div>
         </div>
       </div>
-{showTopButton && (
-  <button
-    className="scroll-top-btn"
-    onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-  >
-    ↑
-  </button>
-)}
+      {showTopButton && (
+        <button
+          className="scroll-top-btn"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        >
+          ↑
+        </button>
+      )}
     </>
   );
 };

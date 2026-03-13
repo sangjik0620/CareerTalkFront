@@ -24,7 +24,6 @@ const EvaluationReport = ({
 
   return (
     <div className="pdf-report">
-      {/* 표지(1페이지) */}
       <section className="pdf-cover">
         <div className="pdf-cover-badge">CareerTalk</div>
         <h1 className="pdf-cover-title">면접 평가 리포트</h1>
@@ -33,8 +32,6 @@ const EvaluationReport = ({
           <div>Generated: {new Date().toLocaleString()}</div>
         </div>
       </section>
-
-      {/* 섹션은 각각 새 페이지 시작 */}
       <Section>
         <SummaryTab data={data} />
       </Section>

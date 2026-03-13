@@ -1,25 +1,15 @@
-// src/components/interview/DeviceTestModal.jsx
 import { useEffect, useRef, useState, useCallback } from "react";
 
-// ─────────────────────────────────────────────
-// 상수
-// ─────────────────────────────────────────────
-const BAR_COUNT = 28; // 마이크 레벨 바 개수
+const BAR_COUNT = 28;
 
-// ─────────────────────────────────────────────
-// 헬퍼: 오디오 레벨 → 바 배열 생성
-// ─────────────────────────────────────────────
 function buildBars(level) {
-  // level: 0~100
   return Array.from({ length: BAR_COUNT }, (_, i) => {
     const threshold = (i / BAR_COUNT) * 100;
     return threshold <= level;
   });
 }
 
-// ─────────────────────────────────────────────
-// 상태 뱃지
-// ─────────────────────────────────────────────
+
 function StatusBadge({ status }) {
   const map = {
     idle:    { label: "대기 중",     cls: "bg-gray-100 text-gray-500 border-gray-200",          dot: "bg-gray-400"    },
@@ -37,9 +27,6 @@ function StatusBadge({ status }) {
   );
 }
 
-// ─────────────────────────────────────────────
-// 마이크 레벨 비주얼라이저
-// ─────────────────────────────────────────────
 function MicVisualizer({ level, isActive }) {
   const bars = buildBars(level);
   return (
@@ -68,13 +55,10 @@ function MicVisualizer({ level, isActive }) {
   );
 }
 
-// ─────────────────────────────────────────────
-// 섹션 래퍼
-// ─────────────────────────────────────────────
+
 function Section({ icon, gradient, title, badge, children }) {
   return (
     <div className="bg-white/70 backdrop-blur-sm rounded-2xl border border-gray-200/80 overflow-hidden shadow-sm">
-      {/* 헤더 */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
         <div className="flex items-center gap-3">
           <div className={`w-9 h-9 bg-gradient-to-br ${gradient} rounded-xl flex items-center justify-center text-white text-base shadow-sm`}>
@@ -89,9 +73,6 @@ function Section({ icon, gradient, title, badge, children }) {
   );
 }
 
-// ─────────────────────────────────────────────
-// 디바이스 선택 드롭다운
-// ─────────────────────────────────────────────
 function DeviceSelect({ devices, value, onChange, placeholder }) {
   if (!devices || devices.length <= 1) return null;
   return (
@@ -109,19 +90,14 @@ function DeviceSelect({ devices, value, onChange, placeholder }) {
   );
 }
 
-// ─────────────────────────────────────────────
-// 메인 모달
-// ─────────────────────────────────────────────
 export default function DeviceTestModal({ isOpen, onClose, onConfirm }) {
-  /* ── 카메라 ── */
   const videoRef             = useRef(null);
   const cameraStreamRef      = useRef(null);
-  const [camStatus,  setCamStatus]  = useState("idle");   // idle | testing | ok | error | denied
+  const [camStatus,  setCamStatus]  = useState("idle");
   const [camDevices, setCamDevices] = useState([]);
   const [camDeviceId, setCamDeviceId] = useState("");
   const [isCamMirrored, setIsCamMirrored] = useState(true);
 
-  /* ── 마이크 ── */
   const audioCtxRef          = useRef(null);
   const analyserRef          = useRef(null);
   const micStreamRef         = useRef(null);
@@ -132,12 +108,10 @@ export default function DeviceTestModal({ isOpen, onClose, onConfirm }) {
   const [micDeviceId, setMicDeviceId] = useState("");
   const [isMicTesting, setIsMicTesting] = useState(false);
 
-  /* ── 체크리스트 ── */
   const camOk = camStatus === "ok";
   const micOk = micStatus === "ok";
   const allReady = camOk && micOk;
 
-  // ── 모달 열릴 때 디바이스 목록 조회 ──
   useEffect(() => {
     if (!isOpen) return;
     navigator.mediaDevices?.enumerateDevices().then((list) => {
@@ -146,7 +120,6 @@ export default function DeviceTestModal({ isOpen, onClose, onConfirm }) {
     });
   }, [isOpen]);
 
-  // ── 모달 닫힐 때 스트림 정리 ──
   useEffect(() => {
     if (!isOpen) {
       stopCamera();
@@ -156,19 +129,14 @@ export default function DeviceTestModal({ isOpen, onClose, onConfirm }) {
       setMicLevel(0);
       setIsMicTesting(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  // ── ESC 닫기 ──
   useEffect(() => {
     const handler = (e) => { if (e.key === "Escape" && isOpen) onClose(); };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [isOpen, onClose]);
 
-  // ────────────────────────────────────────────
-  // 카메라
-  // ────────────────────────────────────────────
   const stopCamera = useCallback(() => {
     cameraStreamRef.current?.getTracks().forEach((t) => t.stop());
     cameraStreamRef.current = null;
@@ -188,7 +156,6 @@ export default function DeviceTestModal({ isOpen, onClose, onConfirm }) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
       }
-      // 디바이스 라벨 재조회 (권한 취득 후)
       const list = await navigator.mediaDevices.enumerateDevices();
       setCamDevices(list.filter((d) => d.kind === "videoinput"));
       setMicDevices(list.filter((d) => d.kind === "audioinput"));
@@ -198,15 +165,10 @@ export default function DeviceTestModal({ isOpen, onClose, onConfirm }) {
     }
   }, [camDeviceId, stopCamera]);
 
-  // 디바이스 변경 시 재시작
   useEffect(() => {
     if (camStatus === "ok" || camStatus === "testing") startCamera();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [camDeviceId]);
 
-  // ────────────────────────────────────────────
-  // 마이크
-  // ────────────────────────────────────────────
   const stopMic = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
     micStreamRef.current?.getTracks().forEach((t) => t.stop());
@@ -240,7 +202,7 @@ export default function DeviceTestModal({ isOpen, onClose, onConfirm }) {
       const tick = () => {
         analyser.getByteFrequencyData(data);
         const avg = data.reduce((s, v) => s + v, 0) / data.length;
-        setMicLevel(Math.min(100, avg * 2.2)); // 0~100 스케일
+        setMicLevel(Math.min(100, avg * 2.2));
         rafRef.current = requestAnimationFrame(tick);
       };
       tick();
@@ -263,24 +225,17 @@ export default function DeviceTestModal({ isOpen, onClose, onConfirm }) {
     }
   };
 
-  // 디바이스 변경 시 재시작
   useEffect(() => {
     if (micStatus === "ok" || micStatus === "testing") startMic();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [micDeviceId]);
 
-  // ────────────────────────────────────────────
-  // 면접 시작 확정
-  // ────────────────────────────────────────────
   const handleConfirm = () => {
     stopCamera();
     stopMic();
     onConfirm();
   };
 
-  // ────────────────────────────────────────────
   if (!isOpen) return null;
-  // ────────────────────────────────────────────
 
   return (
     <div
@@ -288,16 +243,13 @@ export default function DeviceTestModal({ isOpen, onClose, onConfirm }) {
       aria-modal="true"
       role="dialog"
     >
-      {/* 딤 오버레이 */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* 모달 패널 */}
       <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/80 animate-modal-in custom-scroll">
 
-        {/* ── 헤더 ── */}
         <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-xl border-b border-gray-100 px-7 py-5 flex items-center justify-between rounded-t-3xl">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-violet-600 rounded-2xl flex items-center justify-center text-white shadow-md">
@@ -318,7 +270,6 @@ export default function DeviceTestModal({ isOpen, onClose, onConfirm }) {
 
         <div className="px-7 py-6 space-y-5">
 
-          {/* ── 진행 상태 인디케이터 ── */}
           <div className="flex items-center gap-3 bg-gradient-to-r from-blue-50 to-violet-50 border border-blue-100 rounded-2xl px-5 py-3">
             {[
               { label: "카메라", ok: camOk, icon: "📷" },
@@ -346,14 +297,12 @@ export default function DeviceTestModal({ isOpen, onClose, onConfirm }) {
             ))}
           </div>
 
-          {/* ── 카메라 섹션 ── */}
           <Section
             icon="📷"
             gradient="from-blue-500 to-indigo-500"
             title="카메라 테스트"
             badge={<StatusBadge status={camStatus} />}
           >
-            {/* 비디오 프리뷰 */}
             <div className="relative w-full aspect-video bg-gray-900 rounded-2xl overflow-hidden mb-4 shadow-inner">
               <video
                 ref={videoRef}
@@ -362,7 +311,6 @@ export default function DeviceTestModal({ isOpen, onClose, onConfirm }) {
                 playsInline
                 className={`w-full h-full object-cover transition-transform duration-300 ${isCamMirrored ? "-scale-x-100" : ""}`}
               />
-              {/* 오버레이: 대기 중 */}
               {camStatus !== "ok" && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-gray-900/80">
                   <div className={`w-16 h-16 rounded-full flex items-center justify-center text-3xl ${camStatus === "testing" ? "animate-pulse bg-blue-500/20" : "bg-gray-700"}`}>
@@ -376,7 +324,6 @@ export default function DeviceTestModal({ isOpen, onClose, onConfirm }) {
                   </p>
                 </div>
               )}
-              {/* 거울모드 토글 */}
               {camStatus === "ok" && (
                 <button
                   onClick={() => setIsCamMirrored((p) => !p)}
@@ -385,7 +332,6 @@ export default function DeviceTestModal({ isOpen, onClose, onConfirm }) {
                   🔄 {isCamMirrored ? "거울 해제" : "거울 모드"}
                 </button>
               )}
-              {/* 녹화 표시점 */}
               {camStatus === "ok" && (
                 <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-full">
                   <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
@@ -430,21 +376,18 @@ export default function DeviceTestModal({ isOpen, onClose, onConfirm }) {
             )}
           </Section>
 
-          {/* ── 마이크 섹션 ── */}
           <Section
             icon="🎤"
             gradient="from-violet-500 to-purple-500"
             title="마이크 테스트"
             badge={<StatusBadge status={micStatus} />}
           >
-            {/* 비주얼라이저 영역 */}
             <div className="bg-gray-900 rounded-2xl px-6 py-5 mb-4 shadow-inner">
               <MicVisualizer level={micLevel} isActive={isMicTesting} />
               <div className="mt-3 flex items-center justify-between">
                 <span className="text-gray-400 text-xs">
                   {isMicTesting ? "말씀해보세요 🎤" : "테스트 시작 버튼을 눌러주세요"}
                 </span>
-                {/* 레벨 수치 */}
                 <span className={`text-xs font-bold ${
                   micLevel > 80 ? "text-red-400"
                   : micLevel > 55 ? "text-amber-400"
@@ -454,7 +397,6 @@ export default function DeviceTestModal({ isOpen, onClose, onConfirm }) {
                   {isMicTesting ? `${Math.round(micLevel)}%` : "--"}
                 </span>
               </div>
-              {/* 레벨 게이지 바 */}
               <div className="mt-2 h-1.5 bg-gray-700 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all duration-100 ${
@@ -502,7 +444,6 @@ export default function DeviceTestModal({ isOpen, onClose, onConfirm }) {
               </p>
             )}
 
-            {/* 마이크 감도 힌트 */}
             {micOk && (
               <div className="mt-3 flex items-start gap-2 text-xs text-gray-500 bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
                 <span className="text-base leading-none mt-0.5">💡</span>
@@ -511,7 +452,6 @@ export default function DeviceTestModal({ isOpen, onClose, onConfirm }) {
             )}
           </Section>
 
-          {/* ── 준비 완료 배너 ── */}
           {allReady && (
             <div className="flex items-center gap-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl px-5 py-4 animate-slide-in-up">
               <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-400 rounded-xl flex items-center justify-center text-white text-xl shadow-md animate-bounce-subtle shrink-0">
@@ -524,9 +464,8 @@ export default function DeviceTestModal({ isOpen, onClose, onConfirm }) {
             </div>
           )}
 
-        </div>{/* /px-7 py-6 */}
+        </div>
 
-        {/* ── 푸터 버튼 ── */}
         <div className="sticky bottom-0 bg-white/95 backdrop-blur-xl border-t border-gray-100 px-7 py-5 flex flex-col sm:flex-row items-center gap-3 rounded-b-3xl">
           <button
             onClick={onClose}
@@ -553,12 +492,10 @@ export default function DeviceTestModal({ isOpen, onClose, onConfirm }) {
                 <><span className="text-base">⏳</span> 카메라·마이크 테스트를 완료해주세요</>
               )}
             </span>
-            {/* hover shimmer */}
             <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12" />
           </button>
         </div>
 
-        {/* ── 애니메이션 스타일 ── */}
         <style>{`
           @keyframes modalIn {
             from { opacity:0; transform:scale(0.93) translateY(20px); }

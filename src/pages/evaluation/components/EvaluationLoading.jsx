@@ -21,7 +21,6 @@ function EvaluationLoading({ analysisStatus = "PENDING" }) {
       <div className="w-[92%] max-w-md rounded-2xl bg-white p-8 shadow-xl">
         <div className="flex flex-col items-center text-center">
           
-          {/* DONE이면 체크, 아니면 spinner */}
           {isDone ? (
             <div className="mb-6 text-5xl leading-none">✅</div>
           ) : (

@@ -11,9 +11,6 @@ import {
   Tooltip,
 } from "recharts";
 
-/* ─────────────────────────────────────────────
-   메인 컴포넌트
-───────────────────────────────────────────── */
 export default function InterviewTab({ data, turns = [] }) {
   const evaluation = data?.evaluation;
   const ia = evaluation?.interviewAnalysis;
@@ -42,8 +39,6 @@ export default function InterviewTab({ data, turns = [] }) {
     () => buildVoiceRadarData(voiceMetrics),
     [voiceMetrics],
   );
-  // console.log("voiceMetrics =", voiceMetrics);
-  // console.log("radarData =", radarData);
   const stt = ia?.sttAnalysis;
   const keywordUsage = stt?.keywordUsage;
   const hasTurns = Array.isArray(turns) && turns.length > 0;
@@ -65,7 +60,6 @@ export default function InterviewTab({ data, turns = [] }) {
 
   return (
     <div className="interview-tab">
-      {/* ── 페이지 타이틀 ── */}
       <div className="interview-tab__header">
         <h2 className="interview-tab__title">면접 음성 및 답변 분석</h2>
         <p className="interview-tab__subtitle">
@@ -73,9 +67,6 @@ export default function InterviewTab({ data, turns = [] }) {
         </p>
       </div>
 
-      {/* ═══════════════════════════════════════
-          섹션 1 : 음성 분석
-      ═══════════════════════════════════════ */}
       <section className="interview-section interview-section--spaced">
         <div className="interview-section__header">
           <span className="interview-section__icon">🎤</span>
@@ -192,9 +183,6 @@ export default function InterviewTab({ data, turns = [] }) {
         </div>
       </section>
 
-      {/* ═══════════════════════════════════════
-          섹션 2 : STT 분석
-      ═══════════════════════════════════════ */}
       {isPlainObject(stt) ? (
         <section className="interview-section interview-section--spaced">
           <div className="interview-section__header">
@@ -202,7 +190,6 @@ export default function InterviewTab({ data, turns = [] }) {
             <span className="interview-section__title">STT 분석</span>
           </div>
 
-          {/* 통계 카드 3개 */}
           <div className="interview-stats-grid">
             {[
               {
@@ -232,7 +219,6 @@ export default function InterviewTab({ data, turns = [] }) {
             ))}
           </div>
 
-          {/* 키워드 분포 */}
           {isPlainObject(keywordUsage) ? (
             <div>
               <div className="interview-keyword-section__title">
@@ -297,7 +283,6 @@ export default function InterviewTab({ data, turns = [] }) {
             />
           )}
 
-          {/* 종합 피드백 */}
           {stt?.overallFeedback && (
             <div className="interview-overall-feedback">
               <div className="interview-overall-feedback__title">
@@ -319,9 +304,6 @@ export default function InterviewTab({ data, turns = [] }) {
         </section>
       )}
 
-      {/* ═══════════════════════════════════════
-          섹션 3 : 질문별 답변 분석
-      ═══════════════════════════════════════ */}
       <section className="interview-section">
         <div className="interview-section__header">
           <span className="interview-section__icon">📋</span>
@@ -389,22 +371,14 @@ export default function InterviewTab({ data, turns = [] }) {
 
               return (
                 <div key={t?.turnId ?? idx} className="interview-turn-card">
-                  {/* 카드 헤더 */}
                   <div className="interview-turn-card__header">
-                    {/* Q 번호 뱃지 */}
                     <div className="interview-turn-card__badge">Q{idx + 1}</div>
-
-                    {/* 질문 텍스트 */}
                     <span className="interview-turn-card__question">
                       {question || "(질문 없음)"}
                     </span>
-
-                    {/* 시간 */}
                     <span className="interview-turn-card__time">
                       ⏱ {Math.floor(duration / 60)}분 {duration % 60}초
                     </span>
-
-                    {/* 점수 뱃지 */}
                     <span
                       className="interview-turn-card__score"
                       style={{
@@ -415,10 +389,7 @@ export default function InterviewTab({ data, turns = [] }) {
                       {answerScore}점
                     </span>
                   </div>
-
-                  {/* 카드 바디 */}
                   <div className="interview-turn-card__body">
-                    {/* 답변 미리보기 */}
                     <div className="interview-answer-box">
                       <div className="interview-answer-box__top">
                         <div className="interview-answer-box__label">
@@ -447,8 +418,6 @@ export default function InterviewTab({ data, turns = [] }) {
                         </div>
                       )}
                     </div>
-
-                    {/* 종합 음성 점수 바 */}
                     <div>
                       <div className="interview-score-summary__row">
                         <span className="interview-score-summary__label">
@@ -472,8 +441,6 @@ export default function InterviewTab({ data, turns = [] }) {
                         />
                       </div>
                     </div>
-
-                    {/* 음성 점수 세부 */}
                     <div className="interview-voice-detail-box">
                       <div className="interview-voice-detail-box__title">
                         🎧 음성 세부 점수
@@ -506,8 +473,6 @@ export default function InterviewTab({ data, turns = [] }) {
                         )}
                       </div>
                     </div>
-
-                    {/* 오디오 플레이어 */}
                     {t?.audio?.audioUrl && (
                       <div className="interview-audio-box">
                         <div className="interview-audio-box__title">
@@ -520,8 +485,6 @@ export default function InterviewTab({ data, turns = [] }) {
                         />
                       </div>
                     )}
-
-                    {/* 답변 피드백 */}
                     {hasFeedbackSection && (
                       <div className="interview-feedback-box">
                         <div className="interview-feedback-box__title">
@@ -602,10 +565,6 @@ export default function InterviewTab({ data, turns = [] }) {
   );
 }
 
-/* ─────────────────────────────────────────────
-   서브 컴포넌트
-───────────────────────────────────────────── */
-
 function FeedbackBlock({ text }) {
   return (
     <div className="interview-feedback-block">
@@ -673,10 +632,6 @@ function VerticalBar({ label, value }) {
     </div>
   );
 }
-
-/* ─────────────────────────────────────────────
-   유틸
-───────────────────────────────────────────── */
 
 function normalizeFlags(codeList = [], rawFlags = []) {
   const rawMap = new Map();
@@ -779,7 +734,7 @@ function buildVoiceRadarData(voiceMetrics) {
     },
     {
       key: "pitchStability",
-      subject: "Pitch 안정성",
+      subject: "안정성",
       raw: Number(voiceMetrics.pitchStability),
       score: clamp100(Number(voiceMetrics.pitchStability)),
       display: `${clamp100(Number(voiceMetrics.pitchStability))}점`,
@@ -856,7 +811,6 @@ function VoiceRadarTooltip({ active, payload, label }) {
           color: "#555",
           fontWeight: 500,
           marginTop: 4,
-          // display: "flex",
           justifyContent: "space-between",
           gap: 12,
           textAlign: "center",

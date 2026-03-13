@@ -96,12 +96,9 @@
   color: var(--blue-600);
   text-align: right;
 }
-
-/* Improvements */
 .improvements-section h3 {
   margin-bottom: 1.25rem;
 }
-
 .improvement-card {
   padding: 1.25rem;
   background: var(--bg-card);
