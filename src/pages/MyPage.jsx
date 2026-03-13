@@ -33,7 +33,7 @@ const MyPage = () => {
   const [errorMsg, setErrorMsg] = useState("");
 
   const [mainTab, setMainTab] = useState("analysis");
-  const [subTab, setSubTab] = useState("포트폴리오"); // 기본 탭을 포트폴리오로 두면 테스트하기 편합니다.
+  const [subTab, setSubTab] = useState("포트폴리오");
 
   const [analysesData, setAnalysesData] = useState({
     이력서: [],
@@ -41,6 +41,24 @@ const MyPage = () => {
     포트폴리오: [],
   });
   const [interviewsData, setInterviewsData] = useState([]);
+
+  // ==========================================
+  // 💡 삭제 확인 모달 상태 추가
+  // ==========================================
+  const [deleteModal, setDeleteModal] = useState({ 
+    show: false, 
+    id: null, 
+    type: null, // 'analysis' 또는 'interview'
+    category: null 
+  });
+
+  const [analysisPage, setAnalysisPage] = useState(1);
+  const [interviewPage, setInterviewPage] = useState(1);
+  const itemsPerPage = 4;
+
+  useEffect(() => {
+    setAnalysisPage(1);
+  }, [subTab]);
 
   useEffect(() => {
     const fetchAllMyData = async () => {
@@ -125,7 +143,7 @@ const MyPage = () => {
     }
     try {
       const response = await axios.get(
-        `http://localhost:8080/api/member/check-nickname?nickname=${formData.nickname}`,
+        `http://localhost:8080/api/member/check-nickname?nickname=${formData.nickname}`
       );
       if (response.data === true) {
         setNicknameMsg("이미 사용 중인 닉네임입니다.");
@@ -161,7 +179,7 @@ const MyPage = () => {
         const currentUser = JSON.parse(currentUserStr);
         sessionStorage.setItem(
           "user",
-          JSON.stringify({ ...currentUser, ...formData }),
+          JSON.stringify({ ...currentUser, ...formData })
         );
       }
     } catch (error) {
@@ -187,7 +205,7 @@ const MyPage = () => {
       console.error("탈퇴 실패:", error);
       alert(
         "탈퇴 처리 중 오류가 발생했습니다: " +
-          (error.response?.data || "서버 에러"),
+          (error.response?.data || "서버 에러")
       );
     }
   };
@@ -206,72 +224,76 @@ const MyPage = () => {
     }
   };
 
-  // 개별 분석 기록 삭제 로직
-  const handleDeleteAnalysis = async (id) => {
-    if (
-      !window.confirm(
-        `정말 이 ${subTab} 분석 기록을 삭제하시겠습니까?\n삭제 후에는 복구할 수 없습니다.`,
-      )
-    ) {
-      return;
-    }
+  // ==========================================
+  // 💡 개별 삭제 모달 호출 함수 (분석/면접 통합)
+  // ==========================================
+  const handleDeleteAnalysis = (id, category) => {
+    setDeleteModal({ show: true, id, type: 'analysis', category });
+  };
 
+  const handleInterviewDelete = (id) => {
+    setDeleteModal({ show: true, id, type: 'interview', category: '면접 기록' });
+  };
+
+  // 실제 삭제 요청 수행 함수
+  const executeDelete = async () => {
+    const { id, type, category } = deleteModal;
+    const token = sessionStorage.getItem("token");
+    const config = { headers: { Authorization: `Bearer ${token}` } };
+    
     try {
-      const token = sessionStorage.getItem("token");
-      let apiUrl = "";
+      if (type === 'analysis') {
+        let apiUrl = "";
+        if (category === "포트폴리오") apiUrl = `http://localhost:8080/api/portfolios/${id}`;
+        else if (category === "자기소개서") apiUrl = `http://localhost:8080/api/ci/${id}`;
+        else if (category === "이력서") apiUrl = `http://localhost:8080/api/resumes/${id}`;
 
-      if (subTab === "포트폴리오") {
-        apiUrl = `http://localhost:8080/api/portfolios/${id}`;
-      } else if (subTab === "자기소개서") {
-        apiUrl = `http://localhost:8080/api/ci/${id}`;
-      } else if (subTab === "이력서") {
-        apiUrl = `http://localhost:8080/api/resumes/${id}`;
+        await axios.delete(apiUrl, config);
+
+        setAnalysesData((prev) => {
+          const updatedList = prev[category].filter((item) => item.id !== id);
+          const totalPages = Math.ceil(updatedList.length / itemsPerPage);
+          if (analysisPage > totalPages && totalPages > 0) {
+            setAnalysisPage(totalPages);
+          }
+          return { ...prev, [category]: updatedList };
+        });
       } else {
-        alert("지원하지 않는 분석 타입입니다.");
-        return;
+        // 면접 기록 삭제
+        await axios.delete(`http://localhost:8080/api/interview/sessions/${id}`, config);
+
+        setInterviewsData((prev) => {
+          const updatedList = prev.filter((item) => item.id !== id);
+          const totalPages = Math.ceil(updatedList.length / itemsPerPage);
+          if (interviewPage > totalPages && totalPages > 0) {
+            setInterviewPage(totalPages);
+          }
+          return updatedList;
+        });
       }
 
-      await axios.delete(apiUrl, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      setAnalysesData((prev) => ({
-        ...prev,
-        [subTab]: prev[subTab].filter((item) => item.id !== id),
-      }));
-
-      alert("성공적으로 삭제되었습니다.");
+      // 모달 닫기
+      setDeleteModal({ show: false, id: null, type: null, category: null });
     } catch (error) {
       console.error("삭제 실패:", error);
-      alert(error.response?.data || "삭제 중 오류가 발생했습니다.");
+      setErrorMsg(error.response?.data?.message || "삭제 중 오류가 발생했습니다.");
+      setDeleteModal({ show: false, id: null, type: null, category: null });
     }
   };
 
-  const handleInterviewDelete = async (id) => {
-    const ok = window.confirm(
-      "이 면접 기록을 삭제할까요?\n삭제 후에는 복구할 수 없습니다.",
-    );
-    if (!ok) return;
+  // 현재 페이지에 보여줄 데이터 추출
+  const currentAnalysesList = analysesData[subTab] || [];
+  const totalAnalysisPages = Math.ceil(currentAnalysesList.length / itemsPerPage);
+  const displayedAnalyses = currentAnalysesList.slice(
+    (analysisPage - 1) * itemsPerPage,
+    analysisPage * itemsPerPage
+  );
 
-    try {
-      const token = sessionStorage.getItem("token");
-
-      await axios.delete(`http://localhost:8080/api/interview/sessions/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      setInterviewsData((prev) => prev.filter((item) => item.id !== id));
-      alert("면접 기록이 삭제되었습니다.");
-    } catch (error) {
-      console.error("면접 기록 삭제 실패", error);
-      alert(
-        error.response?.data?.message ||
-          "면접 기록 삭제 중 오류가 발생했습니다.",
-      );
-    }
-  };
+  const totalInterviewPages = Math.ceil(interviewsData.length / itemsPerPage);
+  const displayedInterviews = interviewsData.slice(
+    (interviewPage - 1) * itemsPerPage,
+    interviewPage * itemsPerPage
+  );
 
   if (loading) {
     return (
@@ -337,8 +359,8 @@ const MyPage = () => {
               !editMode
                 ? "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 : isNicknameVerified
-                  ? "bg-blue-600 text-white hover:bg-blue-700"
-                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                ? "bg-blue-600 text-white hover:bg-blue-700"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
             }`}
           >
             {editMode ? "변경사항 저장" : "정보 수정"}
@@ -541,24 +563,45 @@ const MyPage = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {analysesData[subTab] && analysesData[subTab].length > 0 ? (
-                  analysesData[subTab].map((item) => (
-                    <ResultCard
-                      key={item.id}
-                      badge={subTab}
-                      badgeClass="bg-blue-50 text-blue-600"
-                      date={item.date}
-                      title={item.title}
-                      score={item.score}
-                      onClick={() => handleResultClick(item.id, "analysis")}
-                      onDelete={() => handleDeleteAnalysis(item.id)} // 💡 삭제 프롭스 전달
-                      buttonClass="group-hover:bg-blue-600 group-hover:text-white"
-                    />
-                  ))
+                {displayedAnalyses.length > 0 ? (
+                  displayedAnalyses.map((item) => {
+                    const displayDate = item.analyzedAt 
+                      ? item.analyzedAt.substring(0, 10)
+                      : "날짜 없음";
+
+                    return (
+                      <ResultCard
+                        key={item.id}
+                        badge={subTab}
+                        badgeClass="bg-blue-50 text-blue-600"
+                        date={displayDate} 
+                        title={item.title}
+                        score={item.score}
+                        onClick={() => handleResultClick(item.id, "analysis")}
+                        onDelete={() => handleDeleteAnalysis(item.id, subTab)}
+                        buttonClass="group-hover:bg-blue-600 group-hover:text-white"
+                      />
+                    );
+                  })
                 ) : (
                   <EmptyState text={`아직 분석된 ${subTab}가 없습니다.`} />
                 )}
               </div>
+
+              {totalAnalysisPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-8">
+                  {Array.from({ length: totalAnalysisPages }, (_, i) => i + 1).map((pageNum) => (
+                    <button
+                      key={pageNum}
+                      onClick={() => setAnalysisPage(pageNum)}
+                      className={`w-9 h-9 rounded-full text-sm font-bold transition-all
+                        ${analysisPage === pageNum ? "bg-blue-600 text-white shadow-md" : "bg-white text-gray-500 border border-gray-200 hover:bg-gray-50"}`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -569,13 +612,13 @@ const MyPage = () => {
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {interviewsData && interviewsData.length > 0 ? (
-                  interviewsData.map((item) => (
+                {displayedInterviews.length > 0 ? (
+                  displayedInterviews.map((item) => (
                     <ResultCard
                       key={item.id}
                       badge={item.type || "면접"}
                       badgeClass="bg-purple-50 text-purple-600"
-                      date={item.date}
+                      date={item.date || "날짜 없음"}
                       title={item.title}
                       duration={item.duration}
                       interview
@@ -588,6 +631,21 @@ const MyPage = () => {
                   <EmptyState text="아직 면접 기록이 없습니다." />
                 )}
               </div>
+
+              {totalInterviewPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-8">
+                  {Array.from({ length: totalInterviewPages }, (_, i) => i + 1).map((pageNum) => (
+                    <button
+                      key={pageNum}
+                      onClick={() => setInterviewPage(pageNum)}
+                      className={`w-9 h-9 rounded-full text-sm font-bold transition-all
+                        ${interviewPage === pageNum ? "bg-purple-600 text-white shadow-md" : "bg-white text-gray-500 border border-gray-200 hover:bg-gray-50"}`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -611,6 +669,41 @@ const MyPage = () => {
           </div>
         </div>
       </div>
+
+      {/* ==========================================
+          💡 개별 기록 삭제 확인 모달
+      ========================================== */}
+      {deleteModal.show && (
+        <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center z-[110] px-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-8 max-w-[400px] w-full shadow-2xl border border-gray-100">
+            <div className="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center mb-6">
+              <svg className="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </div>
+
+            <h3 className="text-xl font-bold text-gray-900 mb-2">기록을 삭제하시겠습니까?</h3>
+            <p className="text-gray-500 text-sm leading-relaxed mb-6">
+              선택하신 <span className="text-blue-600 font-bold">{deleteModal.category}</span> 기록이 영구적으로 삭제되며, 이 작업은 되돌릴 수 없습니다.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteModal({ show: false, id: null, type: null, category: null })}
+                className="flex-1 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors text-sm"
+              >
+                취소
+              </button>
+              <button
+                onClick={executeDelete}
+                className="flex-1 py-3.5 bg-orange-500 text-white rounded-xl font-semibold hover:bg-orange-600 transition-colors text-sm shadow-sm"
+              >
+                삭제하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showModal && (
         <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center z-[100] px-4 animate-in fade-in duration-200">
@@ -681,7 +774,7 @@ const MyPage = () => {
   );
 };
 
-// ResultCard 컴포넌트에 삭제 버튼 UI 추가
+// ResultCard 컴포넌트
 function ResultCard({
   badge,
   badgeClass,
@@ -692,19 +785,17 @@ function ResultCard({
   onClick,
   buttonClass,
   interview = false,
-  onDelete, // 삭제 핸들러 Props 추가
+  onDelete, 
 }) {
   return (
-    // relative 속성을 주어 우측 상단 삭제 버튼 위치 기준점을 잡아줍니다.
     <div
       className="relative group border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-blue-200 transition-all bg-white cursor-pointer"
       onClick={onClick}
     >
-      {/* 삭제 버튼 로직 (onDelete가 전달되었을 때만 렌더링) */}
       {onDelete && (
         <button
           onClick={(e) => {
-            e.stopPropagation(); // 카드 전체 클릭을 막아줌
+            e.stopPropagation(); 
             onDelete();
           }}
           className="absolute top-4 right-4 p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all duration-200"
