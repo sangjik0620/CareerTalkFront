@@ -96,7 +96,6 @@ const PortfolioUploadModal = ({ isOpen, onClose }) => {
     } catch (error) {
       console.error("분석 실패:", error);
 
-      // 💡 [핵심 추가 로직] 여기서 403(이용권 부족) 에러를 잡아서 결제창으로 넘깁니다!
       const status = error.response?.status;
 
       if (status === 401) {
@@ -107,10 +106,9 @@ const PortfolioUploadModal = ({ isOpen, onClose }) => {
         status === 403 ||
         error.response?.data?.message === "INSUFFICIENT_QUOTA"
       ) {
-        //  백엔드에서 던진 403 에러를 감지하면 실행됨
         alert("분석 이용권이 부족합니다. 이용권 구매 페이지로 이동합니다. ");
         setIsAnalyzing(false);
-        onClose(); // 모달창 닫기
+        onClose();
         navigate("/payment");
       } else {
         alert("분석 중 에러가 발생했습니다.");
@@ -123,7 +121,7 @@ const PortfolioUploadModal = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm transition-opacity">
       <div className="bg-white rounded-2xl shadow-xl w-[95%] max-w-2xl h-[640px] overflow-hidden flex flex-col relative">
-        {/* ======================= [3] 로딩 화면 ======================= */}
+        {/* 로딩 화면  */}
         {viewStep === "analyzing" ? (
           <div className="flex-1 flex flex-col items-center justify-center p-8 animate-fade-in">
             <svg
@@ -156,7 +154,7 @@ const PortfolioUploadModal = ({ isOpen, onClose }) => {
             </p>
           </div>
         ) : viewStep === "confirm" ? (
-          /* ======================= [2] 확인 화면 ======================= */
+          /* 확인 화면  */
           <div className="flex flex-col h-full animate-fade-in">
             <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-white shrink-0">
               <div className="flex items-center gap-3">

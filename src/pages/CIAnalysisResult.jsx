@@ -30,17 +30,14 @@ export default function CIAnalysisResult() {
       try {
         setIsLoading(true);
 
-        if (passedResult) {
-          if (!ignore) {
-            setData(passedResult);
-            setRewrite("");
-            setRewriteNotes([]);
-          }
-          return;
+        // 먼저 전달받은 값이 있으면 임시로 보여주기
+        if (passedResult && !ignore) {
+          setData(passedResult);
         }
 
         const token =
-          sessionStorage.getItem("token") || sessionStorage.getItem("accessToken");
+          sessionStorage.getItem("token") ||
+          sessionStorage.getItem("accessToken");
 
         const response = await fetch(ANALYSIS_DETAIL_URL, {
           method: "GET",
@@ -55,18 +52,16 @@ export default function CIAnalysisResult() {
         }
 
         const resData = await response.json();
-        console.log("analysis detail response:", resData);
-
         const normalized = resData?.data ?? resData?.result ?? resData;
 
         if (!ignore) {
           setData(normalized);
-          setRewrite("");
+          setRewrite(normalized?.rewrittenEssay ?? "");
           setRewriteNotes([]);
         }
       } catch (error) {
         console.error("분석 결과 불러오기 실패:", error);
-        if (!ignore) {
+        if (!ignore && !passedResult) {
           setData(null);
           showToast("분석 결과를 불러오지 못했습니다.");
         }
@@ -90,10 +85,10 @@ export default function CIAnalysisResult() {
   };
 
   const normalizedQuestions = useMemo(() => {
-  // 🔍 백엔드에서 올 수 있는 모든 질문 리스트 후보군을 다 확인합니다.
-  const rawQuestions = data?.questions || data?.interviewQuestions || data?.qList || data?.qlist || [];
-  
-  if (!Array.isArray(rawQuestions) || rawQuestions.length === 0) return [];
+    const q = data?.questions;
+    const intents = data?.questionIntents || [];
+
+    if (!Array.isArray(q) || q.length === 0) return [];
 
   return rawQuestions.map((item, idx) => {
     // 질문 내용이 객체(item.q)인지, 문자열("질문")인지에 따라 대응
@@ -108,9 +103,15 @@ export default function CIAnalysisResult() {
 }, [data]);
 
   const top3 = normalizedQuestions.slice(0, 3);
+  const rewriteLocked = !!data?.rewriteGenerated || !!rewrite?.trim();
 
   const handleGenerateRewrite = async () => {
     if (isGenerating) return;
+
+    if (rewriteLocked) {
+      setTab("REWRITE");
+      return;
+    }
 
     try {
       setIsGenerating(true);
@@ -118,7 +119,8 @@ export default function CIAnalysisResult() {
       setToast("");
 
       const token =
-        sessionStorage.getItem("token") || sessionStorage.getItem("accessToken");
+        sessionStorage.getItem("token") ||
+        sessionStorage.getItem("accessToken");
 
       const payload = {
         analysisId: Number(data?.analysisId ?? analysisId),
@@ -149,7 +151,12 @@ export default function CIAnalysisResult() {
       const result = JSON.parse(raw);
 
       setRewrite(result.rewrittenEssay ?? "");
-      setRewriteNotes(result.changeSummary ?? []);
+      setRewriteNotes([]);
+      setData((prev) => ({
+        ...prev,
+        rewrittenEssay: result.rewrittenEssay ?? "",
+        rewriteGenerated: true,
+      }));
       showToast("AI 개선본 생성 완료!");
     } catch (e) {
       console.error("개선본 생성 실패:", e);
@@ -279,9 +286,13 @@ export default function CIAnalysisResult() {
               <button
                 style={btnPrimarySmall}
                 onClick={handleGenerateRewrite}
-                disabled={isGenerating}
+                disabled={isGenerating || rewriteLocked}
               >
-                {isGenerating ? "생성 중..." : "AI 개선본 생성"}
+                {rewriteLocked
+                  ? "AI 개선본 생성 완료"
+                  : isGenerating
+                    ? "생성 중..."
+                    : "AI 개선본 생성"}
               </button>
             </div>
 
@@ -332,9 +343,13 @@ export default function CIAnalysisResult() {
             <button
               style={btnPrimary}
               onClick={handleGenerateRewrite}
-              disabled={isGenerating}
+              disabled={isGenerating || rewriteLocked}
             >
-              {isGenerating ? "AI 개선본 생성 중..." : "AI 개선본 생성하기"}
+              {rewriteLocked
+                ? "AI 개선본 생성 완료"
+                : isGenerating
+                  ? "AI 개선본 생성 중..."
+                  : "AI 개선본 생성하기"}
             </button>
           </div>
         </div>

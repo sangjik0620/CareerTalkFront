@@ -1,4 +1,5 @@
 import React from "react";
+import "../../../css/evaluation/EvaluationLoading.css";
 
 const statusText = {
   PENDING: "분석 대기 중",

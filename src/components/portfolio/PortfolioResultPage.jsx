@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import PortfolioRadarChart from "./PortfolioRadarChart";
 import PortfolioQuestionItem from "./PortfolioQuestionItem";
+import styles from "../../css/Portfolio.module.css";
 
 const PortfolioResultPage = () => {
   const { analysisId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
 
-  // 💡 중복 호출 방지를 위한 플래그
+  // 중복 호출 방지
   const isFetching = useRef(false);
 
   const [currentData, setCurrentData] = useState(
@@ -17,17 +18,16 @@ const PortfolioResultPage = () => {
   const [isLoading, setIsLoading] = useState(!currentData);
 
   useEffect(() => {
-    // 이미 데이터가 있으면 종료
     if (currentData && String(currentData.analysisId) === String(analysisId)) {
       setIsLoading(false);
       return;
     }
 
-    // 💡 이미 호출 중이면 중복 실행 방지
+    // 호출 중이면 중복 실행 방지
     if (isFetching.current) return;
 
     const fetchResultData = async () => {
-      isFetching.current = true; // 호출 시작
+      isFetching.current = true;
       setIsLoading(true);
 
       try {
@@ -52,7 +52,6 @@ const PortfolioResultPage = () => {
       } catch (error) {
         console.error("결과 조회 실패");
 
-        // 💡 JSON 형태의 에러 메시지라면 "접근 권한" 키워드만 찾아서 예쁘게 보여줌
         let displayMessage = "데이터를 불러오는 중 오류가 발생했습니다.";
 
         if (error.message.includes("접근 권한")) {
@@ -61,7 +60,7 @@ const PortfolioResultPage = () => {
           displayMessage = "해당 분석 결과를 찾을 수 없습니다.";
         }
 
-        alert(displayMessage); // 👈 이제 지저분한 JSON 대신 예쁜 문구가 뜹니다.
+        alert(displayMessage);
         navigate("/");
       } finally {
         setIsLoading(false);
@@ -72,38 +71,35 @@ const PortfolioResultPage = () => {
     if (analysisId) {
       fetchResultData();
     }
-  }, [analysisId]);
+  }, [analysisId, currentData, navigate]); // 의존성 배열 보완
 
   if (isLoading) {
     return (
-      <div
-        style={pageStyle}
-        className="flex flex-col justify-center items-center h-screen"
-      >
-        <div className="w-12 h-12 border-4 border-[#1f55ff] border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p style={{ color: "#0b1b3a", fontWeight: 900 }}>
-          분석 결과를 불러오는 중입니다...
-        </p>
+      <div className={`${styles.page} ${styles.loadingContainer}`}>
+        <div className={styles.spinner}></div>
+        <p className={styles.loadingText}>분석 결과를 불러오는 중입니다...</p>
       </div>
     );
   }
 
   return (
-    <div style={pageStyle}>
-      <div style={topBarStyle}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <button style={btnGhost} onClick={() => navigate(-1)}>
+    <div className={styles.page}>
+      <div className={styles.topBar}>
+        <div className={styles.topBarLeft}>
+          <button
+            className={`${styles.btnBase} ${styles.btnGhost}`}
+            onClick={() => navigate(-1)}
+          >
             ← 뒤로
           </button>
           <div>
-            {/* 💡 닉네임을 강조하여 표시 */}
-            <div style={topTitleStyle}>
-              <span style={{ color: "#1f55ff", fontWeight: 900 }}>
+            <div className={styles.topTitle}>
+              <span className={styles.highlightName}>
                 {currentData?.nickname}
               </span>
               님의 포트폴리오 분석 결과
             </div>
-            <div style={topSubStyle}>
+            <div className={styles.topSub}>
               지원 직무: {currentData.targetJob}
               {currentData.updatedAt && ` · 업데이트: ${currentData.updatedAt}`}
             </div>
@@ -111,13 +107,15 @@ const PortfolioResultPage = () => {
         </div>
 
         {/* 오른쪽 영역 (점수 및 홈 버튼) */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={scorePillStyle}>
-            <span style={{ opacity: 0.75, marginRight: 8 }}>TOTAL</span>
-            <span style={{ fontWeight: 900 }}>{currentData.overallScore}</span>
+        <div className={styles.topBarRight}>
+          <div className={styles.scorePill}>
+            <span className={styles.scorePillLabel}>TOTAL</span>
+            <span className={styles.scorePillValue}>
+              {currentData.overallScore}
+            </span>
           </div>
           <button
-            style={{ ...btnPrimary, width: "auto" }}
+            className={`${styles.btnBase} ${styles.btnPrimary}`}
             onClick={() => navigate("/")}
           >
             홈으로
@@ -125,95 +123,38 @@ const PortfolioResultPage = () => {
         </div>
       </div>
 
-      <div style={mainGridStyle}>
+      <div className={styles.mainGrid}>
         {/* 왼쪽 메인 영역 (상세 분석 리포트) */}
-        <div style={wordShellStyle}>
-          <div style={wordHeaderStyle}>
-            <div style={docBadgeStyle}>DOC</div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={docTitleStyle}>AI 포트폴리오 상세 분석 리포트</div>
+        <div className={styles.wordShell}>
+          <div className={styles.wordHeader}>
+            <div className={styles.docBadge}>DOC</div>
+            <div className={styles.docTitleWrapper}>
+              <div className={styles.docTitle}>
+                AI 포트폴리오 상세 분석 리포트
+              </div>
             </div>
           </div>
 
-          <div style={wordPageStyle}>
-            <div
-              style={{
-                padding: "48px 56px",
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
+          <div className={styles.wordPage}>
+            <div className={styles.wordPageContent}>
               {/* 한줄평 영역 */}
-              <div style={{ marginBottom: "32px" }}>
-                <h3
-                  style={{
-                    fontSize: 17,
-                    fontWeight: 900,
-                    color: "#1f55ff",
-                    marginBottom: 14,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                  }}
-                >
-                  <span style={{ fontSize: 18 }}>✨</span> 한줄평
+              <div className={styles.reviewSection}>
+                <h3 className={styles.sectionTitle}>
+                  <span className={styles.sectionIcon}>✨</span> 한줄평
                 </h3>
-                {/* ⭐ 여기서부터 패딩, 배경, 폰트 크기 완벽 통일 ⭐ */}
-                <div
-                  style={{
-                    fontSize: 16,
-                    fontWeight: 600, // 본문과 이질감이 없도록 굵기 살짝 조절
-                    color: "#111827",
-                    lineHeight: 1.6,
-                    wordBreak: "keep-all",
-                    padding: "30px 32px", // 좌우 들여쓰기 완벽 일치
-                    background:
-                      "linear-gradient(135deg, #f8faff 0%, #ffffff 100%)", // 배경 통일
-                    border: "1px solid rgba(31,85,255,0.12)", // 테두리 통일
-                    borderRadius: "16px", // 모서리 통일
-                    boxShadow: "0 4px 12px rgba(31,85,255,0.02)",
-                  }}
-                >
+
+                <div className={styles.contentBox}>
                   {currentData.oneLineReview}
                 </div>
               </div>
 
               {/* 상세 분석 영역 */}
-              <div
-                style={{ display: "flex", flexDirection: "column", flex: 1 }}
-              >
-                <h3
-                  style={{
-                    fontSize: 17,
-                    fontWeight: 900,
-                    color: "#1f55ff",
-                    marginBottom: 14,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 8,
-                  }}
-                >
-                  <span style={{ fontSize: 18 }}>💡</span> 상세 분석
+              <div className={styles.detailSection}>
+                <h3 className={styles.sectionTitle}>
+                  <span className={styles.sectionIcon}>💡</span> 상세 분석
                 </h3>
-                {/* ⭐ 여기서부터 패딩, 배경, 폰트 크기 완벽 통일 ⭐ */}
-                <div
-                  style={{
-                    flex: 1,
-                    fontSize: 16, // 위쪽과 글자 크기 일치
-                    fontWeight: 500,
-                    color: "#111827",
-                    lineHeight: 1.8,
-                    whiteSpace: "pre-line",
-                    wordBreak: "keep-all",
-                    padding: "30px 32px", // 좌우 들여쓰기 완벽 일치
-                    background:
-                      "linear-gradient(135deg, #f8faff 0%, #ffffff 100%)", // 배경 통일
-                    border: "1px solid rgba(31,85,255,0.12)", // 테두리 통일
-                    borderRadius: "16px", // 모서리 통일
-                    boxShadow: "0 4px 12px rgba(31,85,255,0.02)",
-                  }}
-                >
+
+                <div className={styles.detailContentBox}>
                   {currentData.summaryDetail}
                 </div>
               </div>
@@ -221,58 +162,25 @@ const PortfolioResultPage = () => {
           </div>
         </div>
 
-        <div style={sidePanelStyle}>
-          <div style={panelHeaderStyle}>
-            <div style={{ fontWeight: 900, color: "#0b1b3a" }}>
-              종합 역량 평가
-            </div>
+        <div className={styles.sidePanel}>
+          <div className={styles.panelHeader}>
+            <div className={styles.panelTitle}>종합 역량 평가</div>
           </div>
 
-          <div style={panelBodyStyle}>
+          <div className={styles.panelBody}>
             {/* 점수 카드 */}
-            <div style={scoreCardStyle}>
-              <div style={scoreCircleStyle}>
-                <div style={{ fontSize: 12, opacity: 0.85 }}>SCORE</div>
-                <div style={{ fontSize: 28, fontWeight: 900, lineHeight: 1 }}>
+            <div className={styles.scoreCard}>
+              <div className={styles.scoreCircle}>
+                <div className={styles.scoreLabel}>SCORE</div>
+                <div className={styles.scoreValue}>
                   {currentData.overallScore}
                 </div>
               </div>
-              <div style={{ flex: 1 }}>
-                <div
-                  style={{ fontWeight: 900, color: "#0b1b3a", marginBottom: 6 }}
-                >
-                  평가 요약
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    gap: 6,
-                    marginBottom: 8,
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <span
-                    style={{
-                      padding: "4px 8px",
-                      background: "#Eef2ff",
-                      color: "#1f55ff",
-                      borderRadius: 6,
-                      fontSize: 11,
-                      fontWeight: 800,
-                    }}
-                  >
-                    AI 종합 평가
-                  </span>
-                  <span
-                    style={{
-                      padding: "4px 8px",
-                      background: "#f4f8ff",
-                      color: "#4b5563",
-                      borderRadius: 6,
-                      fontSize: 11,
-                      fontWeight: 800,
-                    }}
-                  >
+              <div className={styles.summaryContent}>
+                <div className={styles.summaryTitle}>평가 요약</div>
+                <div className={styles.badgeContainer}>
+                  <span className={styles.badgePrimary}>AI 종합 평가</span>
+                  <span className={styles.badgeSecondary}>
                     {currentData.targetJob} 기준
                   </span>
                 </div>
@@ -280,34 +188,15 @@ const PortfolioResultPage = () => {
             </div>
 
             {/* 레이더 차트 영역 */}
-            <div
-              style={{
-                marginTop: 8,
-                marginBottom: 8,
-                height: 300,
-                width: "100%",
-                background: "linear-gradient(180deg, #ffffff 0%, #f8faff 100%)",
-                border: "1px solid rgba(31, 85, 255, 0.1)",
-                borderRadius: 16,
-                padding: "16px 0",
-              }}
-            >
+            <div className={styles.radarChartWrapper}>
               <PortfolioRadarChart data={currentData.chartData} />
             </div>
 
-            <div style={panelDividerStyle} />
+            <div className={styles.panelDivider} />
 
             <button
-              style={btnGhostFull}
+              className={`${styles.btnBase} ${styles.btnGhostFull}`}
               onClick={() => navigate("/interview/select")}
-              onMouseEnter={(e) => {
-                e.target.style.background = "#1f55ff";
-                e.target.style.color = "#ffffff";
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = "transparent";
-                e.target.style.color = "#1f55ff";
-              }}
             >
               면접 진행하기 ➔
             </button>
@@ -316,13 +205,11 @@ const PortfolioResultPage = () => {
       </div>
 
       {/* 하단 예상 질문 영역 */}
-      <div style={bottomStyle}>
-        <div style={bottomHeaderStyle}>
-          <div style={{ fontWeight: 900, color: "#0b1b3a" }}>
-            예상 면접 질문
-          </div>
+      <div className={styles.bottomSection}>
+        <div className={styles.bottomHeader}>
+          <div className={styles.bottomTitle}>예상 면접 질문</div>
         </div>
-        <div style={questionGridStyle}>
+        <div className={styles.questionGrid}>
           {currentData.questions?.map((item, idx) => (
             <PortfolioQuestionItem
               key={idx}
@@ -335,243 +222,6 @@ const PortfolioResultPage = () => {
       </div>
     </div>
   );
-};
-
-// ==================== 스타일 정의 ====================
-const pageStyle = {
-  minHeight: "100vh",
-  background: "#f4f8ff",
-  padding: 24,
-  fontFamily:
-    'ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif',
-};
-
-const topBarStyle = {
-  maxWidth: 1200,
-  margin: "0 auto 16px",
-  padding: "14px 16px",
-  background: "#ffffff",
-  borderRadius: 16,
-  border: "1px solid rgba(15, 60, 160, 0.10)",
-  boxShadow: "0 12px 34px rgba(10, 30, 80, 0.08)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  gap: 12,
-};
-
-const topTitleStyle = { fontSize: 16, fontWeight: 900, color: "#0b1b3a" };
-const topSubStyle = {
-  fontSize: 12,
-  color: "rgba(11,27,58,0.65)",
-  marginTop: 2,
-};
-
-const scorePillStyle = {
-  padding: "10px 14px",
-  borderRadius: 999,
-  border: "1px solid rgba(31,85,255,0.25)",
-  background: "linear-gradient(180deg, #ffffff 0%, #f6f9ff 100%)",
-  color: "#1f55ff",
-  fontSize: 13,
-};
-
-const mainGridStyle = {
-  maxWidth: 1200,
-  margin: "0 auto",
-  display: "grid",
-  gridTemplateColumns: "minmax(0, 2fr) minmax(0, 1fr)",
-  gap: 16,
-  alignItems: "start",
-};
-
-const wordShellStyle = {
-  background: "transparent",
-  borderRadius: 16,
-  display: "flex",
-  flexDirection: "column",
-  height: "100%",
-};
-
-const wordHeaderStyle = {
-  display: "flex",
-  alignItems: "center",
-  gap: 12,
-  padding: "12px 14px",
-  background: "#ffffff",
-  borderRadius: 16,
-  border: "1px solid rgba(15, 60, 160, 0.10)",
-  boxShadow: "0 10px 26px rgba(10,30,80,0.06)",
-  marginBottom: 12,
-};
-
-const docBadgeStyle = {
-  width: 44,
-  height: 44,
-  borderRadius: 12,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontWeight: 900,
-  color: "#1f55ff",
-  border: "1px solid rgba(31,85,255,0.25)",
-  background: "#f4f8ff",
-  fontSize: 13,
-};
-
-const docTitleStyle = { fontSize: 15, fontWeight: 900, color: "#0b1b3a" };
-const docMetaStyle = {
-  fontSize: 12,
-  color: "rgba(11,27,58,0.65)",
-  marginTop: 2,
-};
-
-const wordPageStyle = {
-  background: "linear-gradient(to bottom, #ffffff 0%, #f4f7fe 100%)",
-  borderRadius: 16,
-  border: "1px solid rgba(15, 60, 160, 0.10)",
-  boxShadow: "0 18px 46px rgba(10,30,80,0.06)",
-  overflow: "hidden",
-  flex: 1,
-  minHeight: 450,
-};
-
-const sidePanelStyle = {
-  background: "#ffffff",
-  borderRadius: 16,
-  border: "1px solid rgba(15, 60, 160, 0.10)",
-  boxShadow: "0 12px 34px rgba(10, 30, 80, 0.08)",
-  overflow: "hidden",
-  position: "sticky",
-  top: 24,
-  alignSelf: "start",
-};
-
-const panelHeaderStyle = {
-  padding: "16px 20px",
-  borderBottom: "1px solid rgba(15, 60, 160, 0.08)",
-  background:
-    "linear-gradient(180deg, rgba(245,250,255,1) 0%, rgba(255,255,255,1) 60%)",
-};
-
-const panelHintStyle = {
-  fontSize: 12,
-  color: "rgba(11,27,58,0.65)",
-  marginTop: 4,
-};
-
-const panelBodyStyle = {
-  padding: 20,
-  display: "flex",
-  flexDirection: "column",
-  gap: 12,
-};
-
-const panelDividerStyle = {
-  height: 1,
-  background: "rgba(15, 60, 160, 0.08)",
-  margin: "8px 0",
-};
-
-const bottomStyle = {
-  maxWidth: 1200,
-  margin: "16px auto 0",
-  background: "#ffffff",
-  borderRadius: 16,
-  border: "1px solid rgba(15, 60, 160, 0.10)",
-  boxShadow: "0 12px 34px rgba(10, 30, 80, 0.08)",
-  overflow: "hidden",
-};
-
-const bottomHeaderStyle = {
-  padding: "16px 20px",
-  borderBottom: "1px solid rgba(15, 60, 160, 0.08)",
-  background:
-    "linear-gradient(180deg, rgba(245,250,255,1) 0%, rgba(255,255,255,1) 60%)",
-};
-
-const questionGridStyle = {
-  padding: 20,
-  display: "grid",
-  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-  gap: 16,
-  alignItems: "start",
-};
-
-const scoreCardStyle = {
-  border: "1px solid rgba(15, 60, 160, 0.12)",
-  borderRadius: 16,
-  padding: 16,
-  background: "linear-gradient(180deg, #ffffff 0%, #f6f9ff 100%)",
-  display: "flex",
-  gap: 16,
-  alignItems: "center",
-};
-
-const scoreCircleStyle = {
-  width: 84,
-  height: 84,
-  borderRadius: 20,
-  background: "#1f55ff",
-  color: "#fff",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  boxShadow: "0 16px 30px rgba(31,85,255,0.25)",
-  flex: "0 0 auto",
-};
-
-const miniHintStyle = {
-  fontSize: 11,
-  color: "rgba(11,27,58,0.55)",
-  marginTop: 4,
-  lineHeight: 1.4,
-};
-
-const btnBase = {
-  padding: "12px 16px",
-  borderRadius: 999,
-  fontSize: 14,
-  fontWeight: 800,
-  cursor: "pointer",
-  transition: "all 0.15s ease",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const btnPrimary = {
-  ...btnBase,
-  background: "#1f55ff",
-  color: "#fff",
-  border: "1px solid #1f55ff",
-  boxShadow: "0 10px 22px rgba(31,85,255,0.25)",
-  width: "100%",
-};
-
-const btnGhost = {
-  ...btnBase,
-  background: "#fff",
-  color: "#0b1b3a",
-  border: "1px solid rgba(15, 60, 160, 0.15)",
-  width: "auto",
-};
-
-const btnGhostFull = {
-  padding: "12px 16px",
-  borderRadius: 999,
-  fontSize: 14,
-  fontWeight: 800,
-  cursor: "pointer",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  background: "transparent",
-  color: "#1f55ff",
-  border: "1.5px solid #1f55ff",
-  width: "100%",
-  transition: "all 0.2s ease",
 };
 
 export default PortfolioResultPage;

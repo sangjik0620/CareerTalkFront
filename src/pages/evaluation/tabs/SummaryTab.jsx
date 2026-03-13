@@ -1,5 +1,6 @@
 import React from "react";
 import EmptyBlock from "../components/EmptyBlock";
+import "../../../css/evaluation/SummaryTab.css";
 import {
   asArray,
   clamp100,
@@ -116,7 +117,7 @@ export default function SummaryTab({ data }) {
           <div className="interview-info summaryInfoCompact">
             <span>📅 {info?.date ?? "—"}</span>
             <span>⏱️ {info?.duration ?? "—"}</span>
-            <span>💼 {info?.position ?? "—"}</span>
+            <span>💼 {info?.title ?? "—"}</span>
           </div>
         </div>
         <div className="summaryTopRight">

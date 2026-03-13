@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import EmptyBlock from "../components/EmptyBlock";
+import "../../../css/evaluation/InterviewTab.css";
 import { clamp100, getScoreColor, isPlainObject } from "../utils/evalUtils";
 import {
   PolarAngleAxis,

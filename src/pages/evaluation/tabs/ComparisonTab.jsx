@@ -1,5 +1,6 @@
 import React from "react";
 import EmptyBlock from "../components/EmptyBlock";
+import "../../../css/evaluation/ComparisonTab.css";
 import { clamp100, isPlainObject } from "../utils/evalUtils";
 
 const CAT_LABELS = {

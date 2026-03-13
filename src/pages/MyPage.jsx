@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { getQuota } from "../lib/api/paymentApi";
 
@@ -33,7 +33,7 @@ const MyPage = () => {
   const [errorMsg, setErrorMsg] = useState("");
 
   const [mainTab, setMainTab] = useState("analysis");
-  const [subTab, setSubTab] = useState("이력서");
+  const [subTab, setSubTab] = useState("포트폴리오");
 
   const [analysesData, setAnalysesData] = useState({
     이력서: [],
@@ -41,6 +41,24 @@ const MyPage = () => {
     포트폴리오: [],
   });
   const [interviewsData, setInterviewsData] = useState([]);
+
+  // ==========================================
+  // 💡 삭제 확인 모달 상태 추가
+  // ==========================================
+  const [deleteModal, setDeleteModal] = useState({ 
+    show: false, 
+    id: null, 
+    type: null, // 'analysis' 또는 'interview'
+    category: null 
+  });
+
+  const [analysisPage, setAnalysisPage] = useState(1);
+  const [interviewPage, setInterviewPage] = useState(1);
+  const itemsPerPage = 4;
+
+  useEffect(() => {
+    setAnalysisPage(1);
+  }, [subTab]);
 
   useEffect(() => {
     const fetchAllMyData = async () => {
@@ -67,12 +85,10 @@ const MyPage = () => {
             getQuota().catch(() => null),
           ]);
 
-        // 유저 정보 세팅
         setUser(userRes.data);
         setFormData(userRes.data);
         setOriginalData(userRes.data);
 
-        // 분석 데이터 세팅
         if (analysisRes.data) {
           setAnalysesData({
             이력서: analysisRes.data.resume || [],
@@ -81,12 +97,10 @@ const MyPage = () => {
           });
         }
 
-        // 면접 데이터 세팅
         if (interviewRes.data) {
           setInterviewsData(interviewRes.data);
         }
 
-        // 이용권 데이터 세팅
         if (quotaRes) {
           setQuota(quotaRes);
         } else {
@@ -129,7 +143,7 @@ const MyPage = () => {
     }
     try {
       const response = await axios.get(
-        `http://localhost:8080/api/member/check-nickname?nickname=${formData.nickname}`,
+        `http://localhost:8080/api/member/check-nickname?nickname=${formData.nickname}`
       );
       if (response.data === true) {
         setNicknameMsg("이미 사용 중인 닉네임입니다.");
@@ -165,7 +179,7 @@ const MyPage = () => {
         const currentUser = JSON.parse(currentUserStr);
         sessionStorage.setItem(
           "user",
-          JSON.stringify({ ...currentUser, ...formData }),
+          JSON.stringify({ ...currentUser, ...formData })
         );
       }
     } catch (error) {
@@ -191,48 +205,146 @@ const MyPage = () => {
       console.error("탈퇴 실패:", error);
       alert(
         "탈퇴 처리 중 오류가 발생했습니다: " +
-          (error.response?.data || "서버 에러"),
+          (error.response?.data || "서버 에러")
       );
     }
   };
 
-  // 수정
-      const handleResultClick = (id, category) => {
-        if (category === 'analysis') {
-            if (subTab === '이력서') {
-                navigate(`/resume/result/${id}`);
-            } else if (subTab === '자기소개서') {
-                navigate(`/analysis/result/${id}`);
-            } else if (subTab === '포트폴리오') {
-                navigate(`/portfolio/result/${id}`);
-            }
-        } else if (category === 'interview') {
-            navigate(`/interview/result/${id}`);
-        }
-    };
+  const handleResultClick = (id, category) => {
+    if (category === "analysis") {
+      if (subTab === "이력서") {
+        navigate(`/resume/result/${id}`);
+      } else if (subTab === "자기소개서") {
+        navigate(`/analysis/result/${id}`);
+      } else if (subTab === "포트폴리오") {
+        navigate(`/portfolio/result/${id}`);
+      }
+    } else if (category === "interview") {
+      navigate(`/interview/result/${id}`);
+    }
+  };
 
-  if (loading)
+  // ==========================================
+  // 💡 개별 삭제 모달 호출 함수 (분석/면접 통합)
+  // ==========================================
+  const handleDeleteAnalysis = (id, category) => {
+    setDeleteModal({ show: true, id, type: 'analysis', category });
+  };
+
+  const handleInterviewDelete = (id) => {
+    setDeleteModal({ show: true, id, type: 'interview', category: '면접 기록' });
+  };
+
+  // 실제 삭제 요청 수행 함수
+  const executeDelete = async () => {
+    const { id, type, category } = deleteModal;
+    const token = sessionStorage.getItem("token");
+    const config = { headers: { Authorization: `Bearer ${token}` } };
+    
+    try {
+      if (type === 'analysis') {
+        let apiUrl = "";
+        if (category === "포트폴리오") apiUrl = `http://localhost:8080/api/portfolios/${id}`;
+        else if (category === "자기소개서") apiUrl = `http://localhost:8080/api/ci/${id}`;
+        else if (category === "이력서") apiUrl = `http://localhost:8080/api/resumes/${id}`;
+
+        await axios.delete(apiUrl, config);
+
+        setAnalysesData((prev) => {
+          const updatedList = prev[category].filter((item) => item.id !== id);
+          const totalPages = Math.ceil(updatedList.length / itemsPerPage);
+          if (analysisPage > totalPages && totalPages > 0) {
+            setAnalysisPage(totalPages);
+          }
+          return { ...prev, [category]: updatedList };
+        });
+      } else {
+        // 면접 기록 삭제
+        await axios.delete(`http://localhost:8080/api/interview/sessions/${id}`, config);
+
+        setInterviewsData((prev) => {
+          const updatedList = prev.filter((item) => item.id !== id);
+          const totalPages = Math.ceil(updatedList.length / itemsPerPage);
+          if (interviewPage > totalPages && totalPages > 0) {
+            setInterviewPage(totalPages);
+          }
+          return updatedList;
+        });
+      }
+
+      // 모달 닫기
+      setDeleteModal({ show: false, id: null, type: null, category: null });
+    } catch (error) {
+      console.error("삭제 실패:", error);
+      setErrorMsg(error.response?.data?.message || "삭제 중 오류가 발생했습니다.");
+      setDeleteModal({ show: false, id: null, type: null, category: null });
+    }
+  };
+
+  // 현재 페이지에 보여줄 데이터 추출
+  const currentAnalysesList = analysesData[subTab] || [];
+  const totalAnalysisPages = Math.ceil(currentAnalysesList.length / itemsPerPage);
+  const displayedAnalyses = currentAnalysesList.slice(
+    (analysisPage - 1) * itemsPerPage,
+    analysisPage * itemsPerPage
+  );
+
+  const totalInterviewPages = Math.ceil(interviewsData.length / itemsPerPage);
+  const displayedInterviews = interviewsData.slice(
+    (interviewPage - 1) * itemsPerPage,
+    interviewPage * itemsPerPage
+  );
+
+  if (loading) {
     return (
       <div className="text-center mt-20">데이터를 불러오는 중입니다...</div>
     );
-  if (!user)
+  }
+
+  if (!user) {
     return (
       <div className="text-center mt-20">로그인이 필요한 페이지입니다.</div>
     );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-28 pb-12 px-4 font-sans">
-      <Link
-        to="/"
-        className="absolute top-8 left-8 flex items-center gap-2 text-gray-400 hover:text-gray-900 font-semibold group"
-      >
-        <span className="text-xl group-hover:-translate-x-1 transition-transform">
-          ←
-        </span>
-        <span>홈으로 이동</span>
-      </Link>
+    <div
+      className="min-h-screen relative overflow-hidden pt-28 pb-12 px-4 font-sans"
+      style={{
+        background:
+          "linear-gradient(135deg, #f0f2ff 0%, #eaf0ff 50%, #f5f0ff 100%)",
+      }}
+    >
+      <div
+        className="absolute top-[-120px] right-[-100px] w-[500px] h-[500px] rounded-full pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(99,120,247,0.12) 0%, transparent 70%)",
+        }}
+      />
+      <div
+        className="absolute bottom-[-80px] left-[-80px] w-[400px] h-[400px] rounded-full pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(139,100,247,0.10) 0%, transparent 70%)",
+        }}
+      />
 
-      <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-sm border border-gray-100 p-12">
+      <button
+        onClick={() => navigate("/")}
+        className="absolute top-8 left-8 inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 z-20"
+        style={{
+          background: "rgba(255,255,255,0.9)",
+          color: "#4B5672",
+          border: "1px solid rgba(99,120,247,0.14)",
+          boxShadow: "0 4px 14px rgba(99,120,247,0.08)",
+        }}
+      >
+        <span className="text-base">←</span>
+        홈으로 돌아가기
+      </button>
+
+      <div className="relative z-10 max-w-4xl mx-auto bg-white rounded-3xl shadow-sm border border-gray-100 p-12">
         <div className="flex justify-between items-center mb-12">
           <h2 className="text-3xl font-semibold text-gray-900 text-center flex-1 ml-10">
             마이페이지
@@ -243,7 +355,13 @@ const MyPage = () => {
               else setEditMode(true);
             }}
             disabled={editMode && !isNicknameVerified}
-            className={`px-5 py-2 rounded-xl font-bold transition-all ${!editMode ? "bg-gray-100 text-gray-600 hover:bg-gray-200" : isNicknameVerified ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-gray-300 text-gray-500 cursor-not-allowed"}`}
+            className={`px-5 py-2 rounded-xl font-bold transition-all ${
+              !editMode
+                ? "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                : isNicknameVerified
+                ? "bg-blue-600 text-white hover:bg-blue-700"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
           >
             {editMode ? "변경사항 저장" : "정보 수정"}
           </button>
@@ -267,7 +385,11 @@ const MyPage = () => {
                 value={formData.name}
                 onChange={handleChange}
                 disabled={!editMode}
-                className={`w-full text-lg font-semibold bg-transparent border-b-2 py-1 transition-all outline-none ${editMode ? "border-blue-500 text-gray-800" : "border-transparent text-gray-800"}`}
+                className={`w-full text-lg font-semibold bg-transparent border-b-2 py-1 transition-all outline-none ${
+                  editMode
+                    ? "border-blue-500 text-gray-800"
+                    : "border-transparent text-gray-800"
+                }`}
               />
             </div>
             <div>
@@ -281,13 +403,23 @@ const MyPage = () => {
                   value={formData.nickname}
                   onChange={handleChange}
                   disabled={!editMode}
-                  className={`flex-1 text-lg font-semibold bg-transparent border-b-2 py-1 transition-all outline-none text-gray-800 ${editMode ? (isNicknameVerified ? "border-green-500" : "border-blue-500") : "border-transparent"}`}
+                  className={`flex-1 text-lg font-semibold bg-transparent border-b-2 py-1 transition-all outline-none text-gray-800 ${
+                    editMode
+                      ? isNicknameVerified
+                        ? "border-green-500"
+                        : "border-blue-500"
+                      : "border-transparent"
+                  }`}
                 />
                 {editMode && (
                   <button
                     onClick={handleNicknameCheck}
                     disabled={isNicknameVerified}
-                    className={`whitespace-nowrap px-4 py-2 rounded-lg text-sm font-bold text-white transition-colors ${isNicknameVerified ? "bg-gray-300 cursor-not-allowed" : "bg-gray-800 hover:bg-gray-700 shadow-sm active:scale-95"}`}
+                    className={`whitespace-nowrap px-4 py-2 rounded-lg text-sm font-bold text-white transition-colors ${
+                      isNicknameVerified
+                        ? "bg-gray-300 cursor-not-allowed"
+                        : "bg-gray-800 hover:bg-gray-700 shadow-sm active:scale-95"
+                    }`}
                   >
                     {isNicknameVerified ? "확인완료" : "중복확인"}
                   </button>
@@ -295,7 +427,9 @@ const MyPage = () => {
               </div>
               {editMode && nicknameMsg && (
                 <p
-                  className={`text-sm font-bold mt-2 animate-in fade-in ${isNicknameVerified ? "text-green-500" : "text-red-500"}`}
+                  className={`text-sm font-bold mt-2 animate-in fade-in ${
+                    isNicknameVerified ? "text-green-500" : "text-red-500"
+                  }`}
                 >
                   {nicknameMsg}
                 </p>
@@ -378,8 +512,11 @@ const MyPage = () => {
         <div className="flex border-b-2 border-gray-100 mb-10 mt-12">
           <button
             onClick={() => setMainTab("analysis")}
-            className={`flex-1 py-4 text-lg font-black flex items-center justify-center gap-2 transition-colors relative
-                            ${mainTab === "analysis" ? "text-blue-600" : "text-gray-400 hover:text-gray-600"}`}
+            className={`flex-1 py-4 text-lg font-black flex items-center justify-center gap-2 transition-colors relative ${
+              mainTab === "analysis"
+                ? "text-blue-600"
+                : "text-gray-400 hover:text-gray-600"
+            }`}
           >
             <span className="text-xl">분석 결과</span>
             {mainTab === "analysis" && (
@@ -389,8 +526,11 @@ const MyPage = () => {
 
           <button
             onClick={() => setMainTab("interview")}
-            className={`flex-1 py-4 text-lg font-black flex items-center justify-center gap-2 transition-colors relative
-                            ${mainTab === "interview" ? "text-blue-600" : "text-gray-400 hover:text-gray-600"}`}
+            className={`flex-1 py-4 text-lg font-black flex items-center justify-center gap-2 transition-colors relative ${
+              mainTab === "interview"
+                ? "text-blue-600"
+                : "text-gray-400 hover:text-gray-600"
+            }`}
           >
             <span className="text-xl">면접 기록</span>
             {mainTab === "interview" && (
@@ -411,12 +551,11 @@ const MyPage = () => {
                   <button
                     key={tab}
                     onClick={() => setSubTab(tab)}
-                    className={`px-6 py-2.5 rounded-full font-bold text-sm transition-all
-                                            ${
-                                              subTab === tab
-                                                ? "bg-blue-600 text-white shadow-md shadow-blue-200"
-                                                : "bg-white border border-gray-200 text-gray-500 hover:bg-gray-50"
-                                            }`}
+                    className={`px-6 py-2.5 rounded-full font-bold text-sm transition-all ${
+                      subTab === tab
+                        ? "bg-blue-600 text-white shadow-md shadow-blue-200"
+                        : "bg-white border border-gray-200 text-gray-500 hover:bg-gray-50"
+                    }`}
                   >
                     {tab}
                   </button>
@@ -424,52 +563,45 @@ const MyPage = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {analysesData[subTab] && analysesData[subTab].length > 0 ? (
-                  analysesData[subTab].map((item) => (
-                    <div
-                      key={item.id}
-                      className="group border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-blue-200 transition-all cursor-pointer bg-white"
-                    >
-                      <div className="flex justify-between items-center mb-4">
-                        <span className="text-xs font-bold px-3 py-1 bg-blue-50 text-blue-600 rounded-lg">
-                          {subTab}
-                        </span>
-                        <span className="text-xs text-gray-400 font-medium">
-                          {item.date}
-                        </span>
-                      </div>
-                      <h4 className="text-lg font-bold text-gray-900 mb-4 line-clamp-2">
-                        {item.title}
-                      </h4>
-                      <div className="flex justify-between items-end mt-auto">
-                        <div>
-                          <p className="text-xs text-gray-400 font-bold mb-1">
-                            AI 종합 점수
-                          </p>
-                          <p className="text-2xl font-black text-gray-900">
-                            {item.score}
-                            <span className="text-sm font-medium text-gray-500 ml-1">
-                              점
-                            </span>
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => handleResultClick(item.id, "analysis")}
-                          className="px-4 py-2 bg-gray-50 text-gray-600 rounded-xl text-sm font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors"
-                        >
-                          결과 보기
-                        </button>
-                      </div>
-                    </div>
-                  ))
+                {displayedAnalyses.length > 0 ? (
+                  displayedAnalyses.map((item) => {
+                    const displayDate = item.analyzedAt 
+                      ? item.analyzedAt.substring(0, 10)
+                      : "날짜 없음";
+
+                    return (
+                      <ResultCard
+                        key={item.id}
+                        badge={subTab}
+                        badgeClass="bg-blue-50 text-blue-600"
+                        date={displayDate} 
+                        title={item.title}
+                        score={item.score}
+                        onClick={() => handleResultClick(item.id, "analysis")}
+                        onDelete={() => handleDeleteAnalysis(item.id, subTab)}
+                        buttonClass="group-hover:bg-blue-600 group-hover:text-white"
+                      />
+                    );
+                  })
                 ) : (
-                  <div className="col-span-2 py-16 text-center bg-gray-50 rounded-2xl border border-gray-100 border-dashed">
-                    <p className="text-gray-400 font-semibold">
-                      아직 분석된 {subTab}가 없습니다.
-                    </p>
-                  </div>
+                  <EmptyState text={`아직 분석된 ${subTab}가 없습니다.`} />
                 )}
               </div>
+
+              {totalAnalysisPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-8">
+                  {Array.from({ length: totalAnalysisPages }, (_, i) => i + 1).map((pageNum) => (
+                    <button
+                      key={pageNum}
+                      onClick={() => setAnalysisPage(pageNum)}
+                      className={`w-9 h-9 rounded-full text-sm font-bold transition-all
+                        ${analysisPage === pageNum ? "bg-blue-600 text-white shadow-md" : "bg-white text-gray-500 border border-gray-200 hover:bg-gray-50"}`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -480,51 +612,40 @@ const MyPage = () => {
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {interviewsData && interviewsData.length > 0 ? (
-                  interviewsData.map((item) => (
-                    <div
+                {displayedInterviews.length > 0 ? (
+                  displayedInterviews.map((item) => (
+                    <ResultCard
                       key={item.id}
-                      className="group border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-purple-200 transition-all cursor-pointer bg-white"
-                    >
-                      <div className="flex justify-between items-center mb-4">
-                        <span className="text-xs font-bold px-3 py-1 bg-purple-50 text-purple-600 rounded-lg">
-                          {item.type || "면접"}
-                        </span>
-                        <span className="text-xs text-gray-400 font-medium">
-                          {item.date}
-                        </span>
-                      </div>
-                      <h4 className="text-lg font-bold text-gray-900 mb-4 line-clamp-2">
-                        {item.title}
-                      </h4>
-                      <div className="flex justify-between items-end mt-auto">
-                        <div>
-                          <p className="text-xs text-gray-400 font-bold mb-1">
-                            진행 시간
-                          </p>
-                          <p className="text-xl font-bold text-gray-700">
-                            {item.duration}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() =>
-                            handleResultClick(item.id, "interview")
-                          }
-                          className="px-4 py-2 bg-gray-50 text-gray-600 rounded-xl text-sm font-bold group-hover:bg-purple-600 group-hover:text-white transition-colors"
-                        >
-                          기록 보기
-                        </button>
-                      </div>
-                    </div>
+                      badge={item.type || "면접"}
+                      badgeClass="bg-purple-50 text-purple-600"
+                      date={item.date || "날짜 없음"}
+                      title={item.title}
+                      duration={item.duration}
+                      interview
+                      onClick={() => handleResultClick(item.id, "interview")}
+                      onDelete={() => handleInterviewDelete(item.id)}
+                      buttonClass="group-hover:bg-purple-600 group-hover:text-white"
+                    />
                   ))
                 ) : (
-                  <div className="col-span-2 py-16 text-center bg-gray-50 rounded-2xl border border-gray-100 border-dashed">
-                    <p className="text-gray-400 font-semibold">
-                      아직 면접 기록이 없습니다.
-                    </p>
-                  </div>
+                  <EmptyState text="아직 면접 기록이 없습니다." />
                 )}
               </div>
+
+              {totalInterviewPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-8">
+                  {Array.from({ length: totalInterviewPages }, (_, i) => i + 1).map((pageNum) => (
+                    <button
+                      key={pageNum}
+                      onClick={() => setInterviewPage(pageNum)}
+                      className={`w-9 h-9 rounded-full text-sm font-bold transition-all
+                        ${interviewPage === pageNum ? "bg-purple-600 text-white shadow-md" : "bg-white text-gray-500 border border-gray-200 hover:bg-gray-50"}`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -548,6 +669,41 @@ const MyPage = () => {
           </div>
         </div>
       </div>
+
+      {/* ==========================================
+          💡 개별 기록 삭제 확인 모달
+      ========================================== */}
+      {deleteModal.show && (
+        <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center z-[110] px-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-8 max-w-[400px] w-full shadow-2xl border border-gray-100">
+            <div className="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center mb-6">
+              <svg className="w-6 h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </div>
+
+            <h3 className="text-xl font-bold text-gray-900 mb-2">기록을 삭제하시겠습니까?</h3>
+            <p className="text-gray-500 text-sm leading-relaxed mb-6">
+              선택하신 <span className="text-blue-600 font-bold">{deleteModal.category}</span> 기록이 영구적으로 삭제되며, 이 작업은 되돌릴 수 없습니다.
+            </p>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteModal({ show: false, id: null, type: null, category: null })}
+                className="flex-1 py-3.5 bg-white border border-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-colors text-sm"
+              >
+                취소
+              </button>
+              <button
+                onClick={executeDelete}
+                className="flex-1 py-3.5 bg-orange-500 text-white rounded-xl font-semibold hover:bg-orange-600 transition-colors text-sm shadow-sm"
+              >
+                삭제하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showModal && (
         <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center z-[100] px-4 animate-in fade-in duration-200">
@@ -618,60 +774,94 @@ const MyPage = () => {
   );
 };
 
+// ResultCard 컴포넌트
 function ResultCard({
-    badge,
-    badgeClass,
-    date,
-    title,
-    score,
-    duration,
-    onClick,
-    buttonClass,
-    interview = false
+  badge,
+  badgeClass,
+  date,
+  title,
+  score,
+  duration,
+  onClick,
+  buttonClass,
+  interview = false,
+  onDelete, 
 }) {
-    return (
-        <div className="group border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-blue-200 transition-all bg-white">
-            <div className="flex justify-between items-center mb-4">
-                <span className={`text-xs font-bold px-3 py-1 rounded-lg ${badgeClass}`}>
-                    {badge}
-                </span>
-                <span className="text-xs text-gray-400 font-medium">{date}</span>
-            </div>
+  return (
+    <div
+      className="relative group border border-gray-200 rounded-2xl p-6 hover:shadow-lg hover:border-blue-200 transition-all bg-white cursor-pointer"
+      onClick={onClick}
+    >
+      {onDelete && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation(); 
+            onDelete();
+          }}
+          className="absolute top-4 right-4 p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all duration-200"
+          title="삭제하기"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+            />
+          </svg>
+        </button>
+      )}
 
-            <h4 className="text-lg font-bold text-gray-900 mb-4 line-clamp-2">{title}</h4>
+      <div className="flex justify-between items-center mb-4 pr-8">
+        <span
+          className={`text-xs font-bold px-3 py-1 rounded-lg ${badgeClass}`}
+        >
+          {badge}
+        </span>
+        <span className="text-xs text-gray-400 font-medium">{date}</span>
+      </div>
 
-            <div className="flex justify-between items-end mt-auto">
-                <div>
-                    <p className="text-xs text-gray-400 font-bold mb-1">
-                        {interview ? '진행 시간' : 'AI 종합 점수'}
-                    </p>
-                    {interview ? (
-                        <p className="text-xl font-bold text-gray-700">{duration}</p>
-                    ) : (
-                        <p className="text-2xl font-black text-gray-900">
-                            {score}
-                            <span className="text-sm font-medium text-gray-500 ml-1">점</span>
-                        </p>
-                    )}
-                </div>
+      <h4 className="text-lg font-bold text-gray-900 mb-4 line-clamp-2">
+        {title}
+      </h4>
 
-                <button
-                    onClick={onClick}
-                    className={`px-4 py-2 bg-gray-50 text-gray-600 rounded-xl text-sm font-bold transition-colors ${buttonClass}`}
-                >
-                    {interview ? '기록 보기' : '결과 보기'}
-                </button>
-            </div>
+      <div className="flex justify-between items-end mt-auto">
+        <div>
+          <p className="text-xs text-gray-400 font-bold mb-1">
+            {interview ? "진행 시간" : "AI 종합 점수"}
+          </p>
+          {interview ? (
+            <p className="text-xl font-bold text-gray-700">{duration}</p>
+          ) : (
+            <p className="text-2xl font-black text-gray-900">
+              {score}
+              <span className="text-sm font-medium text-gray-500 ml-1">점</span>
+            </p>
+          )}
         </div>
-    );
+
+        <button
+          className={`px-4 py-2 bg-gray-50 text-gray-600 rounded-xl text-sm font-bold transition-colors ${buttonClass}`}
+        >
+          {interview ? "기록 보기" : "결과 보기"}
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function EmptyState({ text }) {
-    return (
-        <div className="col-span-2 py-16 text-center bg-gray-50 rounded-2xl border border-gray-100 border-dashed">
-            <p className="text-gray-400 font-semibold">{text}</p>
-        </div>
-    );
+  return (
+    <div className="col-span-2 py-16 text-center bg-gray-50 rounded-2xl border border-gray-100 border-dashed">
+      <p className="text-gray-400 font-semibold">{text}</p>
+    </div>
+  );
 }
 
 function QuotaCard({ title, value, desc, color, icon }) {
