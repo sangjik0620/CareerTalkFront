@@ -1,23 +1,13 @@
 import React from "react";
 import EmptyBlock from "../components/EmptyBlock";
 import { getScoreColor, safeJson } from "../utils/evalUtils";
+import "../../../css/evaluation/DocumentTab.css";
 
 const DOC_META = {
   RESUME: { label: "이력서", emoji: "📝" },
   ESSAY: { label: "자기소개서", emoji: "✍️" },
   PORTFOLIO: { label: "포트폴리오", emoji: "💼" },
 };
-
-function parseSummary(text) {
-  const safeText = typeof text === "string" ? text : "";
-
-  const [strengthPart, weaknessPart = ""] = safeText.split("보완점:");
-
-  const strength = strengthPart.replace("장점:", "").trim();
-  const weakness = weaknessPart.trim();
-
-  return { strength, weakness };
-}
 
 function DocScoreCard({ docKey, analysisEntity }) {
   const { label, emoji } = DOC_META[docKey] ?? { label: docKey, emoji: "📄" };
@@ -64,8 +54,6 @@ function DocDetailCard({ docKey, analysisEntity }) {
   const keywords =
     scoreObj?.keywords || scoreObj?.topKeywords || scoreObj?.keyWords || [];
 
-  const { strength, weakness } = parseSummary(analysisEntity?.summaryDetail);
-
   return (
     <div className="doc-detail-card pdf-doc">
       <h3>
@@ -78,34 +66,11 @@ function DocDetailCard({ docKey, analysisEntity }) {
           <div>{analysisEntity.oneLineReview}</div>
         </div>
       )}
-
       {analysisEntity?.summaryDetail && (
         <div className="analysis-section">
-          {strength && (
-            <div style={{ marginBottom: "10px" }}>
-              <strong>장점</strong>
-              <div style={{ whiteSpace: "pre-wrap" }}>{strength}</div>
-            </div>
-          )}
-
-          {weakness && (
-            <div>
-              <strong>보완점</strong>
-              <div style={{ whiteSpace: "pre-wrap" }}>{weakness}</div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {keywords.length > 0 && (
-        <div className="analysis-section">
-          <h4>핵심 키워드</h4>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-            {keywords.map((keyword, idx) => (
-              <span key={idx} className="keyword-chip">
-                {keyword}
-              </span>
-            ))}
+          <h4>피드백</h4>
+          <div style={{ whiteSpace: "pre-wrap" }}>
+            {analysisEntity.summaryDetail}
           </div>
         </div>
       )}
