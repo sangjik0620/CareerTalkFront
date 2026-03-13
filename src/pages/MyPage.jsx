@@ -32,8 +32,8 @@ const MyPage = () => {
   const [showAlert, setShowAlert] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const [mainTab, setMainTab] = useState("analysis");
-  const [subTab, setSubTab] = useState("포트폴리오");
+  const [mainTab, setMainTab] = useState(sessionStorage.getItem("lastMainTab") || "analysis");
+  const [subTab, setSubTab] = useState(sessionStorage.getItem("lastSubTab") || "이력서");
 
   const [analysesData, setAnalysesData] = useState({
     이력서: [],
@@ -55,6 +55,19 @@ const MyPage = () => {
   const [analysisPage, setAnalysisPage] = useState(1);
   const [interviewPage, setInterviewPage] = useState(1);
   const itemsPerPage = 4;
+
+//   useEffect(() => {
+//   sessionStorage.setItem("lastMainTab", mainTab);
+// }, [mainTab]);
+
+// useEffect(() => {
+//   sessionStorage.setItem("lastSubTab", subTab);
+// }, [subTab]);
+
+useEffect(() => {
+  sessionStorage.setItem("lastMainTab", mainTab);
+  sessionStorage.setItem("lastSubTab", subTab);
+}, [mainTab, subTab]);
 
   useEffect(() => {
     setAnalysisPage(1);
@@ -211,6 +224,10 @@ const MyPage = () => {
   };
 
   const handleResultClick = (id, category) => {
+
+    sessionStorage.setItem("lastMainTab", mainTab);
+    sessionStorage.setItem("lastSubTab", subTab);
+
     if (category === "analysis") {
       if (subTab === "이력서") {
         navigate(`/resume/result/${id}`);
@@ -331,7 +348,11 @@ const MyPage = () => {
       />
 
       <button
-        onClick={() => navigate("/")}
+        onClick={() => {
+          sessionStorage.removeItem("lastMainTab"); 
+          sessionStorage.removeItem("lastSubTab"); 
+          navigate("/");
+        }}
         className="absolute top-8 left-8 inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-bold transition-all duration-200 hover:-translate-y-0.5 z-20"
         style={{
           background: "rgba(255,255,255,0.9)",
