@@ -90,17 +90,22 @@ export default function CIAnalysisResult() {
   };
 
   const normalizedQuestions = useMemo(() => {
+  // 🔍 백엔드에서 올 수 있는 모든 질문 리스트 후보군을 다 확인합니다.
+  const rawQuestions = data?.questions || data?.interviewQuestions || data?.qList || data?.qlist || [];
+  
+  if (!Array.isArray(rawQuestions) || rawQuestions.length === 0) return [];
+
+  return rawQuestions.map((item, idx) => {
+    // 질문 내용이 객체(item.q)인지, 문자열("질문")인지에 따라 대응
+    const qText = typeof item === "string" ? item : (item?.q || item?.question || "");
+    const intentText = item?.intent || (data?.questionIntents && data.questionIntents[idx]) || "";
     
-    const q = data?.questions;
-    const intents = data?.questionIntents || [];
-
-    if (!Array.isArray(q) || q.length === 0) return [];
-
-    return q.map((item) => ({
-      question: item?.q || "",
-      intent: item?.intent || "",
-    }));
-  }, [data]);
+    return {
+      question: qText,
+      intent: intentText,
+    };
+  });
+}, [data]);
 
   const top3 = normalizedQuestions.slice(0, 3);
 
@@ -284,21 +289,13 @@ export default function CIAnalysisResult() {
               {tab === "REWRITE" && isGenerating ? (
                 <div style={rewriteLoadingWrapStyle}>
                   <div style={spinnerStyle} />
-                  <div style={rewriteLoadingTitleStyle}>
-                    AI가 개선본을 생성하고 있어요
-                  </div>
-                  <div style={rewriteLoadingDescStyle}>
-                    문장 구조와 표현을 다듬는 중입니다.
-                    <br />
-                    잠시만 기다려 주세요.
-                  </div>
+                  <div style={rewriteLoadingTitleStyle}>AI가 개선본을 생성하고 있어요</div>
                 </div>
               ) : (
                 <pre style={essayTextStyle}>
                   {tab === "ORIGINAL"
-                    ? data.content
-                    : rewrite ||
-                      "아직 AI 개선본이 없어요. ‘AI 개선본 생성’을 눌러주세요."}
+                    ? (data.originalText || data.originalContent || data.essayContent || data.userContent || data.content || "데이터를 불러올 수 없습니다.")
+                    : (rewrite || "아직 AI 개선본이 없어요. ‘AI 개선본 생성’을 눌러주세요.")}
                 </pre>
               )}
             </div>
