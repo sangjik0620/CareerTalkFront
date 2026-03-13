@@ -9,7 +9,6 @@ import DeviceTestModal from "../interview/DeviceTestModal";
 import { api } from "../../lib/api";
 import { getQuota } from "../../lib/api/paymentApi";
 
-// ─────────────────────────────────────────────
 const FILE_META = {
   resume: {
     label: "이력서",
@@ -76,8 +75,6 @@ const FILE_META = {
   },
 };
 
-// ─────────────────────────────────────────────
-// ✅ 신규: 직군 목록
 const JOB_CATEGORIES = [
   "기획∙전략",
   "마케팅∙홍보∙조사",
@@ -102,13 +99,13 @@ const JOB_CATEGORIES = [
   "공공∙복지",
 ];
 
-// ─────────────────────────────────────────────
+
 const fetchUserAnalyses = async () => {
   const res = await api.get("/api/analysis/my");
   return res.data;
 };
 
-// ─────────────────────────────────────────────
+
 const BackgroundMesh = () => (
   <div className="fixed inset-0 pointer-events-none overflow-hidden">
     <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_#dbeafe_0%,_transparent_50%)]" />
@@ -117,7 +114,7 @@ const BackgroundMesh = () => (
   </div>
 );
 
-// ─────────────────────────────────────────────
+
 const ScoreBadge = ({ score }) => {
   const color =
     score >= 90
@@ -135,7 +132,6 @@ const ScoreBadge = ({ score }) => {
   );
 };
 
-// ─────────────────────────────────────────────
 function CardEmptyState({ meta, onClickAnalyze }) {
   return (
     <div
@@ -171,7 +167,6 @@ function CardEmptyState({ meta, onClickAnalyze }) {
   );
 }
 
-// ─────────────────────────────────────────────
 function GlobalEmptyBanner() {
   const steps = [
     { icon: "📤", label: "문서 업로드", desc: "이력서·자소서·포폴" },
@@ -218,7 +213,6 @@ function GlobalEmptyBanner() {
   );
 }
 
-// ─────────────────────────────────────────────
 function AnalysisItemCard({ item, isSelected, onSelect, meta }) {
   return (
     <button
@@ -264,7 +258,6 @@ function AnalysisItemCard({ item, isSelected, onSelect, meta }) {
   );
 }
 
-// ─────────────────────────────────────────────
 function AnalysisCategoryCard({
   fileKey,
   meta,
@@ -380,7 +373,6 @@ function AnalysisCategoryCard({
   );
 }
 
-// ─────────────────────────────────────────────
 function EstimatedTimeCard({ questionCount }) {
   const count = parseInt(questionCount, 10);
   const minutes = count * 2;
@@ -439,12 +431,10 @@ function EstimatedTimeCard({ questionCount }) {
   );
 }
 
-// ✅ 직군 선택 카드 — 드롭다운 방식
 function JobCategoryCard({ value, onChange }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // 바깥 클릭 시 닫기
   useEffect(() => {
     const handler = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -462,7 +452,6 @@ function JobCategoryCard({ value, onChange }) {
 
   return (
     <div className="flex-1 bg-white/70 backdrop-blur-sm rounded-2xl p-5 border border-gray-200/80 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col">
-      {/* 헤더 */}
       <div className="flex items-center gap-2 mb-4">
         <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-xl flex items-center justify-center text-sm shadow-sm">
           🏢
@@ -478,7 +467,6 @@ function JobCategoryCard({ value, onChange }) {
         )}
       </div>
 
-      {/* 드롭다운 트리거 */}
       <div ref={dropdownRef} className="relative">
         <button
           type="button"
@@ -506,7 +494,6 @@ function JobCategoryCard({ value, onChange }) {
               </>
             )}
           </span>
-          {/* 화살표 아이콘 */}
           <svg
             className={`w-4 h-4 shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180 text-indigo-500" : "text-gray-400"}`}
             fill="none"
@@ -522,7 +509,6 @@ function JobCategoryCard({ value, onChange }) {
           </svg>
         </button>
 
-        {/* 드롭다운 목록 */}
         {isOpen && (
           <div className="absolute top-full left-0 right-0 z-50 bg-white border border-indigo-100 rounded-2xl shadow-2xl overflow-hidden animate-dropdown-open">
             <div className="max-h-56 overflow-y-auto custom-scroll py-1.5">
@@ -561,7 +547,6 @@ function JobCategoryCard({ value, onChange }) {
   );
 }
 
-// ─────────────────────────────────────────────
 export default function InterviewSelect() {
   const navigate = useNavigate();
 
@@ -586,7 +571,6 @@ export default function InterviewSelect() {
     portfolio: null,
   });
 
-  // ✅ jobCategory 필드 추가
   const [settings, setSettings] = useState({
     questionCount: "5",
     jobCategory: "",
@@ -778,7 +762,7 @@ export default function InterviewSelect() {
       JSON.stringify({
         selectedAnalyses: selectedIds,
         selectedTargets: targets,
-        settings, // ✅ jobCategory 포함됨
+        settings,
         questions: finalQuestions,
         jobCategory,
       }),
@@ -810,7 +794,6 @@ export default function InterviewSelect() {
       <BackgroundMesh />
 
       <div className="relative z-10 max-w-6xl mx-auto px-6 py-10">
-        {/* 상단 이동 버튼 */}
         <div className="flex items-center justify-between mb-8">
           <button
             onClick={() => navigate("/")}
@@ -974,7 +957,6 @@ export default function InterviewSelect() {
           </h3>
 
           <div className="flex flex-col md:flex-row gap-5">
-            {/* 질문 개수 */}
             <div className="flex-1 bg-gradient-to-br from-blue-50/80 to-indigo-50/80 rounded-2xl p-5 border border-blue-100/80">
               <p className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
                 <span className="text-blue-500">📊</span> 질문 개수
@@ -1017,10 +999,8 @@ export default function InterviewSelect() {
               </p>
             </div>
 
-            {/* 예상 시간 */}
             <EstimatedTimeCard questionCount={settings.questionCount} />
 
-            {/* ✅ 직군 선택 카드 */}
             <JobCategoryCard
               value={settings.jobCategory}
               onChange={(cat) =>

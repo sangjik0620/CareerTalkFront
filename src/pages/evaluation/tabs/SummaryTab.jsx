@@ -110,7 +110,6 @@ export default function SummaryTab({ data }) {
 
   return (
     <div className="tab-content">
-      {/* ── Top Row ── */}
       <div className="summaryTop">
         <div className="summaryTopLeft">
           <h2 className="summaryTitle">면접 종합 평가</h2>
@@ -130,10 +129,8 @@ export default function SummaryTab({ data }) {
         </div>
       </div>
 
-      {/* ── Grid ── */}
       <div className="summaryGrid">
 
-        {/* Score + KPI */}
         <section className="summaryCard scoreCardCompact">
           <div className="scoreLeft">
             <div className="score-circle scoreCircleCompact">
@@ -192,7 +189,6 @@ export default function SummaryTab({ data }) {
           </div>
         </section>
 
-        {/* Index + Keywords */}
         <section className="summaryCard summaryCardCompact">
           <div className="summaryCardHeader">
             <h3 className="summaryCardTitle">핵심 지표</h3>
@@ -224,7 +220,6 @@ export default function SummaryTab({ data }) {
           </div>
         </section>
 
-        {/* Strengths / Weaknesses */}
         <section className="summaryCard summaryCardCompact">
           <div className="swCompact">
             <div className="swMini">

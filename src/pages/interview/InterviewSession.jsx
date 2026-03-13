@@ -456,7 +456,6 @@ export default function InterviewSession() {
     <div className="min-h-screen bg-white text-slate-900 relative">
       <LightGradientOrbs />
 
-      {/* Header */}
       <div className="fixed top-0 left-0 right-0 z-40 bg-white/70 backdrop-blur-xl border-b border-slate-200 shadow-sm">
         <div className="max-w-[1800px] mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
@@ -520,7 +519,6 @@ export default function InterviewSession() {
         </div>
       </div>
 
-      {/* Main */}
       <div className="relative z-10 max-w-[1800px] mx-auto px-6 pt-28 pb-12">
         <div className="grid lg:grid-cols-[1fr_400px] gap-6">
           <div className="space-y-6">

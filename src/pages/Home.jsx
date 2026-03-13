@@ -9,7 +9,6 @@ import Resume from "./Resume";
 import ChatBot from "../components/chatbot/ChatBot";
 import { getQuota } from "../lib/api/paymentApi";
 
-// ===== Icons (SVG) =====
 const Icons = {
   Menu: () => (
     <svg
@@ -257,7 +256,6 @@ const Icons = {
   ),
 };
 
-// ===== 타이핑 효과 컴포넌트 =====
 const TypingEffect = ({
   texts,
   speed = 100,
@@ -322,7 +320,6 @@ const TypingEffect = ({
   );
 };
 
-// ===== 동적 배경 컴포넌트 =====
 const AnimatedBackground = () => {
   const canvasRef = useRef(null);
 
@@ -832,7 +829,6 @@ const Navigation = ({ onStart }) => {
   );
 };
 
-// ===== 새로운 배경 디자인: 흐르는 그라데이션 오브 =====
 const FlowingGradientOrbs = () => {
   return (
     <div className="absolute inset-0 overflow-hidden">
@@ -848,7 +844,6 @@ const FlowingGradientOrbs = () => {
   );
 };
 
-// ===== 개선된 Hero 섹션 =====
 const Hero = ({ onStart }) => {
   const typingTexts = ["완벽한 면접", "성공적인 취업", "꿈의 직장 합격"];
 
@@ -948,7 +943,6 @@ const Hero = ({ onStart }) => {
   );
 };
 
-// ===== Features (밝은 톤) =====
 const Features = ({
   onGoInterview,
   onOpenPortfolioModal,
@@ -1117,7 +1111,6 @@ function VoucherRow({ item }) {
   );
 }
 
-// ===== HowItWorks (밝은 톤) =====
 const HowItWorks = () => {
   const steps = [
     {
@@ -1390,7 +1383,6 @@ const Testimonials = () => {
   );
 };
 
-// ===== FAQ (밝은 톤) =====
 const FAQ = () => {
   const [openIndex, setOpenIndex] = useState(null);
 
@@ -1478,7 +1470,6 @@ const FAQ = () => {
   );
 };
 
-// ===== CTA (밝은 톤) =====
 const CTA = ({ onStart }) => (
   <section className="py-24 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 relative overflow-hidden">
     <div className="absolute inset-0 opacity-20">
@@ -1511,7 +1502,6 @@ const CTA = ({ onStart }) => (
   </section>
 );
 
-// ===== Footer (밝은 톤) =====
 const Footer = () => (
   <footer className="bg-gray-50 text-gray-700 py-12 border-t border-gray-200">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1644,7 +1634,6 @@ function LoginGuideModal({ isOpen, onClose, onGoLogin }) {
   );
 }
 
-// ===== Home Page =====
 export default function Home() {
   const navigate = useNavigate();
   const location = useLocation();
