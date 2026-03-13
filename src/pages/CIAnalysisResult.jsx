@@ -17,6 +17,7 @@ export default function CIAnalysisResult() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [toast, setToast] = useState("");
+  const rawQuestions = data?.questions || [];
 
   const ANALYSIS_DETAIL_URL = useMemo(
     () => `${API_BASE}/api/ci/result/${analysisId}`,
