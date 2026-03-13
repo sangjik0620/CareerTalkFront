@@ -769,13 +769,12 @@
   margin: 1.25rem 0;
 }
 .analysis-section h4 {
-  font-size: 0.875rem;
+  font-size: 14px;
   font-weight: 700;
-  color: var(--text-secondary);
+  color: #000;
   margin-bottom: 0.5rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  font-size: 0.75rem;
 }
 .analysis-section > div {
   font-size: 0.9rem;
