@@ -225,8 +225,6 @@ const MyPage = () => {
         apiUrl = `http://localhost:8080/api/portfolios/${id}`;
       } else if (subTab === "이력서") {
         apiUrl = `http://localhost:8080/api/resumes/${id}`;
-        // 나중에 이력서/자소서 백엔드가 완성되면 아래 주석을 풀고 사용하세요!
-        // if (subTab === "이력서") apiUrl = `http://localhost:8080/api/resumes/${id}`;
         // if (subTab === "자기소개서") apiUrl = `http://localhost:8080/api/cover-letters/${id}`;
       }
 
