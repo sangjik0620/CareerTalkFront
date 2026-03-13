@@ -1,5 +1,6 @@
 import React from "react";
 import EmptyBlock from "../components/EmptyBlock";
+import "../../../css/evaluation/CompetencyTab.css";
 import { asArray, clamp100, hasItems } from "../utils/evalUtils";
 
 const PRIORITY_TEXT = { high: "높음", medium: "보통", low: "낮음" };

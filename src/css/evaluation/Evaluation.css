@@ -1,0 +1,580 @@
+
+/* ── Google Fonts (Pretendard fallback) ── */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+:root {
+  /* Brand */
+  --blue-50: #eff6ff;
+  --blue-100: #dbeafe;
+  --blue-200: #bfdbfe;
+  --blue-500: #3b82f6;
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
+  --indigo-500: #6366f1;
+  --indigo-600: #4f46e5;
+  --violet-500: #8b5cf6;
+
+  --brand: var(--blue-600);
+  --brand-dark: var(--blue-700);
+  --grad-brand: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+  --grad-teal: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+
+  /* Semantic */
+  --green-500: #22c55e;
+  --green-600: #16a34a;
+  --amber-500: #f59e0b;
+  --red-500: #ef4444;
+  --red-600: #dc2626;
+
+  /* Neutrals */
+  --slate-50: #f8fafc;
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+
+  --text-primary: var(--slate-900);
+  --text-secondary: var(--slate-500);
+  --text-muted: var(--slate-400);
+  --border: var(--slate-200);
+  --bg-page: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-subtle: var(--slate-50);
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.07), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --shadow-md:
+    0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg:
+    0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+  --shadow-xl:
+    0 20px 25px -5px rgb(0 0 0 / 0.09), 0 8px 10px -6px rgb(0 0 0 / 0.04);
+
+  /* Radius */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+  --r-2xl: 24px;
+  --r-full: 9999px;
+
+  /* Transitions */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --t-fast: 150ms var(--ease);
+  --t-base: 200ms var(--ease);
+  --t-slow: 300ms var(--ease);
+}
+
+/* ────────────────────────────────────────────────
+   Reset & Base
+   ──────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ────────────────────────────────────────────────
+   Page Container
+   ──────────────────────────────────────────────── */
+.evaluation-container {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+  min-height: 100vh;
+  background: var(--bg-page);
+  font-family:
+    "Inter",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    sans-serif;
+  color: var(--text-primary);
+}
+
+/* ────────────────────────────────────────────────
+   Header
+   ──────────────────────────────────────────────── */
+.evaluation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.75rem;
+  padding: 1.125rem 1.5rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-sm);
+}
+.evaluation-header h1 {
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.025em;
+}
+/* ────────────────────────────────────────────────
+   Tab Nav
+   ──────────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 0.375rem;
+  margin-bottom: 1.5rem;
+  background: var(--bg-card);
+  padding: 0.375rem;
+  border-radius: var(--r-xl);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-xs);
+  overflow-x: auto;
+}
+.tabs::-webkit-scrollbar {
+  display: none;
+}
+.tab {
+  flex: 1;
+  min-width: 100px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.625rem 1rem;
+  border: none;
+  border-radius: var(--r-lg);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--t-fast),
+    color var(--t-fast),
+    box-shadow var(--t-fast);
+}
+.tab:hover {
+  background: var(--slate-100);
+  color: var(--text-primary);
+}
+.tab.active {
+  background: var(--grad-brand);
+  color: #fff;
+  box-shadow: 0 2px 8px rgb(37 99 235 / 0.28);
+}
+.tab-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+.tab-label {
+  letter-spacing: -0.01em;
+}
+
+/* ────────────────────────────────────────────────
+   Tab Content Wrapper
+   ──────────────────────────────────────────────── */
+.tab-content-wrapper {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-2xl);
+  padding: 2rem;
+  box-shadow: var(--shadow-md);
+  animation: ev-fade-in 0.25s var(--ease) both;
+}
+@keyframes ev-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ────────────────────────────────────────────────
+   Common Utilities
+   ──────────────────────────────────────────────── */
+.tab-content h2 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.025em;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--slate-100);
+}
+.tab-content h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  letter-spacing: -0.01em;
+}
+.muted {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-style: italic;
+}
+/* ── Badge ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: var(--r-full);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+.badge-good {
+  background: #dcfce7;
+  color: var(--green-600);
+}
+.badge-bad {
+  background: #fee2e2;
+  color: var(--red-600);
+}
+.badge-neutral {
+  background: var(--slate-100);
+  color: var(--slate-600);
+}
+.badge-ghost {
+  background: var(--blue-50);
+  color: var(--blue-600);
+  border: 1px solid var(--blue-100);
+}
+/* ── Generic Card ── */
+.ev-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+/* ── Empty Block ── */
+.empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 3rem 2rem;
+  border: 2px dashed var(--slate-200);
+  border-radius: var(--r-xl);
+  text-align: center;
+}
+.empty-card h3 {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+.empty-card p {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+/* ── Keyword Tag ── */
+.keyword-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--r-full);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  background: var(--blue-50);
+  color: var(--blue-600);
+  border: 1px solid var(--blue-100);
+  transition: background var(--t-fast);
+}
+.keyword-tag:hover {
+  background: var(--blue-100);
+}
+.keyword-tag.secondary {
+  background: var(--slate-100);
+  color: var(--slate-600);
+  border-color: var(--slate-200);
+}
+.keywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+/* ── Section Header ── */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.section-hint {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 12px;
+}
+/* PDF 버튼 */
+.export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #000;
+  background: #f3f4f6;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+  transition: all 0.18s ease;
+}
+.export-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+}
+.export-btn:active {
+  transform: translateY(0);
+}
+/* 홈 버튼 */
+.home-btn {
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--brand);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.home-btn:hover {
+  background: var(--brand-dark);
+}
+
+/* ────────────────────────────────────────────────
+   Responsive
+   ──────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .evaluation-container {
+    padding: 1rem 1rem 3rem;
+  }
+  .summaryGrid {
+    grid-template-columns: 1fr;
+  }
+  .summaryGrid > :first-child {
+    grid-column: auto;
+  }
+  .scoreCardCompact {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .kpiGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .document-overview {
+    grid-template-columns: 1fr;
+  }
+  .swCompact {
+    grid-template-columns: 1fr;
+  }
+  .competency-overview {
+    grid-template-columns: 1fr;
+  }
+  .tabs {
+    gap: 0.25rem;
+  }
+  .tab {
+    min-width: 72px;
+    padding: 0.5rem 0.625rem;
+    font-size: 0.8125rem;
+  }
+}
+@media (max-width: 480px) {
+  .evaluation-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .kpiGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .metric {
+    grid-template-columns: 80px 1fr 44px;
+  }
+}
+
+/* PDF 다운로드 CSS */
+.print-root {
+  position: fixed;
+  left: -99999px;
+  top: 0;
+  width: 210mm;
+  background: #fff;
+}
+.pdf-report {
+  width: 210mm;
+  background: #fff;
+  color: #111827;
+  font-family:
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    "Noto Sans KR",
+    Arial,
+    sans-serif;
+}
+.pdf-cover {
+  page-break-after: always; /* 표지는 1페이지로 끝 */
+  padding: 14mm 12mm;
+}
+.pdf-cover-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #3730a3;
+  font-weight: 700;
+  font-size: 12px;
+}
+.pdf-cover-title {
+  margin: 10mm 0 6mm;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+}
+.pdf-cover-meta {
+  font-size: 12px;
+  color: #6b7280;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.pdf-section {
+  page-break-before: always;
+  padding: 12mm;
+}
+.pdf-section-header {
+  padding-bottom: 6mm;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 8mm;
+}
+.pdf-section-title {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+.pdf-section-body {
+  font-size: 12.5px;
+}
+@media print {
+  @page {
+    size: A4;
+    margin: 0; 
+  }
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .evaluation-header,
+  .tabs,
+  .header-actions {
+    display: none !important;
+  }
+  .pdf-report * {
+    box-shadow: none !important;
+  }
+  .pdf-section {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+  .pdf-section-body > * {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .pdf-section-body .document-details {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+  .pdf-section-body .document-details > .doc-detail-card {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+  .pdf-section-body .doc-score-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .pdf-doc-tab > h2 {
+    margin: 0 0 6mm !important;
+  }
+  .pdf-doc-tab .document-overview {
+    margin-bottom: 6mm !important;
+  }
+  .pdf-doc-tab .document-details {
+    margin-top: 0 !important;
+  }
+  .pdf-doc-tab .document-details {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+  .pdf-doc-tab .document-details > .doc-detail-card {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+  .pdf-doc-tab .empty-block,
+  .pdf-doc-tab .empty-card {
+    padding: 6mm !important;
+  }
+  audio {
+    display: none !important;
+  }
+  .category-comparison {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+  }
+  .category-comparison > * {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .category-comparison p,
+  .category-comparison ul,
+  .category-comparison ol,
+  .category-comparison li {
+    break-inside: auto;
+    page-break-inside: auto;
+  }
+}
+.screen-only {
+  display: none !important;
+}
+@media print {
+  .screen-only {
+    display: block !important;
+  }
+
+  .print-root {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    width: auto !important;
+  }
+}
+.report-section {
+  page-break-inside: avoid;
+  break-inside: avoid;
+  margin-bottom: 24px;
+}
+
+
+
+

@@ -1,5 +1,6 @@
 import React from "react";
 import EmptyBlock from "../components/EmptyBlock";
+import "../../../css/evaluation/SummaryTab.css";
 import {
   asArray,
   clamp100,

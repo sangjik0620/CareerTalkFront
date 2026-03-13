@@ -1,6 +1,7 @@
 import React from "react";
 import EmptyBlock from "../components/EmptyBlock";
 import { getScoreColor, safeJson } from "../utils/evalUtils";
+import "../../../css/evaluation/DocumentTab.css";
 
 const DOC_META = {
   RESUME: { label: "이력서", emoji: "📝" },
