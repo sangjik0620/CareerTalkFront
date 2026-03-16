@@ -393,8 +393,8 @@ export default function InterviewSession() {
       fd.append("targetsJson", JSON.stringify(selectedTargets));
     }
 
-    if (jobPosition) {
-      fd.append("jobPosition", jobPosition);
+    if (jobCategory) {
+      fd.append("jobCategory", jobCategory);
     }
 
     setIsUploading(true);
