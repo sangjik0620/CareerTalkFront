@@ -116,29 +116,42 @@ export default function ClAnalysis({ isOpen, onClose }) {
   };
 
   const handleConfirmAnalyze = async () => {
-    setViewStep("analyzing");
-    setIsAnalyzing(true);
-
     try {
-      const token = sessionStorage.getItem("token");
+      setIsAnalyzing(true);
+
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
 
       if (!token) {
-        throw new Error("로그인 토큰이 없습니다.");
+        alert("로그인이 필요합니다.");
+        navigate("/login");
+        return;
       }
-
-      const payload = buildRequestPayload();
 
       const formData = new FormData();
       formData.append(
         "request",
-        new Blob([JSON.stringify(payload)], { type: "application/json" }),
+        new Blob(
+          [
+            JSON.stringify({
+              title:
+                mode === "HOME"
+                  ? selectedFile?.name?.replace(/\.pdf$/i, "") ||
+                    "PDF 자기소개서"
+                  : title.trim(),
+              content: mode === "HOME" ? "" : content.trim(),
+              targetJob: jobDetail?.trim() || jobRole,
+            }),
+          ],
+          { type: "application/json" },
+        ),
       );
 
-      if (mode === "HOME" && selectedFile) {
+      if (selectedFile) {
         formData.append("file", selectedFile);
       }
 
-      const res = await fetch(`${API_BASE}/api/ci/analyze`, {
+      const response = await fetch(`${API_BASE}/api/ci/analyze`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -146,39 +159,31 @@ export default function ClAnalysis({ isOpen, onClose }) {
         body: formData,
       });
 
-      const raw = await res.text();
+      const data = await response.json();
 
-      if (!res.ok) {
-        throw new Error(raw || "분석 API 실패");
+      if (!response.ok) {
+        if (response.status === 403 && data.code === "INSUFFICIENT_QUOTA") {
+          alert(
+            "분석 이용권이 부족합니다.\n분석 이용권 구매페이지로 이동합니다.",
+          );
+          navigate("/payment");
+          return;
+        }
+
+        alert(data.message || "분석 중 오류가 발생했습니다.");
+        return;
       }
 
-      let result;
-      try {
-        result = JSON.parse(raw);
-      } catch (e) {
-        console.error("응답 JSON 파싱 실패:", e);
-        throw new Error("서버 응답 형식이 올바르지 않습니다.");
-      }
-
-      console.log("analysis result =", result);
-
-      sessionStorage.removeItem("ci_result");
-      sessionStorage.setItem("ci_result", JSON.stringify(result));
-
-      setIsAnalyzing(false);
-      handleClose();
-
-      navigate(`/analysis/result/${result.analysisId}`, {
-        state: { result },
+      navigate(`/ci/result/${data.analysisId}`, {
+        state: { result: data },
       });
-    } catch (e) {
-      console.error("분석 에러:", e);
-      alert(e.message || "분석 중 오류가 발생했습니다.");
+    } catch (err) {
+      console.error("분석 에러:", err);
+      alert("서버와 통신 중 오류가 발생했습니다.");
+    } finally {
       setIsAnalyzing(false);
-      setViewStep("input");
     }
   };
-
   const headerTitle =
     mode === "HOME" ? "자기소개서 분석(PDF)" : "자기소개서 입력폼";
   const headerDesc =
