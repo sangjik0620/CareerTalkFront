@@ -1120,8 +1120,6 @@ export default function InterviewSelect() {
           from { opacity:0; transform:translateY(16px); }
           to { opacity:1; transform:translateY(0); }
         }
-
-        // 기존 style 태그 안에 아래 내용 추가
         @keyframes dropdownOpen {
           from { opacity: 0; transform: translateY(-8px) scaleY(0.95); }
           to   { opacity: 1; transform: translateY(0)   scaleY(1);    }
