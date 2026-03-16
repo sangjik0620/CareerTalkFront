@@ -45,6 +45,27 @@ export default function ClAnalysis({ isOpen, onClose }) {
   const [viewStep, setViewStep] = useState("input");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
+  const getAccessToken = () => {
+    const candidates = [
+      localStorage.getItem("token"),
+      localStorage.getItem("accessToken"),
+      localStorage.getItem("jwt"),
+      localStorage.getItem("Authorization"),
+      sessionStorage.getItem("token"),
+      sessionStorage.getItem("accessToken"),
+      sessionStorage.getItem("jwt"),
+      sessionStorage.getItem("Authorization"),
+    ].filter(Boolean);
+
+    if (candidates.length === 0) return null;
+
+    let token = candidates[0];
+
+    token = token.replace(/^Bearer\s+/i, "").replace(/^"|"$/g, "");
+
+    return token;
+  };
+
   useEffect(() => {
     if (!isOpen) resetAll();
   }, [isOpen]);
@@ -118,13 +139,13 @@ export default function ClAnalysis({ isOpen, onClose }) {
   const handleConfirmAnalyze = async () => {
     try {
       setIsAnalyzing(true);
+      setViewStep("analyzing");
 
-      const token =
-        localStorage.getItem("token") || localStorage.getItem("accessToken");
+      const token = getAccessToken();
 
       if (!token) {
-        alert("로그인이 필요합니다.");
-        navigate("/login");
+        alert("로그인 정보가 없습니다. 다시 로그인해 주세요.");
+        window.location.href = "http://localhost:5173/login";
         return;
       }
 
@@ -159,14 +180,21 @@ export default function ClAnalysis({ isOpen, onClose }) {
         body: formData,
       });
 
-      const data = await response.json();
+      const raw = await response.text();
+      let data = {};
+
+      try {
+        data = raw ? JSON.parse(raw) : {};
+      } catch {
+        data = { message: raw };
+      }
 
       if (!response.ok) {
+        setViewStep("confirm");
+
         if (response.status === 403 && data.code === "INSUFFICIENT_QUOTA") {
-          alert(
-            "분석 이용권이 부족합니다.\n분석 이용권 구매페이지로 이동합니다.",
-          );
-          navigate("/payment");
+          alert("분석 이용권이 부족합니다.");
+          window.location.href = "http://localhost:5173/payment";
           return;
         }
 
@@ -174,11 +202,12 @@ export default function ClAnalysis({ isOpen, onClose }) {
         return;
       }
 
-      navigate(`/ci/result/${data.analysisId}`, {
+      navigate(`/analysis/result/${data.analysisId}`, {
         state: { result: data },
       });
     } catch (err) {
       console.error("분석 에러:", err);
+      setViewStep("confirm");
       alert("서버와 통신 중 오류가 발생했습니다.");
     } finally {
       setIsAnalyzing(false);
